@@ -1,4 +1,12 @@
-# Fustor 热重载机制 (Hot Reload)
+---
+version: 1.0.0
+---
+
+# L3: [workflow] Fustor 热重载机制 (Hot Reload)
+
+> Implements: [Component: COMPONENTS.CONFIG]
+> Type: workflow | algorithm
+> (Ref: CONTRACTS.STABILITY)
 
 > 版本: 1.0.0  
 > 日期: 2026-02-12  

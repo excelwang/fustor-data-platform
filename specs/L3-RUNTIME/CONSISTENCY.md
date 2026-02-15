@@ -1,4 +1,12 @@
-# Fustor 一致性设计方案
+---
+version: 1.0.0
+---
+
+# L3: [algorithm] Fustor 一致性设计方案
+
+> Implements: [Component: COMPONENTS.CONSISTENCY]
+> Type: algorithm | decision
+> (Ref: CONTRACTS.STABILITY, CONTRACTS.DATA_ROUTING)
 
 ## 1. 概述
 

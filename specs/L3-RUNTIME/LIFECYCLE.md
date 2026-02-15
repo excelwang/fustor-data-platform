@@ -1,4 +1,12 @@
-# Fustor 运行时行为与生命周期 (Runtime Behavior)
+---
+version: 1.0.0
+---
+
+# L3: [workflow] Fustor 运行时行为与生命周期 (Runtime Behavior)
+
+> Implements: [Component: COMPONENTS.SESSION, COMPONENTS.ROLES]
+> Type: workflow | decision
+> (Ref: CONTRACTS.STABILITY, CONTRACTS.CONCURRENCY)
 
 > 版本: 1.0.0
 > 日期: 2026-02-04
