@@ -4,7 +4,7 @@ import asyncio
 import time
 from unittest.mock import MagicMock, AsyncMock, patch
 
-from fustor_fusion_mgmt.on_command import on_command_fallback, _CONCURRENCY_SEMAPHORE
+from fustor_fusion_mgmt.on_command import on_command_fallback
 
 @pytest.mark.asyncio
 async def test_on_command_fallback_concurrency_limit():
@@ -43,26 +43,34 @@ async def test_on_command_fallback_concurrency_limit():
         
     mock_bridge.send_command_and_wait = slow_command
     
-    start_time = time.time()
+    # Reset semaphore to ensure we use the new limit
+    import fustor_fusion_mgmt.on_command as oc
+    oc._SEMAPHORE = None
     
-    # Execute fallback
-    await on_command_fallback("view-1", {}, mock_pm)
-    
-    duration = time.time() - start_time
-    
-    # Assertions
-    print(f"Max concurrent tasks: {max_active}")
-    print(f"Total duration: {duration:.4f}s")
-    
-    # The semaphore is 10. So max_active should be <= 10.
-    # Allow small buffer for loop overhead, but strict equality is usually fine with semaphore.
-    assert max_active <= 10, f"Concurrency limit exceeded: {max_active} > 10"
-    
-    # Check duration to ensure it actually ran in parallel (not serial which would be 5s)
-    # and not all at once (which would be 0.1s)
-    # 5 runs of 0.1s = 0.5s.
-    assert duration >= 0.45, "Ran too fast (concurrency limit likely ignored)"
-    assert duration < 2.0, "Ran too slow (likely serial execution)"
+    # Mock config to return limit 10
+    with patch("fustor_fusion.config.unified.fusion_config") as mock_config:
+        mock_config.fusion.on_command_concurrency_limit = 10
+        
+        start_time = time.time()
+        
+        # Execute fallback
+        await on_command_fallback("view-1", {}, mock_pm)
+        
+        duration = time.time() - start_time
+        
+        # Assertions
+        print(f"Max concurrent tasks: {max_active}")
+        print(f"Total duration: {duration:.4f}s")
+        
+        # The semaphore is 10. So max_active should be <= 10.
+        # Allow small buffer for loop overhead, but strict equality is usually fine with semaphore.
+        assert max_active <= 10, f"Concurrency limit exceeded: {max_active} > 10"
+        
+        # Check duration to ensure it actually ran in parallel (not serial which would be 5s)
+        # and not all at once (which would be 0.1s)
+        # 5 runs of 0.1s = 0.5s.
+        assert duration >= 0.45, "Ran too fast (concurrency limit likely ignored)"
+        assert duration < 2.0, "Ran too slow (likely serial execution)"
 
 from fastapi import HTTPException
 

@@ -17,7 +17,20 @@ logger = logging.getLogger("fustor_fusion_mgmt.on_command")
 
 # Global semaphore to limit concurrent fallback scans across all requests
 # to prevent overwhelming agents or network.
-_CONCURRENCY_SEMAPHORE = asyncio.Semaphore(10)
+# Global semaphore cache to limit concurrent fallback scans across all requests
+_SEMAPHORE: Optional[asyncio.Semaphore] = None
+_SEMAPHORE_LIMIT: int = 0
+_SEMAPHORE_LOCK = asyncio.Lock()
+
+async def get_semaphore(limit: int) -> asyncio.Semaphore:
+    """Get or update the global semaphore based on the limit."""
+    global _SEMAPHORE, _SEMAPHORE_LIMIT
+    async with _SEMAPHORE_LOCK:
+        if _SEMAPHORE is None or _SEMAPHORE_LIMIT != limit:
+            _SEMAPHORE = asyncio.Semaphore(limit)
+            _SEMAPHORE_LIMIT = limit
+            logger.info(f"Updated On-Command concurrency semaphore to {limit}")
+        return _SEMAPHORE
 
 async def on_command_fallback(view_id: str, params: Dict[str, Any], pipe_manager: Any) -> Dict[str, Any]:
     """
@@ -40,7 +53,11 @@ async def on_command_fallback(view_id: str, params: Dict[str, Any], pipe_manager
 
         async def execute_on_pipe(p_id: str) -> Optional[Dict[str, Any]]:
             # Concurrency Control
-            async with _CONCURRENCY_SEMAPHORE:
+            # Get current limit from config
+            limit = fusion_config.fusion.on_command_concurrency_limit
+            sem = await get_semaphore(limit)
+
+            async with sem:
                 pipe = pipe_manager.get_pipe(p_id)
                 if not pipe: return None
                 
@@ -57,12 +74,21 @@ async def on_command_fallback(view_id: str, params: Dict[str, Any], pipe_manager
                 if not target_session_id:
                     return None
 
-                # 1. Prepare Command
+                # 1. Prepare Command - Pass through parameters
                 target_path = params.get("path", "/")
+                
+                # Intelligent depth logic: if recursive is false, depth is 1.
+                # If recursive is true (or missing/default), use max_depth param or default 10.
+                is_recursive = params.get("recursive", True)
+                if not is_recursive:
+                    max_depth = 1
+                else:
+                    max_depth = params.get("max_depth", params.get("depth", 10))
+
                 cmd_params = {
                     "path": target_path,
-                    "max_depth": 1 if not params.get("recursive", False) else params.get("depth", 10),
-                    "limit": params.get("limit", 1000),
+                    "max_depth": int(max_depth),
+                    "limit": int(params.get("limit", 1000)),
                     "pattern": params.get("pattern", "*"),
                 }
 

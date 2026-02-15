@@ -25,6 +25,7 @@ class FusionGlobalConfig(BaseModel):
     # GAP-P0 Implementation settings
     audit_timeout_multiplier: float = Field(default=2.0, description="审计超时倍数 (x audit_interval)")
     on_command_fallback_timeout: float = Field(default=10.0, description="On-Command Find 回退超时(秒)")
+    on_command_concurrency_limit: int = Field(default=50, description="On-Command Find 并发限制")
 
 
 
