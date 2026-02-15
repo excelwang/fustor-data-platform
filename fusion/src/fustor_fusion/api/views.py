@@ -106,7 +106,7 @@ class FallbackDriverWrapper:
             if hasattr(runtime_objects, "on_command_fallback") and runtime_objects.on_command_fallback:
                 logger.warning(f"View {self._view_id} primary/readiness failed ({e}), triggering On-Command Fallback...")
                 try:
-                    return await runtime_objects.on_command_fallback(self._view_id, kwargs)
+                    return await runtime_objects.on_command_fallback(self._view_id, kwargs, runtime_objects.pipe_manager)
                 except Exception as fallback_e:
                     logger.error(f"Fallback failed for {self._view_id}: {fallback_e}")
                     # If fallback fails, we must expose the original reason (e.g. 503 if not ready)

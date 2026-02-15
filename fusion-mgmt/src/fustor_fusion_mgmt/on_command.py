@@ -12,11 +12,14 @@ from typing import Any, Dict, List, Optional
 from fastapi import HTTPException
 
 from fustor_fusion.core.session_manager import session_manager
-from fustor_fusion import runtime_objects
 
 logger = logging.getLogger("fustor_fusion_mgmt.on_command")
 
-async def on_command_fallback(view_id: str, params: Dict[str, Any]) -> Dict[str, Any]:
+# Global semaphore to limit concurrent fallback scans across all requests
+# to prevent overwhelming agents or network.
+_CONCURRENCY_SEMAPHORE = asyncio.Semaphore(10)
+
+async def on_command_fallback(view_id: str, params: Dict[str, Any], pipe_manager: Any) -> Dict[str, Any]:
     """
     Execute a remote scan on the Agent when local view query fails.
     """
@@ -24,9 +27,8 @@ async def on_command_fallback(view_id: str, params: Dict[str, Any]) -> Dict[str,
     
     try:
         # 1. Resolve Pipes
-        pipe_manager = runtime_objects.pipe_manager
         if not pipe_manager:
-            raise RuntimeError("Pipe manager not initialized")
+            raise RuntimeError("Pipe manager not provided")
 
         p_ids = pipe_manager.resolve_pipes_for_view(view_id)
         if not p_ids:
@@ -37,45 +39,47 @@ async def on_command_fallback(view_id: str, params: Dict[str, Any]) -> Dict[str,
         fallback_timeout = fusion_config.fusion.on_command_fallback_timeout
 
         async def execute_on_pipe(p_id: str) -> Optional[Dict[str, Any]]:
-            pipe = pipe_manager.get_pipe(p_id)
-            if not pipe: return None
-            
-            bridge = pipe_manager.get_bridge(p_id)
-            if not bridge: return None
+            # Concurrency Control
+            async with _CONCURRENCY_SEMAPHORE:
+                pipe = pipe_manager.get_pipe(p_id)
+                if not pipe: return None
+                
+                bridge = pipe_manager.get_bridge(p_id)
+                if not bridge: return None
 
-            # Use leader session or any active session
-            target_session_id = pipe.leader_session
-            if not target_session_id:
-                active_sessions = await bridge.get_all_sessions()
-                if active_sessions:
-                    target_session_id = next(iter(active_sessions))
-            
-            if not target_session_id:
-                return None
+                # Use leader session or any active session
+                target_session_id = pipe.leader_session
+                if not target_session_id:
+                    active_sessions = await bridge.get_all_sessions()
+                    if active_sessions:
+                        target_session_id = next(iter(active_sessions))
+                
+                if not target_session_id:
+                    return None
 
-            # 1. Prepare Command
-            target_path = params.get("path", "/")
-            cmd_params = {
-                "path": target_path,
-                "max_depth": 1 if not params.get("recursive", False) else params.get("depth", 10),
-                "limit": params.get("limit", 1000),
-                "pattern": params.get("pattern", "*"),
-            }
+                # 1. Prepare Command
+                target_path = params.get("path", "/")
+                cmd_params = {
+                    "path": target_path,
+                    "max_depth": 1 if not params.get("recursive", False) else params.get("depth", 10),
+                    "limit": params.get("limit", 1000),
+                    "pattern": params.get("pattern", "*"),
+                }
 
-            # 2. Execute via Bridge (Synchronous-like wait)
-            try:
-                result = await bridge.send_command_and_wait(
-                    session_id=target_session_id,
-                    command="scan",
-                    params=cmd_params,
-                    timeout=fallback_timeout
-                )
-                if result:
-                    result["success"] = True
-                return result
-            except Exception as e:
-                logger.warning(f"Fallback command failed on session {target_session_id}: {e}")
-                return None
+                # 2. Execute via Bridge (Synchronous-like wait)
+                try:
+                    result = await bridge.send_command_and_wait(
+                        session_id=target_session_id,
+                        command="scan",
+                        params=cmd_params,
+                        timeout=fallback_timeout
+                    )
+                    if result:
+                        result["success"] = True
+                    return result
+                except Exception as e:
+                    logger.warning(f"Fallback command failed on session {target_session_id}: {e}")
+                    return None
 
         # 3. Dispatch and Wait
         results = await asyncio.gather(*[execute_on_pipe(pid) for pid in p_ids])
