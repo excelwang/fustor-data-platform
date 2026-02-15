@@ -86,16 +86,8 @@ class FallbackDriverWrapper:
         # Explicit override for standard ABC method to centralize readiness check + fallback
         try:
             # 1. Centralized Readiness Check
-            from ..view_state_manager import view_state_manager
-            
-            # Check Leadership & Snapshot
-            state = await view_state_manager.get_state(self._view_id)
-            has_leader = state and state.authoritative_session_id
-            is_snapshot_complete = await view_state_manager.is_snapshot_complete(self._view_id)
-            
-            if not (has_leader and is_snapshot_complete):
-                 # Force fallback
-                 raise RuntimeError("View Not Ready")
+            from ..runtime.readiness import check_view_readiness
+            await check_view_readiness(self._view_id)
 
             # 2. Attempt Primary Driver
             return await self._driver.get_data_view(**kwargs)
@@ -104,13 +96,19 @@ class FallbackDriverWrapper:
             # 3. Fallback Mechanism
             # Check if fallback handler is registered (it should be if fusion-mgmt is installed)
             if hasattr(runtime_objects, "on_command_fallback") and runtime_objects.on_command_fallback:
-                logger.warning(f"View {self._view_id} primary/readiness failed ({e}), triggering On-Command Fallback...")
+                # Log only if it's NOT a ViewNotReadyError (which is expected during startup)
+                from fustor_core.exceptions import ViewNotReadyError
+                if not isinstance(e, ViewNotReadyError):
+                    logger.warning(f"View {self._view_id} primary failed ({e}), triggering On-Command Fallback...")
+                else:
+                    logger.info(f"View {self._view_id} not ready ({e}), triggering On-Command Fallback...")
+                
                 try:
                     return await runtime_objects.on_command_fallback(self._view_id, kwargs, runtime_objects.pipe_manager)
                 except Exception as fallback_e:
                     logger.error(f"Fallback failed for {self._view_id}: {fallback_e}")
-                    # If fallback fails, we must expose the original reason (e.g. 503 if not ready)
-                    if str(e) == "View Not Ready":
+                    # If fallback fails, we must expose the original reason
+                    if isinstance(e, ViewNotReadyError):
                          raise HTTPException(
                             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
                             detail=f"View '{self._view_id}' is unavailable and fallback failed: {fallback_e}",
@@ -119,10 +117,11 @@ class FallbackDriverWrapper:
                     raise e
             else:
                 # No fallback capability
-                if str(e) == "View Not Ready":
+                from fustor_core.exceptions import ViewNotReadyError
+                if isinstance(e, ViewNotReadyError):  # Use custom exception, not string matching
                      raise HTTPException(
                         status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-                        detail=f"View '{self._view_id}' is performing initial synchronization",
+                        detail=str(e),
                         headers={"Retry-After": "5"}
                     )
                 raise e
@@ -180,34 +179,25 @@ def make_readiness_checker(view_name: str) -> Callable:
         manager = await get_cached_view_manager(view_name)
         driver_instance = manager.driver_instances.get(view_name)
         
-        # 1. Check Global Snapshot Status (via ViewStateManager)
-        from ..view_state_manager import view_state_manager
-        state = await view_state_manager.get_state(view_name)
-        if not state or not state.authoritative_session_id:
+        # 1. Centralized Check
+        from ..runtime.readiness import check_view_readiness
+        from fustor_core.exceptions import ViewNotReadyError
+        
+        try:
+            await check_view_readiness(view_name)
+        except ViewNotReadyError as e:
             # GAP-V1 Fix: If fallback is enabled, don't 503. Let the wrapper handle it.
             if runtime_objects.on_command_fallback:
-                 logger.warning(f"View '{view_name}': No leader session. Allowing request for On-Command Fallback.")
+                 logger.debug(f"View '{view_name}': Not ready ({e}). Allowing request for On-Command Fallback.")
                  return
             
+            # No fallback, so we must 503
             raise HTTPException(
                 status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-                detail=f"View '{view_name}': No active leader session. Ensure at least one agent is running.",
-                headers={"Retry-After": "10"}
-            )
-            
-        is_snapshot_complete = await view_state_manager.is_snapshot_complete(view_name)
-        if not is_snapshot_complete:
-            # GAP-V1 Fix: If fallback is enabled, don't 503.
-            if runtime_objects.on_command_fallback:
-                 logger.warning(f"View '{view_name}': Snapshot pending. Allowing request for On-Command Fallback.")
-                 return
-
-            raise HTTPException(
-                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-                detail=f"View '{view_name}': Initial snapshot sync phase in progress (Leader is scanning storage)",
+                detail=str(e),
                 headers={"Retry-After": "5"}
             )
-            
+
         # 2. Check Driver Instance Specific Readiness
         if not driver_instance and len(manager.driver_instances) == 1:
             driver_instance = list(manager.driver_instances.values())[0]

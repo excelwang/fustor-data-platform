@@ -23,16 +23,30 @@ _SEMAPHORE_LIMIT: int = 0
 _SEMAPHORE_LOCK = asyncio.Lock()
 
 async def get_semaphore(limit: int) -> asyncio.Semaphore:
-    """Get or update the global semaphore based on the limit."""
+    """
+    Get or update the global semaphore based on the limit.
+    Warning: Resizing (creating a new semaphore) allows a short burst of extra concurrency
+    during the transition period as old tasks finish on the old semaphore.
+    """
     global _SEMAPHORE, _SEMAPHORE_LIMIT
-    async with _SEMAPHORE_LOCK:
-        if _SEMAPHORE is None or _SEMAPHORE_LIMIT != limit:
-            _SEMAPHORE = asyncio.Semaphore(limit)
-            _SEMAPHORE_LIMIT = limit
-            logger.info(f"Updated On-Command concurrency semaphore to {limit}")
+    
+    # Fast path without lock if limit hasn't changed (approximate check)
+    if _SEMAPHORE and _SEMAPHORE_LIMIT == limit:
         return _SEMAPHORE
 
-async def on_command_fallback(view_id: str, params: Dict[str, Any], pipe_manager: Any) -> Dict[str, Any]:
+    async with _SEMAPHORE_LOCK:
+        if _SEMAPHORE is None or _SEMAPHORE_LIMIT != limit:
+            # Check constraint
+            safe_limit = max(1, limit)
+            if safe_limit != limit:
+                 logger.warning(f"Invalid On-Command concurrency limit {limit}, adjusting to {safe_limit}")
+            
+            _SEMAPHORE = asyncio.Semaphore(safe_limit)
+            _SEMAPHORE_LIMIT = safe_limit
+            logger.info(f"Updated On-Command concurrency semaphore to {safe_limit}")
+        return _SEMAPHORE
+
+async def on_command_fallback(view_id: str, params: Dict[str, Any], pipe_manager: "PipeManager") -> Dict[str, Any]:
     """
     Execute a remote scan on the Agent when local view query fails.
     """

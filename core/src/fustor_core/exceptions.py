@@ -35,6 +35,11 @@ class NotFoundError(FustorException):
         super().__init__(detail=detail, context=context)
 
 
+class ViewNotReadyError(FustorException):
+    """Raised when a view is not ready (no leader or initial snapshot in progress)."""
+    pass
+
+
 class ConflictError(FustorException):
     """Raised when a resource already exists and cannot be created again."""
     status_code = 409
