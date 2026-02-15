@@ -23,47 +23,62 @@
 
 ---
 
-## 2. 分层架构
+## 2. 核心架构分层 (L1/L2/L3 模型)
 
+Fustor 采用 **控制面与数据面解耦** 的三层架构，确保“控制面幸存于数据面”：
+
+```mermaid
+graph TD
+    subgraph "L3: Management Plane (运维层/可选)"
+        L3_Fusion["fustor-view-mgmt (Orchestration/UI)"]
+        L3_Agent["fustor-source-mgmt (Command Support)"]
+    end
+
+    subgraph "L2: Session & Control Plane (会话层/核心)"
+        L2_Fusion["SessionManager (Presence Tracking)"]
+        L2_Agent["AgentPipe (Heartbeat/Umbilical Cord)"]
+    end
+
+    subgraph "L1: Data Plane (数据层/执行)"
+        L1_Source["Source Drivers (FS/SQL/etc.)"]
+        L1_View["View Drivers (Arbitration/Merge)"]
+        L1_Sender["Sender/Receiver Drivers"]
+    end
+
+    %% Dependencies
+    L3_Fusion -.->|Injects Admin Cmd| L2_Fusion
+    L2_Agent <==>|L2 Heartbeat Tunnel| L2_Fusion
+    L2_Agent ---|Spawns/Monitors| L1_Source
+    L1_Source ---|Produces Events| L2_Agent
+    L1_View ---|Queries/Updates| L2_Fusion
 ```
-┌─────────────────────────────────────────────────────────────────────────────────────┐
-│                              Fustor 分层架构                                          │
-├─────────────────────────────────────────────────────────────────────────────────────┤
-│                                                                                      │
-│   Layer 5: Application (应用层)                                                       │
-│   ┌─────────────────────────────┐       ┌─────────────────────────────┐             │
-│   │     fustor-agent            │       │     fustor-fusion           │             │
-│   └──────────────┬──────────────┘       └──────────────┬──────────────┘             │
-│                  │                                      │                            │
-│   Layer 4: Pipe Engine (管道引擎层)                                               │
-│   ┌──────────────▼──────────────┐       ┌──────────────▼──────────────┐             │
-│   │     PipeInstanceService     │       │     FusionPipeManager       │             │
-│   │     (管理 Source→Sender)    │       │     (管理 Receiver→View)    │             │
-│   └──────────────┬──────────────┘       └──────────────┬──────────────┘             │
-│                  │                                      │                            │
-│   Layer 3: Handler (处理器层) - fustor-source-*, fustor-view-*                        │
-│   ┌──────────────▼──────────────┐       ┌──────────────▼──────────────┐             │
-│   │     Source Handler          │       │     View Handler            │             │
-│   │     (读取数据，产生事件)     │       │     (消费事件，更新视图)     │             │
-│   └──────────────┬──────────────┘       └──────────────┬──────────────┘             │
-│                  │                                      │                            │
-│   Layer 2: Transport (传输层) - fustor-sender-*, fustor-receiver-*                    │
-│   ┌──────────────▼──────────────┐       ┌──────────────▼──────────────┐             │
-│   │     Sender (HTTP/gRPC)      │══════▶│     Receiver (HTTP/gRPC)    │             │
-│   └─────────────────────────────┘Network└─────────────────────────────┘             │
-│                                                                                      │
-│   Layer 1: Core (核心层) - fustor-core                                                │
-│   ┌─────────────────────────────────────────────────────────────────────────────┐   │
-│   │ FustorPipe 抽象 │ Event 模型 │ Transport 抽象 │ LogicalClock │ Common Utils │   │
-│   └─────────────────────────────────────────────────────────────────────────────┘   │
-│                                                                                      │
-│   Layer 0: Schema (契约层) - fustor-schema-*                                          │
-│   ┌─────────────────────────────────────────────────────────────────────────────┐   │
-│   │  fustor-schema-fs (Pydantic 模型) │ fustor-schema-* (第三方可扩展)           │   │
-│   └─────────────────────────────────────────────────────────────────────────────┘   │
-│                                                                                      │
-└─────────────────────────────────────────────────────────────────────────────────────┘
-```
+
+### 2.1 垂直分层模型 (Stability Underneath, Extensibility Above)
+
+Fustor 采用 **“下沉稳定性，上行扩展性”** 的三层垂直模型，严禁次序颠倒：
+
+1.  **Layer 1: 稳定性与会话层 (Stability Layer)**
+    *   **核心组件**: `fustor-fusion` (core pipes), `fustor-agent` (core tunnel)。
+    *   **职责**: 纯粹的物理连接维持、心跳隧道（Umbilical Cord）、生存状态监控。
+    *   **原则**: **中立性 (Neutrality)**。L1 只提供寻址原语（Unicast/Broadcast），严禁感知具体的业务指令或管理操作。
+
+2.  **Layer 2: 领域与数据层 (Domain Layer)**
+    *   **核心组件**: `fustor-core` (drivers), `view-fs`, `source-fs`。
+    *   **职责**: 定义数据的“血肉”，包括数据同步、快照合并、API 核心查询逻辑。
+    *   **原则**: **自主性与补偿性**。通过租用 L1 的寻址原语实现 Fallback 回退扫描。
+
+3.  **Layer 3: Management Layer (Optional Plugins)**
+    *   **Packages**: `fustor-view-mgmt`, `fustor-source-mgmt`。
+    *   **职责**: 非关键路径的管理工作（升级、迁移、UI 服务）。
+    *   **原则**: **可选性**。L3 必须作为 L1/L2 的标准化借用者（Client）。
+
+### 2.2 Peer-to-Peer 自主模型 (Peer-to-Peer Autonomy Model)
+
+Fustor 将 Agent 和 Fusion 视为 L1 稳定性层的 **平等租户 (Peer Tenants)**，而非主从关系：
+
+*   **主动感知 (Proactive)**: Agent 拥有原生的领域冲动（L2），会根据配置自主启动监听并租用 L1 管道推送数据。它不需要 Fusion 的“启动命令”。
+*   **对等对称**: 双方使用相同的 L1 原语进行通信。区别仅在于 L2 驱动的类型：一端是 **感知源 (Source)**，另一端是 **聚合视图 (View)**。
+*   **生存隔离**: 管理行为（L3）的失效不应影响数据面（L2）的自主同步与生命体征（L1）。
 
 ---
 
@@ -139,14 +154,14 @@ extensions/
 
 为节省系统资源（如 inotify watch 描述符），FSDriver 实现了 **Per-URI Singleton** 模式。
 
-- **唯一标识**: `signature = f"{uri}#{hash(credential)}"`
-- **行为**:
-    - 不同 AgentPipe 配置若指向同一 URI 且凭证相同，将共享同一个 Driver 实例。
-    - 共享实例意味着共享底层的 WatchManager 和 EventQueue。
-- **生命周期约束**:
-    - **引用计数**: Driver 内部不维护引用计数（简化设计）。
-    - **显式销毁**: 必须调用 `driver.close()` 或 `FSDriver.invalidate(uri, cred)` 才能从缓存中移除。
-    - **热重载**: 修改配置（如排除列表）但 URI 不变时，为了使新配置生效，ConfigReloader 必须显式 `invalidate` 旧实例，否则下次 `FSDriver(id, config)` 仍会返回旧实例。
+-   **唯一标识**: `signature = f"{uri}#{hash(credential)}"`
+-   **行为**:
+    -   不同 AgentPipe 配置若指向同一 URI 且凭证相同，将共享同一个 Driver 实例。
+    -   共享实例意味着共享底层的 WatchManager 和 EventQueue。
+-   **生命周期约束**:
+    -   **引用计数**: Driver 内部不维护引用计数（简化设计）。
+    -   **显式销毁**: 必须调用 `driver.close()` 或 `FSDriver.invalidate(uri, cred)` 才能从缓存中移除。
+    -   **热重载**: 修改配置（如排除列表）但 URI 不变时，为了使新配置生效，ConfigReloader 必须显式 `invalidate` 旧实例，否则下次 `FSDriver(id, config)` 仍会返回旧实例。
 
 ### 3.6 应用包
 
@@ -561,10 +576,19 @@ Agent 收到响应后，设置心跳间隔为 `timeout_seconds / 2`。
 
 ---
 
-## 附录 A: 配置目录名称
+## 12. 远程命令分发策略 (Remote Command Dispatch Strategies)
 
-| 组件 | Agent 配置目录 | Fusion 配置目录 |
-|------|---------------|----------------|
-| Source/View | `sources-config.yaml` | `views-config/` |
-| Sender/Receiver | `senders-config.yaml` | `receivers-config.yaml` |
-| Pipe | `agent-pipes-config/` | `fusion-pipes-config/` |
+Fustor 采用 **“统一租用 (Unified Renting)”** 模式进行指令下发，由 L2（领域层）或 L3（管理层）直接租用 L1（稳定性层）提供的中立原语。
+
+### 12.1 逻辑广播原语 (L1 Primitive: `broadcast`)
+*   **适用场景**: `scan` (On-Command Fallback)。
+*   **目标层级**: **L2 领域原子性**。
+*   **执行逻辑**: 针对对应 ViewID 关联的 **所有物理源** 进行全量覆盖。
+
+### 12.2 物理单播原语 (L1 Primitive: `unicast`)
+*   **适用场景**: `upgrade`, `stop`。
+*   **目标层级**: **L3 进程原子性**。
+*   **执行逻辑**: 针对特定 AgentID 或 SessionID 进行精准触达，确保运维操作的幂等与原子性。
+
+### 12.3 自动重连与恢复
+所有远程指令触发的连接中断（如升级、重启）必须由 L2 层（`AgentPipe` 的心跳重连机制）实现自动恢复，确保控制面的“脐带”在物理网络可达的情况下始终处于就绪状态。
