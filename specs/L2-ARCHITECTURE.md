@@ -496,7 +496,50 @@ Fustor 将 Agent 和 Fusion 视为 L1 稳定性层的 **平等租户 (Peer Tenan
 
 **Implements**:
 - (Ref: CONTRACTS.LAYER_INDEPENDENCE)
-- (Ref: CONTRACTS.COMMAND_DISPATCH.UNIFIED_RENTING)
+
+### COMPONENTS.ROLES.RENTING (Unified Renting Model)
+
+> Source: `2026-02-15-task-dispatch-paradigm.md`
+
+L2/L3 服务不再拥有专用命令通道，而是统一作为 Client 向 L1 租用寻址原语。
+
+#### 1. 视图广播任务 (Broadcast Task)
+- **目的**: 内容补偿 (Data Compensation)
+- **场景**: `scan` (On-Demand Find)
+- **租用原语**: `L1.broadcast(view_id)`
+- **成功准则**: Quorum/Full (集齐所有源)
+- **失败影响**: 数据盲区 (Partial Data)
+
+#### 2. 代理控制任务 (Targeted Task)
+- **目的**: 状态变更 (State Mutation)
+- **场景**: `upgrade`, `reload`, `stop`
+- **租用原语**: `L1.unicast(agent_id)`
+- **成功准则**: Any/Single (命中即生效)
+- **失败影响**: 管控失效 (Control Loss)
+
+### COMPONENTS.ORCHESTRATION
+
+建议封装通用的 `TaskOrchestrator` 服务，隔离分发细节：
+
+```python
+class TaskOrchestrator:
+    async def view_broadcast(self, view_id: str, cmd: Dict) -> List[Dict]:
+        """
+        全量广播逻辑：用于回退扫描。
+        1. 确定 ViewID 关联的所有 Session
+        2. L1.broadcast()
+        3. 汇聚结果
+        """
+        pass
+
+    async def agent_targeted_dispatch(self, agent_id: str, cmd: Dict) -> Dict:
+        """
+        精准选路逻辑：用于升级/停止。
+        1. 确定 AgentID 关联的 Session (优先 Leader)
+        2. L1.unicast()
+        """
+        pass
+```
 
 ### COMPONENTS.ROLES.FSDRIVER
 

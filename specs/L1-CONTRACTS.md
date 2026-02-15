@@ -194,26 +194,26 @@ invariants:
 
 ---
 
-## CONTRACTS.COMMAND_DISPATCH
+## CONTRACTS.ADDRESSING
 
-> Source: 01-ARCHITECTURE.md §12
+> Source: L1-NEUTRALITY, 2026-02-16T0220-neutral-addressing-primitives.md
 
-- **UNIFIED_RENTING**: Command dispatch MUST use "Unified Renting" model — L2/L3 rent L1 neutral primitives.
-  > Responsibility: Layer independence — L1 must never know command semantics.
-  > Verification: L1 code contains zero references to `scan`, `upgrade`, or `stop`.
+- **ADDRESSING_ONLY**: Every packet sent from Fusion to Agent MUST be either `unicast(target_id)` or `broadcast(view_id)`.
+  > Responsibility: Routing — purely mechanical packet delivery.
+  > Verification: L1 code contains only `dispatch(header, payload)`.
   (Ref: VISION.LAYER_MODEL)
 
-- **BROADCAST_FOR_SCAN**: Fallback scan MUST use L1 `broadcast(view_id, payload)` primitive targeting all sources of a view.
-  > Responsibility: Completeness — zero data blind spots.
-  > Verification: All active sessions receive scan command simultaneously.
-  (Ref: VISION.EXPECTED_EFFECTS)
+- **PAYLOAD_OPACITY**: L1 MUST treat all command payloads as opaque dictionaries.
+  > Responsibility: Stability — L1 survives invalid payloads.
+  > Verification: Zero inspections of `payload.type` or `payload.body` in `SessionManager`.
+  (Ref: VISION.SURVIVAL)
 
-- **UNICAST_FOR_MGMT**: Management operations (upgrade, stop) MUST use L1 `unicast(target, payload)` primitive targeting specific agent/session.
-  > Responsibility: Atomicity — process-level precision for operations.
-  > Verification: Only the targeted agent receives the management command.
-  (Ref: VISION.EXPECTED_EFFECTS)
+- **NEUTRALITY**: The `SessionManager` MUST NOT contain string literals or logic related to `scan`, `snapshot`, `job_id`, or `path`.
+  > Responsibility: Decoupling — prevent business logic leakage.
+  > Verification: Grep check passes.
+  (Ref: VISION.LAYER_MODEL.L1_NEUTRALITY)
 
-- **AUTO_RECONNECT**: All remote command-induced disconnections (upgrade, restart) MUST be auto-recovered by L2 heartbeat reconnection.
+- **AUTO_RECONNECT**: All remote operations (even destructive ones like restart) MUST be auto-recovered by L2 heartbeat reconnection.
   > Responsibility: Resilience — umbilical cord stays ready when physically reachable.
   > Verification: Agent reconnects within 2× backoff interval after process restart.
   (Ref: VISION.SURVIVAL.UMBILICAL_CORD)

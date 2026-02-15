@@ -103,6 +103,7 @@ Fustor 拒绝"主从"式命令模型，推崇 **"感知驱动，按需对齐"** 
 - **INTRINSIC_DRIVE**: Agent 绝非被动等待 Fusion 命令的傀儡。它是一个**主动的、有状态的传感器**。Agent 的 L2 层根据自身配置，自主监听本地变化并主动寻找 L1 管道推送。
 - **INDEPENDENT_LIFECYCLE**: Agent 的生存不依赖于 Fusion。断网或 Fusion 崩溃时，Agent 感知逻辑 (L2) 全速运行，事件在 L1 隧道中排队。
 - **MULTI_TARGET_RENTING**: Agent 可同时向多个 Receiver (Fusion、三方工具) 租用 L1 管道推送数据。只认管道契约，不认行政从属。
+- **UNIVERSAL_ADDRESSING**: L1 层仅提供 `broadcast` (全量覆盖) 和 `unicast` (精准触达) 两种寻址原语。任何上层业务（数据回退、远程升级）都必须映射为这两种原语之一。
 
 ## VISION.SUCCESS_CRITERIA
 
