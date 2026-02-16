@@ -5,13 +5,13 @@
 
 ---
 
-## 1. 设计初衷
+## [overview] Event_Bus_Design_Intent
 
 为了将 **Domain Layer** (扫描产生的事件) 与 **Stability Layer** (网络推送逻辑) 完全解耦，**Sensord** 内部核心使用了一个有界环形缓冲区 `MemoryEventBus`。
 
 ---
 
-## 2. 核心特性
+## [feature] Event_Bus_Core_Features
 
 ### 2.1 快慢消费者自动分裂 (Automatic Bus Splitting)
 
@@ -31,7 +31,7 @@
 - **规则**: `EventBus` 的生命周期随 **Sensord** 进程启动而建立，随最后一条 `SensordPipe` 销毁而释放资源。
 - **背压保护 (Backpressure)**: 当缓冲区达到 100% 满位时，生产者（Source）将被暂停异步执行，直到至少有一个活跃订阅者释放其锁定的槽位。
 
-## 3. 生命周期与资源管理
+## [lifecycle] Event_Bus_Resource_Management
 
 - **低水位线 (Low Watermark)**: 维护所有订阅者中最小的 `last_seen_index`。
 - **垃圾回收 (GC)**: 物理索引标号小于低水位线的事件会被立即从内存中 Trim 掉。

@@ -5,7 +5,7 @@
 
 ---
 
-## 1. 触发机制 (Trigger)
+## [mechanism] Hot_Reload_Trigger_Mechanism
 
 **Sensord** 支持不重启进程的情况下更新业务配置。
 - **信号**: `SIGHUP` (Signal Hang Up)。
@@ -13,7 +13,17 @@
 
 ---
 
-## 2. 执行流程 (Execution Flow)
+## [workflow] Hot_Reload_Execution_Flow
+
+**Rationale**: Ensure configuration updates are applied without process termination, preserving active event buffers and connections.
+
+**Steps**:
+1. Receive SIGHUP signal.
+2. Re-parse all configuration files.
+3. Calculate diff between current and new configuration.
+4. Stop pipes/drivers removed in new config.
+5. Create and start new pipes/drivers.
+6. Update shared singletons.
 
 当 **Sensord** 接收到重载信号时，执行以下原子操作：
 
@@ -33,7 +43,7 @@ Sensord 对比 `OldState` 与 `NewState` 的差异：
 
 ---
 
-## 3. 热升级准则 (Best Practices)
+## [best_practice] Hot_Upgrade_Best_Practices
 
 1.  **静默更新**: 重载期间，`EventBus` 中的存量数据不得丢失。
 2.  **句柄复用**: 对于 URI 未变更的 Driver，必须保持物理连接（如 NFS Mount 或 SQL Connection），仅更新引用。
@@ -62,7 +72,15 @@ sequenceDiagram
 
 ---
 
-## 4. 差分算法 (Diff Algorithm)
+## [algorithm] Config_Diff_Algorithm
+
+**Rationale**: Minimized disruption by identifying exactly which components changed, avoiding unnecessary restarts.
+
+```python
+def get_config_diff(old_config, new_config):
+    # Returns (added, removed, updated) components
+    ...
+```
 
 sensord 内部通过以下逻辑计算变更：
 
@@ -85,7 +103,7 @@ def get_diff(current_running_ids: Set[str]) -> Dict:
 
 ---
 
-## 5. 配置更新最佳实践
+## [best_practice] Config_Update_Guidelines
 
 ### 5.1 修改现有任务 (Update Strategy)
 
@@ -105,7 +123,7 @@ driver_params:
 
 ---
 
-## 6. 与驱动单例的交互
+## [mechanism] Driver_Singleton_Interaction
 
 `FSDriver` 实例与热重载的深度解耦：
 1. `pipe.stop()` 触发时，若该 Driver 不再被任何其他活跃 Pipe 使用（虽然目前 sensord 配置级别不维护 RC，但 Driver 显式 `.close()` 会注销资源）。

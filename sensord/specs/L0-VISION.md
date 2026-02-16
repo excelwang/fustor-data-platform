@@ -24,7 +24,7 @@
 - **REPLICATION**: Sensord does NOT replicate file contents; it synchronizes state views.
 - **USER_AUTH**: End-user management is handled by upper layers; Sensord uses machine-to-machine pipe authorization.
 
-## VISION.SURVIVAL
+## VISION.STABILITY
 
 > "The Control Plane must survive the Data Plane."
 
@@ -35,6 +35,60 @@ The fundamental architectural goal of **Sensord** is the **absolute decoupling o
   1. **Self-Repair**: The Control Plane can remotely restart or reset a crashed Data Plane.
   2. **Hot Upgrade**: Sensord can receive software updates and perform atomic in-place replacement.
   3. **Config Hot-Reload**: Update business logic dynamically without interrupting the process.
+
+## VISION.LIFECYCLE
+
+**Sensord** 产品的生命周期由 **Stability Layer** 托管。通过 SCP 协议，实现对 Session、Pipe 以及进程本身的完整闭环管理。
+
+- **Atomic Lifecycle**: 无论是升级、配置重载还是会话重建，系统必须保证状态切换的原子性。
+- **Graceful Termination**: 任何组件的销毁都必须符合资源回收规范，保证数据面与控制面的双重整洁。
+
+---
+
+## VISION.AUTONOMY
+
+**Sensord** 是一套独立的软件系统，推崇 **"感知驱动，按需对齐"** 的自主模型：
+
+- **INTRINSIC_DRIVE**: Sensord 绝非被动等待命令的傀儡，而是一个**主动的、有状态的传感器**。它根据自身配置，自主监听本地变化并主动寻找消费者信道进行推送。
+- **INDEPENDENT_LIFECYCLE**: Sensord 的生存不依赖于特定消费者。在断网或消费者故障时，Sensord 本地感知逻辑全速运行，事件在本地缓冲区排队。
+- **MULTI_TARGET_RENTING**: Sensord 可同时向多个不同的消费者或三方工具推送数据。
+- **UNIVERSAL_PROTOCOL**: Sensord 采用通用的基于 HTTP/JSON 的通信协议。
+
+---
+
+## VISION.CONCURRENCY
+
+**Sensord** 采用单线程事件循环（Asyncio）驱动核心业务逻辑，辅以多线程/多进程隔离阻塞式 I/O。
+
+- **Liveness Guarantee**: 控制面（心跳与指令）具备绝对优先级，不受数据面 I/O 阻塞。
+- **Order Consistency**: 通过线性执行模型，消除复杂锁竞争带来的不确定性。
+
+---
+
+## VISION.DATA_ROUTING
+
+实现数据源（Source）与消费者（Consumer）之间的多对多路由。
+
+- **Schema Driven**: 基于语义化的数据契约（Schema）而非物理路径。
+- **Universal Projection**: 支持在传输过程中进行字段投影与过滤。
+
+---
+
+## VISION.ADDRESSING
+
+定义集群中节点的唯一标识（UDID）与定点指令分发机制（Unicast/Broadcast）。
+
+---
+
+## VISION.TESTING
+
+**Sensord** 作为一个高可靠系统，其代码质量必须通过严格的“影子测试（Shadow Testing）”与契约对账验证。
+
+---
+
+## VISION.LAYER_INDEPENDENCE
+
+维持项目的 **Thin Core** 架构。各功能层级（Stability, Domain, Management）具备严格的单向依赖关系，支持按需裁剪安装。
 
 ### Architecture of Separation
 
@@ -87,17 +141,6 @@ Sensord formally separates its communication into two distinct protocols:
 - **Layer**: Domain Layer.
 - **Purpose**: Data Contract & Consistency. Defines event schemas, change semantics (mtime, size), and consistency metadata (Atomic Write, Audit flags).
 - **Invariant**: SDP is extensible and schema-driven (e.g., `sensord-schema-fs`).
-
-
-
-## VISION.AUTONOMY
-
-**Sensord** 是一套独立的软件系统，推崇 **"感知驱动，按需对齐"** 的自主模型：
-
-- **INTRINSIC_DRIVE**: Sensord 绝非被动等待命令的傀儡，而是一个**主动的、有状态的传感器**。它根据自身配置，自主监听本地变化并主动寻找消费者信道进行推送。
-- **INDEPENDENT_LIFECYCLE**: Sensord 的生存不依赖于特定消费者。在断网或消费者故障时，Sensord 本地感知逻辑全速运行，事件在本地缓冲区排队。
-- **MULTI_TARGET_RENTING**: Sensord 可同时向多个不同的消费者或三方工具推送数据。它是对自己管理的资源负责，而非对某一特定的行政隶属负责。
-- **UNIVERSAL_PROTOCOL**: Sensord 采用通用的基于 HTTP/JSON 的通信协议。任何希望接入的系统（Aggregator）只需兼容此协议即可成为 Sensord 的消费者。
 
 ## VISION.SUCCESS_CRITERIA
 

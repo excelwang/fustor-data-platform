@@ -5,23 +5,19 @@ version: 1.0.0
 # L3: [workflow] [fustord] Peer Session & Fault Tolerance
 
 > Type: workflow | decision
-> Layer: Stability Layer (SCP Handling)
-> Layer: Domain Layer
-
-> 版本: 1.0.0
-> 日期: 2026-02-04
+> Layer: Stability Layer (SCP) + Domain Layer (Session)
 > 补充: CONSISTENCY.md
 
 本文档记录了系统在运行时的动态行为细节，包括 Leader 选举、角色切换、审计缓存生命周期等。
 
-## 1. Leader 选举与角色切换
+## [strategy] Leader_Follower_Election_Strategy
 
-### 1.1 选举策略: 先到先得 (First-Come-First-Serve)
-Leader 的选举完全由 fustord 端控制，采用非抢占式的锁机制。
+**Rationale**: Use a simple non-preemptive locking mechanism to designate a single source as the primary scan performer (Leader), minimizing shared storage I/O.
 
-- **获取锁**: 第一个连接到 View 的 Session 会立即获得 Leader 锁。
-- **排队**: 后续连接的 Session 只能成为 Follower (Standby)。
-- **释放锁**: 仅当 Leader Session 断开连接或显式销毁时，锁才会被释放。
+**Steps**:
+1. First session to View requests Leader lock.
+2. ViewStateManager assigns lock or puts session in Follower queue.
+3. If Leader disconnects, ViewStateManager promotes first candidate from Follower queue.
 
 ### 1.2 故障转移 (Failover Promotion)
 当 Leader 掉线时，fustord 会执行 **First Response Promotion**：
@@ -66,7 +62,7 @@ Session 超时时间由 **Client-Hint + Server-Default** 共同决定：
 
 ---
 
-## 2. 状态机 (Session State Machine)
+## [model] Session_State_Machine_Model
 
 fustord 为每一个 **Sensord** 的租赁请求维护一个 Session 状态：
 
@@ -84,21 +80,21 @@ state_machine
 
 ---
 
-## 3. 心跳与脐带 (SCP Umbilical Cord)
+## [mechanism] Heartbeat_and_Command_Umbilical_Cord
 
 1.  **心跳检测**: fustord 采用被动等候模式。如果距离上次心跳超过 `timeout_seconds`，将 Session 切换为 `EXPIRED`。
 2.  **指令下发**: 所有的业务指令（如 `start_audit`, `do_scan`, `upgrade`）都通过 **SCP** 心跳的 HTTP Response 进行“搭载”分发。
 
 ---
 
-## 4. 资源清理原则 (Cleanup)
+## [principle] Resource_Cleanup_Principles
 
 - **非 Live 视图**: Session 过期后，View 内部的数据条目**不得**物理删除，除非收到明确的 `on_closed` 事件。
 - **Live 视图**: Session 过期即视为源不可达，物理清理内存中与该源相关的全部实时影子。
 
 ---
 
-## 5. 故障隔离模型 (Fault Tolerance Model)
+## [model] Fault_Isolation_and_Tolerance_Model
 
 ### 5.1 级联故障规则 (Cascading Failure Rules)
 

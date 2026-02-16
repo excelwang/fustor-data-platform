@@ -7,7 +7,9 @@ version: 1.0.0
 > Type: algorithm | decision
 > Layer: Domain Layer (Arbitration)
 
-## 1. 概述
+## [overview] Consistency_Arbitration_Overview
+
+**Rationale**: Define how Fustord reconciles conflicting data streams from multiple sensors on shared storage.
 
 ### 1.1 目标场景
 
@@ -61,7 +63,7 @@ version: 1.0.0
 
 ---
 
-## 2. 架构：Leader/Follower 模式
+## [model] Leader_Follower_Architecture_Model
 
 ### 2.1 角色定义
 
@@ -78,7 +80,7 @@ version: 1.0.0
 
 ---
 
-## 3. 消息类型
+## [definition] Message_Types_and_Sources
 
 sensord 向 fustord 发送的消息分为三类，通过 `message_source` 字段区分：
 
@@ -146,7 +148,7 @@ Audit 消息复用标准 Event 结构，包含以下额外信息：
 
 ---
 
-## 4. 状态管理
+## [model] Fustord_State_Management_Model
 
 fustord 通过 `FSState` 类维护以下状态：
 
@@ -254,14 +256,14 @@ Blind-spot 是**信息型记录**，用于标记"仅通过补偿源（Audit/Snap
 | 更新 `last_updated_at` | ✅ | ❌ | ❌ | ❌ |
 | 参与 Clock Skew 采样 | ✅ | ❌ | ❌ | ❌ |
 | 设置 `known_by_sensord` | `True` | `False` (保留原值) | `False` (遗漏时设为False) | `False` (遗漏时设为False) |
+| 触发 Tombstone 重生检测 | ✅ | ✅ | ✅ | ✅ |
 
 > [!IMPORTANT]
 > **监控质量证明 (Monitoring Quality Attestation) 哲学**：
 > `known_by_sensord`（API 中体现为 `sensord_missing`）是一个**非对称证据系统**：
 > 1. **反证能力**：若为 `False`，可确凿证明该文件发生过“带外修改”或 sensord 监控遗漏。
 > 2. **非预见性**：若为 `True`，仅代表最近一次变更被捕获，不保证未来盲区服务器的写入能被感知。
-> 因此，Snapshot, Audit, On-Demand 等轮询源**严禁**将此标志设为 `True`，因为它们无法证明 inotify Wather 的实时覆盖。
-| 触发 Tombstone 重生检测 | ✅ | ✅ | ✅ | ✅ |
+> 因此，Snapshot, Audit, On-Demand 等轮询源**严禁**将此标志设为 `True`，因为它们无法证明 inotify Watcher 的实时覆盖。
 
 > [!CAUTION]
 > **On-demand 不等于 Realtime**。On-demand 使用 `os.stat()` 读取文件属性，与 Audit 完全同源。
@@ -271,7 +273,9 @@ Blind-spot 是**信息型记录**，用于标记"仅通过补偿源（Audit/Snap
 
 ---
 
-## 5. 仲裁算法
+## [algorithm] Consistency_Arbitration_Algorithm
+
+**Rationale**: Prioritize high-fidelity realtime events while using periodic audit/snapshot data as fallback and discovery sources.
 
 核心原则：**Realtime 优先，Mtime 仲裁**
 
@@ -456,9 +460,9 @@ for path in audit_seen_paths:
 
 ---
 
-## 6. 双轨时间系统 (Dual-Track Time System)
+## [model] Dual_Track_Time_System_Model
 
-详细设计请参考：[LOGICAL_CLOCK_DESIGN.md](./LOGICAL_CLOCK_DESIGN.md)
+详细设计请参考：[LOGICAL_CLOCK.md](./LOGICAL_CLOCK.md)
 
 ### 6.1 时间轨道概览
 
@@ -490,7 +494,7 @@ for path in audit_seen_paths:
 
 ---
 
-## 7. 审计生命周期
+## [lifecycle] Consistency_Audit_Lifecycle_Workflow
 
 SensordPipe 通过 API 发送生命周期信号，触发 fustord 的一致性处理：
 
@@ -507,7 +511,15 @@ SensordPipe 通过 API 发送生命周期信号，触发 fustord 的一致性处
 
 ---
 
-## 8. 哨兵巡检 (Sentinel Sweep)
+## [workflow] Sentinel_Sweep_Process_Workflow
+
+**Rationale**: Maintain high data confidence by periodically verifying that "clean" files remain stable and unchanged.
+
+**Steps**:
+1. Scan internal suspect list for due entries.
+2. Dispatch `suspect_check` commands to relevant sensors via SCP.
+3. Receive stability feedback via SDP.
+4. Update node's `integrity_suspect` flag based on feedback.
 - **Sentinels (Every 5 minutes)**: Short cycle integrity check.
 - **Audit (Every 12 hours)**: Long cycle complete consistency check.
 - **目的**：验证 Suspect List 中文件的 mtime 稳定性
@@ -529,7 +541,18 @@ fustord 收到反馈后通过 `driver.update_suspect()` 执行稳定性判定。
 
 ---
 
-## 9. API 反馈
+## [interface] API_Feedback_and_Query_Interface
+
+**Rationale**: Expose internal consistency metrics and troubleshooting data to external management tools.
+
+```python
+# Query response extension
+{
+    "path": "/...",
+    "integrity_suspect": bool,
+    "has_blind_spot": bool
+}
+```
 
 | 级别 | 条件 | 返回字段 |
 |------|------|----------|
@@ -570,7 +593,7 @@ GET /api/v1/views/{view_id}/tree?path=/data/logs&force-real-time=true
 
 ---
 
-## 10. 扩展性要求
+## [decision] System_Extensibility_Requirements
 
 所有 SourceDriver 和 ViewDriver 必须支持 `message_source` 字段：
 
@@ -589,7 +612,7 @@ GET /api/v1/views/{view_id}/tree?path=/data/logs&force-real-time=true
 
 ---
 
-## 11. 实现细节 (Implementation Notes)
+## [note] Implementation_Details_and_Protection_Rules
 
 ### 11.1 陈旧证据保护 (Stale Evidence Protection)
 

@@ -12,7 +12,9 @@ version: 1.0.0
 > 状态: 设计中  
 > 前置依赖: 01-ARCHITECTURE, 02-CONSISTENCY_DESIGN
 
-## 1. 需求背景
+## [overview] Forest_View_Architecture_Overview
+
+**Rationale**: Aggregates distributed data into a single coherent tree while preserving evidence of its origin.
 
 ### 1.1 场景
 
@@ -41,7 +43,9 @@ version: 1.0.0
 
 ---
 
-## 2. 架构决策
+## [decision] Forest_Architecture_Selection_Strategy
+
+**Rationale**: Chose a nested driver approach to maximize logic reuse from standard FSView drivers.
 
 ### 2.1 核心原则: Forest Pattern (单一视图，内部多树)
 
@@ -68,7 +72,9 @@ SensordPipe-G/H/I ─(fustord_pipe_id=C)─┘                    └─ Tree C 
 
 ---
 
-## 3. 配置设计
+## [definition] Forest_Configuration_Structure_Definition
+
+**Rationale**: Allow binding multiple sensors to a single forest view through pipe mapping.
 
 ### 3.1 fustord 配置
 
@@ -135,9 +141,14 @@ pipes:
 
 ---
 
-## 4. API 设计
+## [interface] Forest_Query_API_Interface_Guidelines
 
-`view-fs-forest` 通过 `fustor.view_api` entry point 注册以下端点（前缀由 view 名称决定，如 `/shared-storage/`）。
+**Rationale**: Provide cross-NFS comparison APIs for unified data observability.
+
+```python
+# Forest Query Payload
+GET /forest-view/stats?path=/data
+```
 
 **主要变化**: 原 `members` 列表中的 `view_id` 变为 `fustord_pipe_id`。
 
@@ -215,14 +226,18 @@ pipes:
 
 ---
 
-## 5. 实现要点
+## [note] Forest_Implementation_Notes
+
+**Rationale**: Detail the routing and dynamic subtree creation logic.
 
 ### 5.1 `view-fs-forest` Driver 行为
 
 - **Event Routing**: `process_event(event)` 读取 `event.metadata["fustord_pipe_id"]`，将事件路由给对应的内部 `FSViewDriver`。
 - **Dynamic Tree**: 遇到未知的 `fustord_pipe_id` 自动创建新子树。
 - **Query Aggregation**: 所有查询方法（stats, tree）遍历所有内部子树并聚合结果。
-### 5.2 Session Lifecycle & Leader Election
+## [algorithm] View_Arbitration_Mechanism_Algorithm
+
+**Rationale**: Coordinate multi-source snapshot completions and role assignments.
 
 Forest View 实际上是一个 View 容器，因此 Session 管理权必须下放：
 
@@ -310,7 +325,7 @@ async def get_subtree_stats(self, path: str) -> Dict[str, Any]:
 ```
 extensions/
 ├── view-fs-forest/                  # 新增 (替代 view-multi-fs)
-│   └── src/fustor_view_fs_forest/
+│   └── src/fustord_view_fs_forest/
 │       ├── __init__.py
 │       ├── driver.py                # ForestFSViewDriver
 │       └── api.py                   # /stats, /tree 聚合端点

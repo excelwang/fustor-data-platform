@@ -7,15 +7,15 @@ version: 1.0.0
 > Type: protocol | interface
 > Layer: Stability Layer (Command Handling)
 
-## 1. 概述
+## [overview] Command_Execution_Overview
 
 Sensord 作为独立自治的传感器，通过 **Heartbeat Response** 通道接收并执行标准化指令。本协议定义了 Sensord 支持的指令集、Payload 格式及预期的执行行为。
 
-> **原则**: Sensord **不关心** 指令是谁发出的（Fustord, Admin CLI, or other Consumers），只关心 **指令格式** 和 **执行逻辑**。
+> **原则**: Sensord **不关心** 指令是谁发出的（Aggregator, Admin CLI, or other Consumers），只关心 **指令格式** 和 **执行逻辑**。
 
 ---
 
-## 2. 指令传输机制 (Transport)
+## [mechanism] Command_Transport_Mechanism
 
 - **Channel**: Heartbeat Response
 - **Format**: JSON List (Batch Commands)
@@ -36,10 +36,22 @@ Sensord 作为独立自治的传感器，通过 **Heartbeat Response** 通道接
 
 ---
 
-## 3. 支持的指令集 (Supported Commands)
+## [interface] Supported_Command_Set
 
 ### 3.1 Data Complement (`scan`)
 
+**Rationale**: Provide a mechanism for consumers to explicitly trigger a scan of a specific directory to ensure data completeness on-demand.
+
+```python
+# Command format
+{
+    "command": "scan",
+    "params": {
+        "path": "/absolute/path/to/scan",
+        "recursive": true
+    }
+}
+```
 用于填补数据盲区或强制刷新特定路径的状态。
 
 - **Input Payload**:
@@ -96,7 +108,9 @@ Sensord 作为独立自治的传感器，通过 **Heartbeat Response** 通道接
 
 ---
 
-## 4. 异常处理 (Error Handling)
+## [error_handling] Protocol_Error_Handling
+
+**Rationale**: Ensure the "umbilical cord" remains intact even when malformed or failed commands are encountered.
 
 - **Unknown Command**: Log warning, ignore, and continue processing other commands.
 - **Execution Failure**: Log error (local), report via `system_error` stats in next heartbeat.

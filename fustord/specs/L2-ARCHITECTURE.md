@@ -68,12 +68,25 @@ Every node MUST adhere to the **Stability $\succ$ Domain $\succ$ Management** hi
 
 Fustord mirrors Sensord's architecture:
 
-| Concept | Sensord Side | Fustord Side |
-|---------|--------------|--------------|
+| Concept | Sensord Side (Source) | Fustord Side (View) |
+|---------|-----------------------|---------------------|
 | **Pipeline** | `SensordPipe` | `FustordPipe` |
 | **Flow** | Source → Sender | Receiver → View |
 | **Stability** | Active Push (Client) | Passive Ingestion (Server) |
-| **Protocol Carrier** | `SenderHandler` (sensord) | `Receiver` (fustord) ([spec]) |
+| **Protocol Carrier** | `SenderHandler` | `Receiver` |
+
+---
+
+## 3. Lexicon Symmetry (Internal Mapping)
+
+| Sensord Concept | Responsibility | Fustord Concept (Aggregator) |
+|-----------------|----------------|-----------------------------|
+| **Source** | Local data extraction | **View** |
+| **Sender** | Transport channel | **Receiver** |
+| **SensordPipe** | Source $\rightarrow$ Sender binding | **FustordPipe** |
+| **task_id** | Sensor process/task ID | **session_id** |
+| **SCP** | Control flow | **Control Channel** |
+| **SDP** | Data flow | **Data Channel** |
 
 ---
 
@@ -150,18 +163,15 @@ A dedicated service (`TaskOrchestrator`) isolates dispatch complexity:
 
 ---
 
+## 7. API Surface
 
+fustord 对外提供两类 API 接口：
 
----
+| 功能域 | 协议 | 方向 |
+|--------|------|------|
+| Session 管理 (创建/心跳/销毁) | SCP | Sensord ↔ Fustord |
+| 数据事件批量接收 | SDP | Sensord → Fustord |
+| View 查询 (目录树/统计) | HTTP | Client → Fustord |
 
-## 8. API Surface
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| PUT | `/api/v1/pipe/session` | Create/Renew Session (SCP) |
-| POST | `/api/v1/pipe/{sess_id}/events` | Ingest Event Batch (SDP) |
-| POST | `/api/v1/pipe/{sess_id}/heartbeat` | Keep-Alive & Get Commands (SCP) |
-| DELETE | `/api/v1/pipe/{sess_id}` | Close Session (SCP) |
-| GET | `/api/v1/views/{view_id}/stats` | Query View Statistics |
-| GET | `/api/v1/views/{view_id}/tree` | Browse View Directory Tree |
+> 具体 API Path、Payload 格式及哨兵巡检接口见 [PROTOCOL_CARRIER.md](./L3-RUNTIME/PROTOCOL_CARRIER.md) 和 [CONSISTENCY.md](./L3-RUNTIME/CONSISTENCY.md)。
 

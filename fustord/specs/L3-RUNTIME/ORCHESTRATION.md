@@ -9,7 +9,9 @@ version: 1.0.0
 
 ---
 
-## 1. 核心原语: Renting Model
+## [model] Resource_Renting_Model_Primitives
+
+**Rationale**: Abstract complex management tasks into simple protocol-level "rents" for unicast or broadcast delivery.
 
 在 **fustord** 中，所有的管理行为（升级、扫描、重启）统一抽象为对 **SCP (Sensord Control Protocol)** 寻址原语的租用。
 
@@ -25,7 +27,16 @@ version: 1.0.0
 
 ---
 
-## 2. 接口定义 (Interface Definition)
+## [interface] Task_Orchestrator_Interface_Definition
+
+**Rationale**: Provide a clean service boundary for the management layer to interact with the stability layer's session pool.
+
+```python
+# Task Orchestrator interface
+class ITaskOrchestrator:
+    async def view_broadcast(self, view_id: str, cmd: Dict): ...
+    async def sensord_targeted_dispatch(self, sensord_id: str, cmd: Dict): ...
+```
 
 建议封装通用的 `TaskOrchestrator` 服务，隔离分发细节：
 
@@ -51,7 +62,7 @@ class TaskOrchestrator:
 
 ---
 
-## 3. 搭载模型 (Piggyback)
+## [mechanism] Command_Piggyback_Dispatch_Model
 
 由于 **Sensord** 与 **fustord** 之间通常是基于 HTTP 的 Pull 模型（心跳由 Sensord 发起），指令分发采用 **搭载响应模式**：
 1. `SessionManager` 将待发指令存入目标 Session 的指令队列。

@@ -2,18 +2,18 @@
 
 > **Status**: Active
 > **Layer**: Implementation (L3)
-> **Parent**: L1-CONTRACTS.KON_BLOCKING_IO
+> **Parent**: L1-CONTRACTS.NON_BLOCKING_IO
 
 ---
 
-## 1. Asyncio Event Loop
+## [model] Asyncio_Event_Loop
 
 - **SINGLE_EVENT_LOOP**: Sensord core logic MUST run on a single `asyncio` event loop.
   - **Rationale**: Deterministic state management without complex locking.
   - **Constraint**: No blocking calls (file I/O, heavy computation) allowed in the main loop.
   - **Verification**: All `await` keywords map to non-blocking keys; no `time.sleep()`.
 
-## 2. Thread Bridge Pattern
+## [pattern] Thread_Bridge_Pattern
 
 To bridge synchronous Blocking I/O (e.g., `os.scandir`, `inotify` reads) with the Asyncio world, Sensord uses the **Thread Bridge Pattern**:
 

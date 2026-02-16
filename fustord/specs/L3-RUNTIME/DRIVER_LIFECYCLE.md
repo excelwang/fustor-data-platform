@@ -9,11 +9,11 @@ version: 1.0.0
 
 ---
 
-## 1. 核心模式: Multi-Tenant View
+## [pattern] Per_URI_Singleton_Driver_Pattern
 
 在 **fustord** 内部，对于每一个逻辑视图（由 `ViewID` 标识），承载着来自多个 **Sensord** 节点的数据流。
 
-### 1.1 视图隔离 (Isolation)
+### [isolation] Driver_Thread_Isolation_and_Bridge_Pattern
 - **规则**: 每个 View 拥有独立的 `ViewStateManager` 和 `SessionManager`。
 - **目的**: 确保不同业务域的数据互不干扰，且锁粒度控制在视图级别。
 
@@ -31,6 +31,6 @@ version: 1.0.0
 
 ---
 
-## 2. 交互 (Interactions)
+## [strategy] Driver_Hot_Reload_and_Recovery_Strategy
 
 View 通过 **SCP** 控制面响应向 **Sensord** 下发 `scan` 或 `audit` 指令。

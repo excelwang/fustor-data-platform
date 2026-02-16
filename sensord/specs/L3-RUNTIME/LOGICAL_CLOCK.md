@@ -7,7 +7,7 @@ version: 1.0.0
 > Type: algorithm | safety_spec
 > Layer: Domain Layer (Event Sequencing)
 
-## 1. 问题背景: 时钟偏斜 (Clock Skew)
+## [overview] Clock_Skew_Background
 
 在分布式系统中，**Sensord**（采集端）与 **Consumer**（存储端）的服务器时钟可能完全不同步。
 - 如果直接透传 `mtime`，一旦采集端时钟超前，存储端会因“来自未来的文件”导致索引崩溃。
@@ -15,7 +15,9 @@ version: 1.0.0
 
 ---
 
-## 2. 算法方案: Shadow Reference Frame
+## [algorithm] Shadow_Reference_Frame_Algorithm
+
+**Rationale**: Provide a stable logical time domain that masks physical clock skew between distributed nodes without requiring global clock sync.
 
 **Sensord** 采用 **影子参考系 (Logical Clock)** 算法，实现局部保护：
 
@@ -65,7 +67,7 @@ self.watch_manager.schedule(path, lru_timestamp)
 
 ---
 
-## 3. 分层时钟模型 (Hierarchical Clock Model)
+## [model] Hierarchical_Clock_Model_Definition
 
 | 轨道 | 定义 | 核心用途 |
 | :--- | :--- | :--- |
@@ -75,7 +77,7 @@ self.watch_manager.schedule(path, lru_timestamp)
 
 ---
 
-## 4. 异常处理策略 (Handling Anomalies)
+## [strategy] Handling_Clock_Anomalies_Strategy
 
 | 场景 | sensord 行为策略 |
 | :--- | :--- |
@@ -85,7 +87,7 @@ self.watch_manager.schedule(path, lru_timestamp)
 
 ---
 
-## 5. 对外协议影响 (Protocol Impact)
+## [impact] Protocol_Clock_Impact
 
 Sensord 发送的消息包必须严格解耦物理时间与逻辑时间：
 - `mtime`: 原始数据域时间，用于 **Consumer** 执行最终一致性对账。

@@ -1,15 +1,15 @@
-# L2: Protocol Carrier (SCP & SDP)
+# L3: [protocol] Protocol Carrier (SCP & SDP)
 
 > **Subject**: SCP | SDP | Carrier
 > **Layer**: Stability Layer (Shared Infrastructure)
 
 ---
 
-## 1. Overview
+## [overview] Protocol_Carrier_Overview
 
-The Protocol Carrier layer is the **True Symmetry Point** of the Fustor ecosystem. It defines the binary/textual wire formats and state machines used to maintain the "Umbilical Cord" and the "Data Stream".
+The Protocol Carrier layer is the **True Symmetry Point** of the Sensord ecosystem. It defines the binary/textual wire formats and state machines used to maintain the "Umbilical Cord" and the "Data Stream".
 
-## 2. SCP: Sensord Control Protocol
+## [protocol] SCP_Sensord_Control_Protocol
 
 SCP is responsible for **Presence**, **Survival**, and **Orchestration**.
 
@@ -23,7 +23,7 @@ SCP is responsible for **Presence**, **Survival**, and **Orchestration**.
     - **Upstream**: Health metrics, Current Role (L/F), Task Acknowledgments.
     - **Downstream**: Role assignment, Command dispatch (`scan`, `reload`, `upgrade`).
 
-## 3. SDP: Sensord Data Protocol
+## [protocol] SDP_Sensord_Data_Protocol
 
 SDP is responsible for **Event Delivery** and **Consistency Alignment**.
 
@@ -37,18 +37,14 @@ SDP is responsible for **Event Delivery** and **Consistency Alignment**.
 
 ---
 
-## 5. Architectural Duality: Pipe vs. Protocol Carrier
+## [model] Protocol_Carrier_Architectural_Duality
 
-### 5.1 The Asymmetry of Pipes
+### 5.1 The Role of Pipes
 **Pipes** are directional orchestrators. They define "how data moves through a node."
 - **SensordPipe**: Active orchestrator (Source $\rightarrow$ EventBus $\rightarrow$ Sender). Handles local drift, scanning, and pushing.
-- **FustordPipe**: Passive orchestrator (Receiver $\rightarrow$ Queue $\rightarrow$ ViewHandlers). Handles multi-source merging and backpressure.
 
-> [!IMPORTANT]
-> **Pipes MUST NOT be merged.** Their responsibilities are polar opposites (Client/Push vs. Server/Pull). Merging them would violate the Single Responsibility Principle.
-
-### 5.2 The Symmetry of Decoupled Carriers
-Symmetry is found in the **Protocol Carrier layer**, not the Pipe layer. The carrier handles the "mechanical delivery" of SCP/SDP frames.
+### 5.2 Decoupled Carriers
+The carrier handles the "mechanical delivery" of SCP/SDP frames.
 
 | Symmetric Point | Responsibility | Implementation Carrier |
 |-----------------|----------------|------------------------|

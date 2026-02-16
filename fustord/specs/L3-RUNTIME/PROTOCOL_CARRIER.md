@@ -5,11 +5,11 @@
 
 ---
 
-## 1. Overview
+## [overview] Protocol_Carrier_Layer_Overview
 
-The Protocol Carrier layer is the **True Symmetry Point** of the Fustor ecosystem. It defines the binary/textual wire formats and state machines used to maintain the "Umbilical Cord" and the "Data Stream".
+The Protocol Carrier layer is the **True Symmetry Point** of the Sensord/Fustord ecosystem. It defines the binary/textual wire formats and state machines used to maintain the "Umbilical Cord" and the "Data Stream".
 
-## 2. SCP: Sensord Control Protocol
+## [protocol] SCP_Sensord_Control_Protocol_Definition
 
 SCP is responsible for **Presence**, **Survival**, and **Orchestration**.
 
@@ -23,7 +23,7 @@ SCP is responsible for **Presence**, **Survival**, and **Orchestration**.
     - **Upstream**: Health metrics, Current Role (L/F), Task Acknowledgments.
     - **Downstream**: Role assignment, Command dispatch (`scan`, `reload`, `upgrade`).
 
-## 3. SDP: Sensord Data Protocol
+## [protocol] SDP_Sensord_Data_Protocol_Definition
 
 SDP is responsible for **Event Delivery** and **Consistency Alignment**.
 
@@ -37,9 +37,9 @@ SDP is responsible for **Event Delivery** and **Consistency Alignment**.
 
 ---
 
-## 4. Architectural Duality: Pipe vs. Protocol Carrier
+## [model] Architectural_Duality_Pipes_vs_Carriers
 
-### 4.1 The Asymmetry of Pipes
+### 1.1 The Asymmetry of Pipes
 **Pipes** are directional orchestrators. They define "how data moves through a node."
 - **SensordPipe**: Active orchestrator (Source $\rightarrow$ EventBus $\rightarrow$ Sender). Handles local drift, scanning, and pushing.
 - **FustordPipe**: Passive orchestrator (Receiver $\rightarrow$ Queue $\rightarrow$ ViewHandlers). Handles multi-source merging and backpressure.

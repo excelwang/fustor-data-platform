@@ -19,7 +19,7 @@
 - **STORAGE**: fustord does NOT store user file contents; it persists and serves metadata views.
 - **AUTH_PROXY**: fustord does NOT act as a general authentication proxy; it uses API key-based pipe authorization for backend service-to-service communication.
 
-## VISION.SURVIVAL
+## VISION.STABILITY
 
 > "The View must survive the Source."
 
@@ -27,46 +27,22 @@ The fundamental architectural goal of **fustord** is the **absolute decoupling o
 
 - **FUSTORD_SURVIVAL**: Once the fustord process starts, it **MUST NOT** terminate due to ingestion errors, invalid data frames, or malformed protocol packets. It is the indestructible anchor of the system.
 - **VIEW_ISOLATION**: Failure in one View (e.g., a memory leak in a specific plugin) must not affect the stability of the Management API or other unrelated Views.
-- **UMBILICAL_CONTROL**: fustord maintains the "Umbilical Cord" (SCP Tunnel) to every Sensord. As long as this control plane is intact, fustord can:
-  1. **Remediate**: Detect "brain-dead" sensors and issue remote restart commands.
-  2. **Upgrade**: Push software updates to the fleet without manual intervention.
-  3. **Reconfigure**: Hot-reload sensor configurations to adapt to changing storage environments.
+- **UMBILICAL_CONTROL**: fustord maintains the "Umbilical Cord" (SCP Tunnel) to every Sensord.
 
-### Architecture of Separation
+## VISION.PROTOCOL
 
-```mermaid
-graph TD
-    subgraph "fustord Stability Layer"
-        SessionMgr[Session Manager] <-->|SCP Heartbeat| Sensord[Sensord Node]
-        Orchestrator[Task Orchestrator] -.->|Dispatch| SessionMgr
-    end
+**fustord** 官方定义了控制链路 (SCP) 与数据链路 (SDP) 的交互契约。
 
-    subgraph "fustord Domain Layer"
-        Ingestor[SDP Ingestor] --> ViewEngine[View Engine]
-        ViewEngine --> MemoryTree[Consistency Trees]
-    end
+- **Idempotency**: 无论底层网络重传多少次，数据的变更在视图中必须具备幂等性。
+- **Contract Enforcement**: 强制执行 Schema 校验，确保非法格式无法进入领域层。
 
-    subgraph "fustord Management Layer"
-        API[Management API] -- Queries --> ViewEngine
-        CLI[Admin CLI] -- Tasks --> Orchestrator
-    end
+## VISION.DOMAIN
 
-    Sensord -.->|SDP Data Flow| Ingestor
-```
+**fustord** 领域层负责核心的一致性裁决逻辑。通过对 Watermark、Tombstone 及 Suspect 状态的数学模拟，重建分布式存储的真实视图。
 
-- **Stability Layer**: Responsible for presence tracking, protocol handshakes, and command routing. It ensures fustord is "reachable" by the fleet.
-- **Domain Layer**: Responsible for the complex logic of merging histories, calculating watermarks, and serving query results.
+## VISION.LIFECYCLE
 
-## VISION.EXPECTED_EFFECTS
-
-### Presence as Service
-- **Fallback Scan**: If a queried directory is not in the memory tree, fustord automatically triggers a broadcast `scan` command via SCP. The API waits for results, ensuring "What you see is the Truth."
-
-### Centralized Orchestration
-- **Single Point of Control**: 运维人员通过 fustord API 下发指令，由 fustord 自动通过 SCP 隧道分发至目标 Sensord 进程。
-- **原子升级**: 升级指令由 fustord 精准下发 (Unicast)，确保集群平滑滚动更新。
-
-
+管理 Sensord 集群的完整生命周期，包括灰度升级、原子配置分发及僵尸节点检测。
 
 ---
 
@@ -75,8 +51,21 @@ graph TD
 **fustord** 采用 **"中心化协调，去中心化执行"** 的自治模型：
 
 - **COORDINATOR_MINDSET**: fustord 不是 Sensord 的"主人"，而是"仲裁者"。它尊重每一个 Sensord 上报的本地事实，仅在多个事实冲突时根据一致性代数进行裁决。
-- **ON_DEMAND_DRIVE**: fustord 的数据抓取是"按需驱动"的。如果缓存中没有数据，Domain Layer 会自动通过 Stability Layer 触发广播扫描，这种行为是系统的本能，而非外部指令。
-- **PEER_NEUTRABILITY**: fustord 对接入的 Sensord 保持中立。它只认 `session_id` 和协议契约，不依赖于 Sensord 的具体部署环境。
+- **ON_DEMAND_DRIVE**: fustord 的数据抓取是"按需驱动"的。如果缓存中没有数据，Domain Layer 会自动通过 Stability Layer 触发广播扫描。
+- **PEER_NEUTRABILITY**: fustord 对接入的 Sensord 保持中立。
+
+---
+
+## VISION.CONCURRENCY
+
+**fustord** 核心引擎采用单线程事件循环确保状态机变更的确定性，同时支持并发查询。
+
+---
+
+## VISION.LAYER_INDEPENDENCE
+
+遵循严格的分层隔离原则，确保稳定性层与业务域逻辑解耦。
+
 
 ## VISION.SUCCESS_CRITERIA
 

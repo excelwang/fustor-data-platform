@@ -5,7 +5,7 @@
 
 ---
 
-## 1. Core Packages
+## [definition] Fustord_Core_Package_Organization
 
 - `fustord`: The main daemon entry point, CLI, and lifecycle management.
 - `fustord-core`: Shared libraries and interfaces.
@@ -14,11 +14,11 @@
     - `view/`: Abstract base classes for View Drivers.
     - `stability/`: (Shared) BasePipeManager and common Mixins from `sensord-core`.
 
-## 2. Extension Packages
+## [definition] Fustord_Driver_Extension_Packages
 
-- `fustor-receiver-*`: Transport protocol implementations.
-    - `fustor-receiver-http`: HTTP/REST receiver (FastAPI/Aiohttp).
-    - `fustor-receiver-grpc`: gRPC receiver (Future).
-- `fustor-view-*`: Domain specific view drivers.
-    - `fustor-view-fs`: File System Consistency View (Tombstones, Suspects).
-    - `fustor-view-fs-forest`: Multi-tree Aggregation View.
+- `fustord-receiver-*`: Transport protocol implementations.
+    - `fustord-receiver-http`: HTTP/REST receiver.
+    - `fustord-receiver-grpc`: gRPC receiver (Future).
+- `fustord-view-*`: Domain specific view drivers.
+    - `fustord-view-fs`: File System Consistency View (Tombstones, Suspects).
+    - `fustord-view-fs-forest`: Multi-tree Aggregation View.

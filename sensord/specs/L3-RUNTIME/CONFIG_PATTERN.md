@@ -3,7 +3,7 @@
 > Type: decision | pattern
 > Layer: Domain Layer
 
-## 1. Global Singleton for Mutations
+## [pattern] Global_Singleton_for_Mutations
 
 为了简化服务层（Service Layer）的方法签名并确保配置变更的原子性，**sensord** 采用 **Global Singleton Pattern** 进行配置的增删改操作。
 
@@ -42,5 +42,5 @@ with patch("sensord.config.unified.sensord_config") as mock_conf:
     service.do_something()
 ```
 
-## 2. Immutable Configuration Objects
+## [model] Immutable_Configuration_Objects
 配置对象本身（`SourceConfig`, `PipeConfig`）一旦被加载，应视为**不可变对象**（Immutable）。任何修改都应通过 `sensord_config.update_*` 接口替换整个对象或更新其字段，而不是直接修改对象的属性。

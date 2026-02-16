@@ -6,7 +6,7 @@
 
 ---
 
-## 1. Core Packages
+## [definition] Core_Sensord_Packages
 
 **Component**: sensord engine package organization.
 
@@ -28,7 +28,7 @@ sensord-core/                         # 核心抽象层 (SDK)
 126: │   └── config/                      # Pydantic 配置模型
 ```
 
-## 2. Driver Packages
+## [definition] Source_and_Sender_Drivers
 
 **Component**: Data extraction implementation packages.
 

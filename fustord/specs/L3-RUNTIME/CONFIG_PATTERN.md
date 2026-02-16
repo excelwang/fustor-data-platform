@@ -1,15 +1,15 @@
-# L3: [pattern] [Fustord] Configuration Structure
+# L3: [fustord] Configuration Structure
 
 > Type: pattern
 > Layer: Implementation Layer (Configuration)
 
 ---
 
-## 1. Loader Strategy
+## [strategy] Config_Loader_Strategy
 
 Settings are loaded from `$FUSTORD_HOME`.
 
-## 2. YAML Structure
+## [definition] YAML_Configuration_Structure_Definition
 
 ```yaml
 # receivers.yaml - 定义监听端口
