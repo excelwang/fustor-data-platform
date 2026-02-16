@@ -1,7 +1,7 @@
 """
 Test A1: First sensord becomes Leader.
 
-验证第一个连接到 Fusion 的 sensord 被选举为 Leader。
+验证第一个连接到 fustord 的 sensord 被选举为 Leader。
 参考文档: CONSISTENCY_DESIGN.md - Section 3 (Leader/Follower 选举)
 """
 import pytest
@@ -17,20 +17,20 @@ class TestLeaderElectionFirst:
     def test_first_sensord_becomes_leader(
         self,
         docker_env,
-        fusion_client,
+        fustord_client,
         setup_sensords,
         clean_shared_dir
     ):
         """
-        场景: 第一个 sensord A 连接到 Fusion
+        场景: 第一个 sensord A 连接到 fustord
         预期: sensord A 被选举为 Leader
-        验证方法: 查询 Fusion Sessions API，确认 sensord A 的 role 为 "leader"
+        验证方法: 查询 fustord Sessions API，确认 sensord A 的 role 为 "leader"
         """
         # Wait for sensords to establish sessions and View to be READY
-        assert fusion_client.wait_for_view_ready(timeout=VIEW_READY_TIMEOUT), "View did not become ready"
+        assert fustord_client.wait_for_view_ready(timeout=VIEW_READY_TIMEOUT), "View did not become ready"
         
-        # Get all sessions from Fusion
-        sessions = fusion_client.get_sessions()
+        # Get all sessions from fustord
+        sessions = fustord_client.get_sessions()
         
         # Find leader session
         leaders = [s for s in sessions if s.get("role") == "leader"]

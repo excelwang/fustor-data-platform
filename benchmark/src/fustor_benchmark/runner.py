@@ -10,18 +10,18 @@ from .generator import DataGenerator
 from .services import ServiceManager
 from .tasks import (
     run_find_recursive_metadata_task,
-    run_single_fusion_req,
+    run_single_fustord_req,
     run_find_sampling_phase,
     run_find_validation_phase
 )
 from .reporter import calculate_stats, generate_html_report, generate_fs_scan_report
 
 class BenchmarkRunner:
-    def __init__(self, run_dir, target_dir, fusion_api_url=None, api_key=None, base_port=18100, view_id="bench-view"):
+    def __init__(self, run_dir, target_dir, fustord_api_url=None, api_key=None, base_port=18100, view_id="bench-view"):
         self.run_dir = os.path.abspath(run_dir)
         self.env_dir = os.path.join(self.run_dir, ".fustor")
         self.data_dir = os.path.abspath(target_dir)
-        self.external_api_url = fusion_api_url.rstrip('/') if fusion_api_url else None
+        self.external_api_url = fustord_api_url.rstrip('/') if fustord_api_url else None
         self.external_api_key = api_key
         self.view_id = view_id
         self.services = ServiceManager(self.run_dir, base_port=base_port) 
@@ -29,14 +29,14 @@ class BenchmarkRunner:
         self.generator = DataGenerator(self.data_dir)
 
     def _discover_leaf_targets_via_api(self, api_key: str, depth: int):
-        """Finds directories at the specified depth using Fusion API."""
+        """Finds directories at the specified depth using fustord API."""
         prefix_depth = len(self.data_dir.strip('/').split('/')) if self.data_dir != '/' else 0
         max_fetch_depth = depth + prefix_depth
-        fusion_url = self.external_api_url or f"http://localhost:{self.services.fusion_port}"
+        fustord_url = self.external_api_url or f"http://localhost:{self.services.fustord_port}"
         headers = {"X-API-Key": api_key}
         
         try:
-            res = requests.get(f"{fusion_url}/api/v1/views/{self.view_id}/tree", params={"path": "/", "max_depth": max_fetch_depth, "only_path": "true"}, headers=headers, timeout=30)
+            res = requests.get(f"{fustord_url}/api/v1/views/{self.view_id}/tree", params={"path": "/", "max_depth": max_fetch_depth, "only_path": "true"}, headers=headers, timeout=30)
             if res.status_code != 200: return ["/"]
             tree_data = res.json()
             targets = []
@@ -110,62 +110,62 @@ class BenchmarkRunner:
         # QPS is calculated as Count / Total Wall Time of the whole process
         return calculate_stats(total_latencies, total_wall_time, requests_count)
 
-    def run_concurrent_fusion(self, api_key, targets, concurrency=20, requests_count=100):
-        click.echo(f"Running Concurrent Fusion API: {concurrency} workers, {requests_count} reqs...")
-        fusion_url = self.external_api_url or f"http://localhost:{self.services.fusion_port}"
+    def run_concurrent_fustord(self, api_key, targets, concurrency=20, requests_count=100):
+        click.echo(f"Running Concurrent fustord API: {concurrency} workers, {requests_count} reqs...")
+        fustord_url = self.external_api_url or f"http://localhost:{self.services.fustord_port}"
         headers = {"X-API-Key": api_key, "X-View-ID": self.view_id}
         shuffled_targets = list(targets); random.shuffle(shuffled_targets)
         tasks = [shuffled_targets[i % len(shuffled_targets)] for i in range(requests_count)]
         latencies = []
         start_total = time.time()
         with ThreadPoolExecutor(max_workers=concurrency) as executor:
-            futures = [executor.submit(run_single_fusion_req, fusion_url, headers, t, False, False) for t in tasks]
+            futures = [executor.submit(run_single_fustord_req, fustord_url, headers, t, False, False) for t in tasks]
             for f in as_completed(futures):
                 res = f.result()
                 if res is not None: latencies.append(res)
         return calculate_stats(latencies, time.time() - start_total, requests_count)
 
-    def run_concurrent_fusion_dry_run(self, api_key, targets, concurrency=20, requests_count=100):
-        click.echo(f"Running Concurrent Fusion Dry-run: {concurrency} workers, {requests_count} reqs...")
-        fusion_url = self.external_api_url or f"http://localhost:{self.services.fusion_port}"
+    def run_concurrent_fustord_dry_run(self, api_key, targets, concurrency=20, requests_count=100):
+        click.echo(f"Running Concurrent fustord Dry-run: {concurrency} workers, {requests_count} reqs...")
+        fustord_url = self.external_api_url or f"http://localhost:{self.services.fustord_port}"
         headers = {"X-API-Key": api_key, "X-View-ID": self.view_id}
         shuffled_targets = list(targets); random.shuffle(shuffled_targets)
         tasks = [shuffled_targets[i % len(shuffled_targets)] for i in range(requests_count)]
         latencies = []
         start_total = time.time()
         with ThreadPoolExecutor(max_workers=concurrency) as executor:
-            futures = [executor.submit(run_single_fusion_req, fusion_url, headers, t, True, False) for t in tasks]
+            futures = [executor.submit(run_single_fustord_req, fustord_url, headers, t, True, False) for t in tasks]
             for f in as_completed(futures):
                 res = f.result()
                 if res is not None: latencies.append(res)
         return calculate_stats(latencies, time.time() - start_total, requests_count)
 
-    def run_concurrent_fusion_dry_net(self, concurrency=20, requests_count=100):
-        click.echo(f"Running Concurrent Fusion Dry-net: {concurrency} workers, {requests_count} reqs...")
-        fusion_url = self.external_api_url or f"http://localhost:{self.services.fusion_port}"
+    def run_concurrent_fustord_dry_net(self, concurrency=20, requests_count=100):
+        click.echo(f"Running Concurrent fustord Dry-net: {concurrency} workers, {requests_count} reqs...")
+        fustord_url = self.external_api_url or f"http://localhost:{self.services.fustord_port}"
         latencies = []
         start_total = time.time()
         with ThreadPoolExecutor(max_workers=concurrency) as executor:
-            futures = [executor.submit(run_single_fusion_req, fusion_url, {}, None, False, True) for _ in range(requests_count)]
+            futures = [executor.submit(run_single_fustord_req, fustord_url, {}, None, False, True) for _ in range(requests_count)]
             for f in as_completed(futures):
                 res = f.result()
                 if res is not None: latencies.append(res)
         return calculate_stats(latencies, time.time() - start_total, requests_count)
 
     def wait_for_sync(self, api_key: str):
-        click.echo("Waiting for Fusion readiness...")
-        fusion_url = self.external_api_url or f"http://localhost:{self.services.fusion_port}"
+        click.echo("Waiting for fustord readiness...")
+        fustord_url = self.external_api_url or f"http://localhost:{self.services.fustord_port}"
         headers = {"X-API-Key": api_key}
         start_wait = time.time()
         while True:
             elapsed = time.time() - start_wait
             try:
-                res = requests.get(f"{fusion_url}/api/v1/views/{self.view_id}/tree", params={"path": "/", "max_depth": 1, "only_path": "true"}, headers=headers, timeout=5)
+                res = requests.get(f"{fustord_url}/api/v1/views/{self.view_id}/tree", params={"path": "/", "max_depth": 1, "only_path": "true"}, headers=headers, timeout=5)
                 if res.status_code == 200:
-                    click.echo(f"  [Fusion] READY after {elapsed:.1f}s.")
+                    click.echo(f"  [fustord] READY after {elapsed:.1f}s.")
                     break
                 elif res.status_code == 503:
-                    if int(elapsed) % 5 == 0: click.echo(f"  [Fusion] Still syncing... ({int(elapsed)}s)")
+                    if int(elapsed) % 5 == 0: click.echo(f"  [fustord] Still syncing... ({int(elapsed)}s)")
                 else: raise RuntimeError(f"Unexpected response: {res.status_code}")
             except Exception: pass
             time.sleep(5)
@@ -180,7 +180,7 @@ class BenchmarkRunner:
             else:
                 self.services.setup_env()
                 api_key = self.services.configure_system()
-                self.services.start_fusion()
+                self.services.start_fustord()
                 self.services.start_sensord(api_key)
                 time.sleep(2)
             self.wait_for_sync(api_key)
@@ -188,17 +188,17 @@ class BenchmarkRunner:
             
             os_stats = self.run_concurrent_baseline(targets, concurrency, reqs)
             os_integrity_stats = self.run_concurrent_find_integrity(targets, concurrency, reqs, interval=integrity_interval)
-            fusion_dry_net_stats = self.run_concurrent_fusion_dry_net(concurrency, reqs)
-            fusion_dry_stats = self.run_concurrent_fusion_dry_run(api_key, targets, concurrency, reqs)
-            fusion_stats = self.run_concurrent_fusion(api_key, targets, concurrency, reqs)
+            fustord_dry_net_stats = self.run_concurrent_fustord_dry_net(concurrency, reqs)
+            fustord_dry_stats = self.run_concurrent_fustord_dry_run(api_key, targets, concurrency, reqs)
+            fustord_stats = self.run_concurrent_fustord(api_key, targets, concurrency, reqs)
             
-            fusion_url = self.external_api_url or f"http://localhost:{self.services.fusion_port}"
-            res_stats = requests.get(f"{fusion_url}/api/v1/views/{self.view_id}/stats", headers={"X-API-Key": api_key})
+            fustord_url = self.external_api_url or f"http://localhost:{self.services.fustord_port}"
+            res_stats = requests.get(f"{fustord_url}/api/v1/views/{self.view_id}/stats", headers={"X-API-Key": api_key})
             stats_data = res_stats.json() if res_stats.status_code == 200 else {}
             final_results = {
-                "metadata": {"total_files_in_scope": stats_data.get("total_files", 0), "total_directories_in_scope": stats_data.get("total_directories", 0), "source_path": self.data_dir, "api_endpoint": fusion_url, "integrity_interval": integrity_interval},
+                "metadata": {"total_files_in_scope": stats_data.get("total_files", 0), "total_directories_in_scope": stats_data.get("total_directories", 0), "source_path": self.data_dir, "api_endpoint": fustord_url, "integrity_interval": integrity_interval},
                 "depth": target_depth, "requests": reqs, "concurrency": concurrency, "target_directory_count": len(targets),
-                "os": os_stats, "os_integrity": os_integrity_stats, "fusion_dry_net": fusion_dry_net_stats, "fusion_dry": fusion_dry_stats, "fusion": fusion_stats, "timestamp": time.strftime("%Y-%m-%d %H:%M:%S")
+                "os": os_stats, "os_integrity": os_integrity_stats, "fustord_dry_net": fustord_dry_net_stats, "fustord_dry": fustord_dry_stats, "fustord": fustord_stats, "timestamp": time.strftime("%Y-%m-%d %H:%M:%S")
             }
             os.makedirs(os.path.join(self.run_dir, "results"), exist_ok=True)
             with open(os.path.join(self.run_dir, "results/query-find.json"), "w") as f: json.dump(final_results, f, indent=2)
@@ -208,14 +208,14 @@ class BenchmarkRunner:
             click.echo(f"RECURSIVE METADATA RETRIEVAL PERFORMANCE (DEPTH {target_depth}, INTERVAL {integrity_interval}s)")
             click.echo(f"Data Scale: {stats_data.get('total_files', 0):,} files | Targets: {len(targets)}")
             click.echo("="*135)
-            click.echo(f"{ 'Metric':<25} | {'OS Baseline':<18} | {'OS Integrity':<18} | {'Fusion Dry-Net':<18} | {'Fusion Dry-Run':<18} | {'Fusion API':<18}")
+            click.echo(f"{ 'Metric':<25} | {'OS Baseline':<18} | {'OS Integrity':<18} | {'fustord Dry-Net':<18} | {'fustord Dry-Run':<18} | {'fustord API':<18}")
             click.echo("-" * 135)
             def fmt(s): return f"{s['avg']:10.2f} ms"
             def fmt_q(s): return f"{s['qps']:10.1f}"
-            click.echo(f"{ 'Avg Latency':<25} | {fmt(os_stats)}      | {fmt(os_integrity_stats)}      | {fmt(fusion_dry_net_stats)}      | {fmt(fusion_dry_stats)}      | {fmt(fusion_stats)}")
-            click.echo(f"{ 'P50 Latency':<25} | {os_stats['p50']:10.2f} ms      | {os_integrity_stats['p50']:10.2f} ms      | {fusion_dry_net_stats['p50']:10.2f} ms      | {fusion_dry_stats['p50']:10.2f} ms      | {fusion_stats['p50']:10.2f} ms")
-            click.echo(f"{ 'P99 Latency':<25} | {os_stats['p99']:10.2f} ms      | {os_integrity_stats['p99']:10.2f} ms      | {fusion_dry_net_stats['p99']:10.2f} ms      | {fusion_dry_stats['p99']:10.2f} ms      | {fusion_stats['p99']:10.2f} ms")
-            click.echo(f"{ 'Throughput (QPS)':<25} | {fmt_q(os_stats)}         | {fmt_q(os_integrity_stats)}         | {fmt_q(fusion_dry_net_stats)}         | {fmt_q(fusion_dry_stats)}         | {fmt_q(fusion_stats)}")
+            click.echo(f"{ 'Avg Latency':<25} | {fmt(os_stats)}      | {fmt(os_integrity_stats)}      | {fmt(fustord_dry_net_stats)}      | {fmt(fustord_dry_stats)}      | {fmt(fustord_stats)}")
+            click.echo(f"{ 'P50 Latency':<25} | {os_stats['p50']:10.2f} ms      | {os_integrity_stats['p50']:10.2f} ms      | {fustord_dry_net_stats['p50']:10.2f} ms      | {fustord_dry_stats['p50']:10.2f} ms      | {fustord_stats['p50']:10.2f} ms")
+            click.echo(f"{ 'P99 Latency':<25} | {os_stats['p99']:10.2f} ms      | {os_integrity_stats['p99']:10.2f} ms      | {fustord_dry_net_stats['p99']:10.2f} ms      | {fustord_dry_stats['p99']:10.2f} ms      | {fustord_stats['p99']:10.2f} ms")
+            click.echo(f"{ 'Throughput (QPS)':<25} | {fmt_q(os_stats)}         | {fmt_q(os_integrity_stats)}         | {fmt_q(fustord_dry_net_stats)}         | {fmt_q(fustord_dry_stats)}         | {fmt_q(fustord_stats)}")
             click.echo("-" * 135)
             click.echo(click.style(f"\nJSON results saved to: {os.path.join(self.run_dir, 'results/query-find.json')}", fg="cyan"))
             click.echo(click.style(f"Visual HTML report saved to: {os.path.join(self.run_dir, 'results/query-find.html')}", fg="green", bold=True))
@@ -238,7 +238,7 @@ class BenchmarkRunner:
             
             self.services.setup_env()
             api_key = self.services.configure_system()
-            self.services.start_fusion()
+            self.services.start_fustord()
             
             # Start sensord once and keep it running
             start_time = time.time()
@@ -258,14 +258,14 @@ class BenchmarkRunner:
                 click.echo("  [sensord] Pre-scan log not found (Timeout).")
                 prescan_duration = None
 
-            # 2. Measure Total Ingestion Time (Fusion Ready)
+            # 2. Measure Total Ingestion Time (fustord Ready)
             self.wait_for_sync(api_key)
             ingestion_end_time = time.time()
             total_ingestion_duration = ingestion_end_time - start_time
             
             phase_duration = total_ingestion_duration - prescan_duration if prescan_duration else None
             
-            click.echo(f"  [Fusion] Setup & Ingestion completed in {total_ingestion_duration:.2f}s.")
+            click.echo(f"  [fustord] Setup & Ingestion completed in {total_ingestion_duration:.2f}s.")
             if phase_duration:
                 click.echo(f"  [Calculated] Snapshot Phase Duration (Net): {phase_duration:.2f}s")
                 
@@ -348,8 +348,8 @@ class BenchmarkRunner:
                  json.dump(results, f, indent=2)
             
             # Get total entries for the report
-            fusion_url = self.external_api_url or f"http://localhost:{self.services.fusion_port}"
-            res_stats = requests.get(f"{fusion_url}/api/v1/views/{self.view_id}/stats", headers={"X-API-Key": api_key})
+            fustord_url = self.external_api_url or f"http://localhost:{self.services.fustord_port}"
+            res_stats = requests.get(f"{fustord_url}/api/v1/views/{self.view_id}/stats", headers={"X-API-Key": api_key})
             stats_data = res_stats.json() if res_stats.status_code == 200 else {}
             total_entries = stats_data.get("total_files", 0) + stats_data.get("total_directories", 0)
 

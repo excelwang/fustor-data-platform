@@ -1,8 +1,8 @@
 """
-Fustor HTTP Sender - Transport layer for sensord to Fusion communication.
+Fustor HTTP Sender - Transport layer for sensord to fustord communication.
 
 This package implements the HTTP transport protocol for sending events
-from Fustor sensord to Fustor Fusion.
+from Fustor sensord to Fustor fustord.
 """
 try:
     from ._version import version as __version__
@@ -14,7 +14,7 @@ from typing import Any, Dict, List, Optional
 
 import httpx
 from fustor_core.transport import Sender
-from fustor_core.exceptions import FusionConnectionError
+from fustor_core.exceptions import fustordConnectionError
 from fustor_core.event import EventBase
 from fustor_core.exceptions import SessionObsoletedError
 
@@ -23,7 +23,7 @@ class HTTPSender(Sender):
     """
     HTTP-based Sender implementation for Fustor.
     
-    Uses the Fusion SDK client to communicate with Fusion's REST API.
+    Uses the fustord SDK client to communicate with fustord's REST API.
     """
     
     def __init__(
@@ -37,7 +37,7 @@ class HTTPSender(Sender):
         self.logger = logging.getLogger(f"fustor.sender.http.{sender_id}")
         
         # Lazy import to avoid circular dependency
-        from fustor_fusion_sdk.client import FusionClient
+        from fustord_sdk.client import fustordClient
         
         api_key = credential.get("key") or credential.get("api_key")
         
@@ -45,7 +45,7 @@ class HTTPSender(Sender):
         timeout = self.config.get("timeout", 30.0)
         api_version = self.config.get("api_version", "pipe")
         
-        self.client = FusionClient(
+        self.client = fustordClient(
             base_url=endpoint, 
             api_key=api_key,
             timeout=timeout,
@@ -64,7 +64,7 @@ class HTTPSender(Sender):
         **kwargs
     ) -> Dict[str, Any]:
         """
-        Create a new session with Fusion.
+        Create a new session with fustord.
         
         Args:
             task_id: Identifier for this sync task
@@ -95,17 +95,17 @@ class HTTPSender(Sender):
             else:
                 # Should not happen if client raises exception on error, but handling just in case
                 self.logger.error("Failed to create session: Empty response.")
-                raise RuntimeError("Failed to create session with Fusion service: Empty response.")
+                raise RuntimeError("Failed to create session with fustord service: Empty response.")
 
         except httpx.ConnectError as e:
             self.logger.warning(f"Failed to create session (Connection Error): {e}")
-            raise FusionConnectionError(f"Failed to create session with Fusion service: {e}") from e
+            raise fustordConnectionError(f"Failed to create session with fustord service: {e}") from e
         except httpx.HTTPStatusError as e:
             self.logger.error(f"Failed to create session: HTTP {e.response.status_code} - {e.response.text}")
-            raise RuntimeError(f"Failed to create session with Fusion service: HTTP {e.response.status_code} - {e.response.text}") from e
+            raise RuntimeError(f"Failed to create session with fustord service: HTTP {e.response.status_code} - {e.response.text}") from e
         except Exception as e:
             self.logger.error(f"Failed to create session: {e!r}")
-            raise RuntimeError(f"Failed to create session with Fusion service: {e}") from e
+            raise RuntimeError(f"Failed to create session with fustord service: {e}") from e
     
     async def _send_events_impl(
         self, 
@@ -115,7 +115,7 @@ class HTTPSender(Sender):
         metadata: Optional[Dict[str, Any]] = None
     ) -> Dict[str, Any]:
         """
-        Implementation of sending events to Fusion.
+        Implementation of sending events to fustord.
         Called by the base class template method.
         """
         if not self.session_id:

@@ -38,7 +38,7 @@ class PipeState(IntFlag):
 
 class FustorPipe(ABC):
     """
-    Abstract base class for all Fustor Pipes (sensord or Fusion).
+    Abstract base class for all Fustor Pipes (sensord or fustord).
     
     A FustorPipe orchestrates:
     - Session lifecycle management
@@ -47,7 +47,7 @@ class FustorPipe(ABC):
     - Error recovery
     
     sensord FustorPipe: Source -> Sender
-    Fusion FustorPipe: Receiver -> View(s)
+    fustord FustorPipe: Receiver -> View(s)
     """
     
     def __init__(

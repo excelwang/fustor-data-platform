@@ -18,12 +18,12 @@ version: 1.0.0
 ```mermaid
 graph TD
     subgraph "Management Layer (运维层/可选)"
-        L3_Fusion["fustor-view-mgmt (Orchestration/UI)"]
+        L3_fustord["fustor-view-mgmt (Orchestration/UI)"]
         L3_sensord["fustor-source-mgmt (Command Support)"]
     end
 
     subgraph "Domain Layer (数据层/核心)"
-        L2_Fusion["View Drivers (Arbitration/Merge)"]
+        L2_fustord["View Drivers (Arbitration/Merge)"]
         L2_sensord["Source Drivers (FS/SQL/etc.)"]
     end
 
@@ -34,11 +34,11 @@ graph TD
     end
 
     %% Dependencies
-    L3_Fusion -.->|Injects Admin Cmd| L1_Session
+    L3_fustord -.->|Injects Admin Cmd| L1_Session
     L1_sensordPipe <==>|Stability Heartbeat Tunnel| L1_Session
     L1_sensordPipe ---|Spawns/Monitors| L2_sensord
     L2_sensord ---|Produces Events| L1_sensordPipe
-    L2_Fusion ---|Queries/Updates| L1_Session
+    L2_fustord ---|Queries/Updates| L1_Session
 ```
 
 
@@ -48,16 +48,16 @@ graph TD
 
 ### 术语对称表
 
-| sensord 概念 | 职责 | Fusion 对应 | 职责 |
+| sensord 概念 | 职责 | fustord 对应 | 职责 |
 |-----------|------|------------|------|
 | **Source** | 数据读取实现 | **View** | 数据处理实现 |
 | **Sender** | 传输通道（协议+凭证） | **Receiver** | 传输通道（协议+凭证） |
-| **sensordPipe** | 运行时绑定 (Source→Sender) | **FusionPipe** | 运行时绑定 (Receiver→View) |
+| **sensordPipe** | 运行时绑定 (Source→Sender) | **fustordPipe** | 运行时绑定 (Receiver→View) |
 
 ### 设计原则
 
-1. **完全松耦合**: sensord 和 Fusion 完全独立，第三方可单独使用任一端
-2. **对称架构**: sensord 与 Fusion 的概念一一对应
+1. **完全松耦合**: sensord 和 fustord 完全独立，第三方可单独使用任一端
+2. **对称架构**: sensord 与 fustord 的概念一一对应
 3. **分层清晰**: 参考 Netty 架构，职责分离
 4. **可扩展**: 支持多协议、多 Schema
 
@@ -99,7 +99,7 @@ extensions/
 │       └── exceptions.py
 │
 ├── fustor-sensor-sdk/                # sensord 开发 SDK
-├── fustor-fusion-sdk/               # Fusion 开发 SDK
+├── fustord-sdk/               # fustord 开发 SDK
 ```
 
 ### COMPONENTS.CORE.SCHEMA
@@ -144,9 +144,9 @@ extensions/
 
 ```
 extensions/
-├── fustor-sender-http/              # HTTP Sender (原 pusher-fusion)
+├── fustor-sender-http/              # HTTP Sender (原 pusher-fustord)
 ├── fustor-sender-grpc/              # gRPC Sender (新增)
-├── fustor-receiver-http/            # HTTP Receiver (从 fusion 抽取)
+├── fustor-receiver-http/            # HTTP Receiver (从 fustord 抽取)
 ├── fustor-receiver-grpc/            # gRPC Receiver (新增)
 ```
 
@@ -155,8 +155,8 @@ extensions/
 #### Application Packages
 
 ```
-sensord/                               # fustor-sensord
-fusion/                              # fustor-fusion
+sensord/                               # sensord
+fustord/                              # fustord
 ```
 
 ---
@@ -183,25 +183,25 @@ fusion/                              # fustor-fusion
 
 ### COMPONENTS.TOPOLOGY.FUSION
 
-#### Fusion 侧关系
+#### fustord 侧关系
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────────────┐
 │                                                                                      │
-│   Receiver : FusionPipe = 1 : N                                                  │
-│   (一个 Receiver 可服务多个 FusionPipe)                                          │
+│   Receiver : fustordPipe = 1 : N                                                  │
+│   (一个 Receiver 可服务多个 fustordPipe)                                          │
 │                                                                                      │
 │   ┌──────────────────┐                                                              │
-│   │ Receiver (HTTP)  │───┬──▶ FusionPipe-A ──▶ View-X                           │
+│   │ Receiver (HTTP)  │───┬──▶ fustordPipe-A ──▶ View-X                           │
 │   │ Port: 8102       │   │                                                          │
-│   │ API Key: fk_xxx  │   └──▶ FusionPipe-B ──┬──▶ View-X                       │
+│   │ API Key: fk_xxx  │   └──▶ fustordPipe-B ──┬──▶ View-X                       │
 │   └──────────────────┘                       └──▶ View-Y                       │
 │                                                                                      │
 │   ─────────────────────────────────────────────────────────────────────────────────  │
 │                                                                                      │
-│   FusionPipe : View = 1 : N                                                      │
+│   fustordPipe : View = 1 : N                                                      │
 │                                                                                      │
-│   View : FusionPipe = N : M                   
+│   View : fustordPipe = N : M                   
 │                                                                                      │
 └─────────────────────────────────────────────────────────────────────────────────────┘
 ```
@@ -218,7 +218,7 @@ fusion/                              # fustor-fusion
 ├─────────────────────────────────────────────────────────────────────────────────────┤
 │                                                                                      │
 │   ┌──────────────┐         ┌─────────────────┐         ┌──────────────┐             │
-│   │  FS Watch    │────────▶│    EventBus     │────────▶│  sensordPipe   │──▶ Fusion   │
+│   │  FS Watch    │────────▶│    EventBus     │────────▶│  sensordPipe   │──▶ fustord   │
 │   │   Thread     │  put()  │   (MemoryBus)   │get()    │  Consumer    │             │
 │   └──────────────┘         └─────────────────┘         └──────────────┘             │
 │         │                         │                                                  │
@@ -232,7 +232,7 @@ fusion/                              # fustor-fusion
 │   2. 200ms 轮询超时 (低负载时延迟 ~0ms, 最坏 200ms)                                   │
 │   3. 批量获取已有事件 (有多少取多少, 不等待凑满 batch)                                  │
 │   4. 同源 sensordPipe 共享 Bus (节省资源, 减少重复读取)                                  │
-│   5. 反向命令通道: Fusion 通过 Heartbeat 响应下发指令 (如 Real-Time Scan)                │
+│   5. 反向命令通道: fustord 通过 Heartbeat 响应下发指令 (如 Real-Time Scan)                │
 │                                                                                      │
 └─────────────────────────────────────────────────────────────────────────────────────┘
 ```
@@ -262,7 +262,7 @@ Pipe-C (source=fs-archive)  ────▶ EventBus-2 (signature=fs:/data/archi
 
 ### Session 定义
 
-Session 是 **sensordPipe** 和 **FusionPipe** 之间的业务会话。
+Session 是 **sensordPipe** 和 **fustordPipe** 之间的业务会话。
 
 ### Session 数据结构
 
@@ -271,7 +271,7 @@ Session 是 **sensordPipe** 和 **FusionPipe** 之间的业务会话。
 class Session:
     session_id: str                    # 唯一会话 ID
     sensord_task_id: str                 # sensordPipe 的 task_id
-    fusion_pipe_id: str                # FusionPipe ID
+    fustord_pipe_id: str                # fustordPipe ID
     
     # 生命周期
     created_at: datetime
@@ -294,7 +294,7 @@ sensordPipe 启动
     ├── Sender.connect() ────────────────────▶ Receiver 验证 API Key
     │   POST /api/v1/pipe/sessions/              │
     │   {task_id: "..."}                         ▼
-    │                                       FusionPipe 创建 Session
+    │                                       fustordPipe 创建 Session
     │                                            │
     │◀── 200 {session_id, timeout_seconds} ─────┤
     │                                            │
@@ -357,9 +357,9 @@ fs-research:
 
 #### senders-config.yaml
 ```yaml
-fusion-http:
+fustord-http:
   driver: http
-  endpoint: http://fusion.local:8102
+  endpoint: http://fustord.local:8102
   credential:
     key: fk_research_key
   driver_params:
@@ -370,20 +370,20 @@ fusion-http:
 ```yaml
 id: pipe-research
 source: fs-research
-sender: fusion-http
+sender: fustord-http
 enabled: true
 audit_interval_sec: 600
 sentinel_interval_sec: 120
 ```
 
-### Fusion 配置结构
+### fustord 配置结构
 
 ```
 $FUSTOR_FUSION_HOME/
 ├── receivers-config.yaml            # Receiver 定义
 ├── views-config/                    # View 定义
 │   └── view-*.yaml
-└── fusion-pipes-config/             # FusionPipe 定义
+└── fustord-pipes-config/             # fustordPipe 定义
     └── pipe-*.yaml
 ```
 
@@ -410,7 +410,7 @@ driver_params:
   blind_spot_style: detect
 ```
 
-#### fusion-pipes-config/pipe-http.yaml
+#### fustord-pipes-config/pipe-http.yaml
 ```yaml
 id: pipe-http
 receiver: http-receiver
@@ -432,7 +432,7 @@ session_timeout_seconds: 30
 | `/api/v1/pipe/session/` | Session 管理（创建/心跳/关闭） |
 | `/api/v1/pipe/{session_id}/events` | 事件推送 |
 | `/api/v1/pipe/consistency/*` | 一致性信号（audit_start/end, snapshot_end） |
-| `/api/v1/pipe/pipes` | FusionPipe 管理（列表/详情） |
+| `/api/v1/pipe/pipes` | fustordPipe 管理（列表/详情） |
 | `/api/v1/views/*` | 数据视图查询 |
 
 ### Session 创建响应
@@ -458,7 +458,7 @@ sensord 收到响应后，设置心跳间隔为 `timeout_seconds / 2`。
                     ┌────────────────┼────────────────┐
                     │                │                │
                     ▼                ▼                ▼
-           fustor-sensor-sdk   fustor-schema-*   fustor-fusion-sdk
+           fustor-sensor-sdk   fustor-schema-*   fustord-sdk
                     │                │                │
           ┌─────────┼────────────────┼────────────────┼─────────┐
           │         │                │                │         │
@@ -469,16 +469,16 @@ sensord 收到响应后，设置心跳间隔为 `timeout_seconds / 2`。
                                     │
                     ┌───────────────┼───────────────┐
                     ▼                               ▼
-              fustor-sensord                    fustor-fusion
+              sensord                    fustord
 ```
 
 ## COMPONENTS.ROLES
 
 ### Peer-to-Peer 自主模型
 
-Fustor 将 sensord 和 Fusion 视为 Stability Layer 的 **平等租户 (Peer Tenants)**，而非主从关系：
+Fustor 将 sensord 和 fustord 视为 Stability Layer 的 **平等租户 (Peer Tenants)**，而非主从关系：
 
-*   **主动感知 (Proactive)**: sensord 拥有原生的领域冲动 (Domain Layer)，会根据配置自主启动监听并租用 Stability 管道推送数据。不需要 Fusion 的"启动命令"。
+*   **主动感知 (Proactive)**: sensord 拥有原生的领域冲动 (Domain Layer)，会根据配置自主启动监听并租用 Stability 管道推送数据。不需要 fustord 的"启动命令"。
 *   **对等对称**: 双方使用相同的 Stability 原语进行通信。区别仅在于 Domain 驱动的类型：一端是 **感知源 (Source)**，另一端是 **聚合视图 (View)**。
 *   **生存隔离**: 管理行为 (Management Layer) 的失效不应影响数据面 (Domain Layer) 的自主同步与生命体征 (Stability Layer)。
 
@@ -532,7 +532,7 @@ Domain/Management 服务不再拥有专用命令通道，而是统一作为 Clie
 pipes:
   my-sensord-pipe:
     source: shared-fs
-    sender: fusion-main
+    sender: fustord-main
     fields_mapping:
       - to: "path"                    # 目标字段名
         source: ["path:string"]       # 源字段名[:类型转换]

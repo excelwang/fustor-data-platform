@@ -2,7 +2,7 @@ import asyncio
 import logging
 from typing import Optional, TYPE_CHECKING
 from fustor_core.pipe import PipeState
-from fustor_core.exceptions import SessionObsoletedError, FusionConnectionError
+from fustor_core.exceptions import SessionObsoletedError, fustordConnectionError
 from sensord.config.unified import get_outbound_ip
 
 if TYPE_CHECKING:
@@ -92,10 +92,10 @@ class PipeLifecycleMixin:
                         
                         if not sensord_id:
                             # Resolve dynamic sensord ID (IP) based on Sender endpoint
-                            fusion_uri = getattr(self.sender_handler, "endpoint", "8.8.8.8")
-                            if not isinstance(fusion_uri, str):
-                                fusion_uri = "8.8.8.8"
-                            sensord_id = get_outbound_ip(fusion_uri)
+                            fustord_uri = getattr(self.sender_handler, "endpoint", "8.8.8.8")
+                            if not isinstance(fustord_uri, str):
+                                fustord_uri = "8.8.8.8"
+                            sensord_id = get_outbound_ip(fustord_uri)
                         
                         self.task_id = f"{sensord_id}:{self.id}"
                         
@@ -118,7 +118,7 @@ class PipeLifecycleMixin:
                         await self.on_session_created(session_id, **metadata)
                         
                         # D-04: Restore Resume Capability
-                        # Query Fusion for the last committed index to ensure we resume from where we left off
+                        # Query fustord for the last committed index to ensure we resume from where we left off
                         try:
                             committed_index = await self.sender_handler.get_latest_committed_index(session_id)
                             current_stats_index = self.statistics.get("last_pushed_event_id")
@@ -130,8 +130,8 @@ class PipeLifecycleMixin:
                         except Exception as e:
                             logger.warning(f"Pipe {self.id}: Failed to fetch committed index: {e}. Defaulting to 0/Latest.")
 
-                    except FusionConnectionError:
-                        # Re-raise FusionConnectionError to be handled by outer loop
+                    except fustordConnectionError:
+                        # Re-raise fustordConnectionError to be handled by outer loop
                         raise
                     except RuntimeError as e:
                         logger.error(f"Pipe {self.id}: Detailed session creation error: {e}", exc_info=True)

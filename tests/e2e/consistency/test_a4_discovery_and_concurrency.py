@@ -23,12 +23,12 @@ from ..fixtures.constants import (
 class TestDiscoveryAndConcurrency:
     """Test Discovery API and session concurrency/obsolescence."""
 
-    def test_api_key_discovery(self, fusion_client, test_api_key, test_view):
+    def test_api_key_discovery(self, fustord_client, test_api_key, test_view):
         """
         验证 GET /api/v1/pipe/session/ 能够根据 Key 自动发现 view_id。
         """
-        # 使用 fusion_client (管理端口 8102)
-        resp = fusion_client.api_request(
+        # 使用 fustord_client (管理端口 8102)
+        resp = fustord_client.api_request(
             "GET",
             "pipe/session/",
             headers={"X-API-Key": test_api_key["key"]}
@@ -38,13 +38,13 @@ class TestDiscoveryAndConcurrency:
         assert data["view_id"] == test_view["id"]
         assert data["status"] == "authorized"
 
-    def test_concurrent_push_conflict(self, fusion_client, test_view):
+    def test_concurrent_push_conflict(self, fustord_client, test_view):
         """
         验证 allow_concurrent_push=False 时，第二个 session 会被 409 拒绝。
         """
         # CRITICAL: 先执行一次 reset 确保状态干净，防止上一个测试点的 session 干扰
         # CRITICAL: 先执行一次 reset 确保状态干净，防止上一个测试点的 session 干扰
-        fusion_client.reset()
+        fustord_client.reset()
 
         # 1. 创建第一个 session (作为 leader)
         view_id = test_view["id"]
@@ -57,7 +57,7 @@ class TestDiscoveryAndConcurrency:
         
         
         # 创建第一个会话
-        resp1 = fusion_client.api_request(
+        resp1 = fustord_client.api_request(
             "POST",
             "pipe/session/",
             json=payload1,
@@ -72,7 +72,7 @@ class TestDiscoveryAndConcurrency:
             "client_info": {"sensord_id": "sensord-2"}
         }
         
-        resp2 = fusion_client.api_request(
+        resp2 = fustord_client.api_request(
             "POST",
             "pipe/session/",
             json=payload2,
@@ -85,9 +85,9 @@ class TestDiscoveryAndConcurrency:
         assert "locked" in detail or "concurrent" in detail
         
         # 3. 清理第一个会话
-        fusion_client.terminate_session(session1_id)
+        fustord_client.terminate_session(session1_id)
 
-    def test_heartbeat_obsoleted_payload(self, fusion_client, test_api_key, test_view):
+    def test_heartbeat_obsoleted_payload(self, fustord_client, test_api_key, test_view):
         """
         验证当会话过期后，心跳返回 419 的 Payload 结构。
         """
@@ -95,7 +95,7 @@ class TestDiscoveryAndConcurrency:
         api_key = test_api_key["key"]
         
         # 1. 创建会话
-        resp = fusion_client.api_request(
+        resp = fustord_client.api_request(
             "POST",
             "pipe/session/",
             json={"task_id": "hb-test"},
@@ -103,11 +103,11 @@ class TestDiscoveryAndConcurrency:
         )
         session_id = resp.json()["session_id"]
         
-        # 2. 立即终止会话（在 Fusion 端使其注销）
-        fusion_client.terminate_session(session_id)
+        # 2. 立即终止会话（在 fustord 端使其注销）
+        fustord_client.terminate_session(session_id)
         
         # 3. 尝试发送心跳
-        hb_resp = fusion_client.api_request(
+        hb_resp = fustord_client.api_request(
             "POST",
             f"pipe/session/{session_id}/heartbeat",
             json={"can_realtime": True},
@@ -119,12 +119,12 @@ class TestDiscoveryAndConcurrency:
         data = hb_resp.json()
         assert "not found" in data["detail"].lower() or "obsoleted" in data["detail"].lower()
 
-    def test_view_stats_access(self, fusion_client, test_api_key, test_view):
+    def test_view_stats_access(self, fustord_client, test_api_key, test_view):
         """
         验证 Stats 接口返回正确的统计结构。
         """
         # 创建会话以激活视图 (避免 503 No Active Leader)
-        resp_session = fusion_client.api_request(
+        resp_session = fustord_client.api_request(
             "POST", "pipe/session/",
             json={"task_id": "stats-test"},
             headers={"X-API-Key": test_api_key["key"]}
@@ -133,7 +133,7 @@ class TestDiscoveryAndConcurrency:
         session_id = resp_session.json()["session_id"]
 
         # CRITICAL: 发送 snapshot_end 信号
-        resp_ing = fusion_client.api_request(
+        resp_ing = fustord_client.api_request(
             "POST", f"pipe/{session_id}/events",
             json={"events": [], "source_type": "snapshot", "is_end": True},
             headers={"X-API-Key": test_api_key["key"]}
@@ -142,21 +142,21 @@ class TestDiscoveryAndConcurrency:
         time.sleep(1)
 
         try:
-            resp = fusion_client.api_request("GET", f"views/{test_view['id']}/stats")
+            resp = fustord_client.api_request("GET", f"views/{test_view['id']}/stats")
             assert resp.status_code == 200, f"Stats failed, Detail: {resp.text}"
             data = resp.json()
             assert "item_count" in data
             assert "total_size" in data
             assert "audit_cycle_count" in data
         finally:
-            fusion_client.terminate_session(session_id)
+            fustord_client.terminate_session(session_id)
 
-    def test_view_search_access(self, fusion_client, test_api_key, test_view):
+    def test_view_search_access(self, fustord_client, test_api_key, test_view):
         """
         验证 Search 接口能够进行各种通配符模式搜索。
         """
         # 创建会话以激活视图 (避免 503 No Active Leader)
-        resp_session = fusion_client.api_request(
+        resp_session = fustord_client.api_request(
             "POST", "pipe/session/",
             json={"task_id": "search-test"},
             headers={"X-API-Key": test_api_key["key"]}
@@ -165,7 +165,7 @@ class TestDiscoveryAndConcurrency:
         session_id = resp_session.json()["session_id"]
         
         # CRITICAL: 发送 snapshot_end 信号
-        resp_ing = fusion_client.api_request(
+        resp_ing = fustord_client.api_request(
             "POST", f"pipe/{session_id}/events",
             json={"events": [], "source_type": "snapshot", "is_end": True},
             headers={"X-API-Key": test_api_key["key"]}
@@ -182,7 +182,7 @@ class TestDiscoveryAndConcurrency:
             ]
             
             for p in patterns:
-                resp = fusion_client.api_request(
+                resp = fustord_client.api_request(
                     "GET", 
                     f"views/{test_view['id']}/search",
                     params={"pattern": p}
@@ -190,5 +190,5 @@ class TestDiscoveryAndConcurrency:
                 assert resp.status_code == 200, f"Search failed for pattern: {p}, Detail: {resp.text}"
                 assert isinstance(resp.json(), list)
         finally:
-            fusion_client.terminate_session(session_id)
+            fustord_client.terminate_session(session_id)
 

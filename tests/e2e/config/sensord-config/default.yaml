@@ -17,8 +17,8 @@ sources:
     driver_params: {}
 
 senders:
-  fusion-main:
-    driver: fusion
+  fustord-main:
+    driver: fustord
     uri: "${FUSION_ENDPOINT}"
     credential:
       key: "${API_KEY}"
@@ -30,7 +30,7 @@ senders:
 pipes:
   integration-test-ds:
     source: shared-fs
-    sender: fusion-main
+    sender: fustord-main
     # Universal sync parameters
     audit_interval_sec: ${AUDIT_INTERVAL}
     sentinel_interval_sec: ${SENTINEL_INTERVAL}

@@ -1,6 +1,6 @@
 # Fustor 多视图聚合部署指南 (Forest View)
 
-本文档指导如何部署 Fustor 并启用 **Forest View** 特性。该特性允许 Fusion 将多个 Pipe 的数据流聚合到一个统一的逻辑视图 (Forest) 中，内部自动维护多棵文件系统树。
+本文档指导如何部署 Fustor 并启用 **Forest View** 特性。该特性允许 fustord 将多个 Pipe 的数据流聚合到一个统一的逻辑视图 (Forest) 中，内部自动维护多棵文件系统树。
 
 ## 场景描述
 
@@ -9,7 +9,7 @@
 - **节点 A (`sensord-1`)**: `/mnt/data/shard-01`
 - **节点 B (`sensord-2`)**: `/mnt/data/shard-02`
 
-目标是在 Fusion 端通过单一路径 `/data` 访问所有数据，自动路由到正确的节点。
+目标是在 fustord 端通过单一路径 `/data` 访问所有数据，自动路由到正确的节点。
 
 ---
 
@@ -21,18 +21,18 @@
 
 ## 2. 软件安装
 
-除了基础组件外，Fusion 端需要安装 `fustor-view-fs-forest` 扩展。
+除了基础组件外，fustord 端需要安装 `fustor-view-fs-forest` 扩展。
 
-### 2.1 服务端 (Fusion Node)
+### 2.1 服务端 (fustord Node)
 ```bash
 # 安装核心组件及扩展
-uv pip install fustor-fusion fustor-view-fs fustor-view-fs-forest fustor-receiver-http
+uv pip install fustord fustor-view-fs fustor-view-fs-forest fustor-receiver-http
 ```
 
 ### 2.2 采集端 (Source sensords)
 ```bash
 # 常规 sensord 安装
-uv pip install fustor-sensord fustor-source-fs fustor-sender-http
+uv pip install sensord fustor-source-fs fustor-sender-http
 ```
 
 ---
@@ -54,15 +54,15 @@ sources:
     uri: "/mnt/data/shard-01"
 
 senders:
-  fusion-main:
-    driver: fusion
+  fustord-main:
+    driver: fustord
     uri: "http://<FUSION_IP>:18888"
     credential: { key: "key-shard-01" }
 
 pipes:
   sync-pipe:
     source: fs-source
-    sender: fusion-main
+    sender: fustord-main
 ```
 
 #### sensord 2 (Node B)
@@ -76,26 +76,26 @@ sources:
     uri: "/mnt/data/shard-02"
 
 senders:
-  fusion-main:
-    driver: fusion
+  fustord-main:
+    driver: fustord
     uri: "http://<FUSION_IP>:18888"
     credential: { key: "key-shard-02" }
 
 pipes:
   sync-pipe:
     source: fs-source
-    sender: fusion-main
+    sender: fustord-main
 ```
 
 ---
 
-### 3.2 服务端配置 (Fusion)
+### 3.2 服务端配置 (fustord)
 
-在 Fusion 端，您只需要定义**一个**聚合视图 (`forest-fs` driver)，并将所有 Pipes 指向该视图。
+在 fustord 端，您只需要定义**一个**聚合视图 (`forest-fs` driver)，并将所有 Pipes 指向该视图。
 
 **注意**: Forest View 会根据 `pipe_id` 自动在内部创建和管理子树。
 
-`~/.fustor/fusion-config/default.yaml`:
+`~/.fustor/fustord-config/default.yaml`:
 ```yaml
 receivers:
   http-receiver:
@@ -133,18 +133,18 @@ pipes:
 
 ```yaml
 services:
-  fusion:
+  fustord:
     image: python:3.11-slim
-    command: fustor-fusion start
+    command: fustord start
     volumes:
-      - ./config/fusion:/root/.fustor/fusion-config
+      - ./config/fustord:/root/.fustor/fustord-config
     ports:
       - "8101:8101" # API Port
       - "18888:18888" # Receiver Port
 
   sensord-1:
     image: python:3.11-slim
-    command: fustor-sensord start
+    command: sensord start
     volumes:
       - ./config/sensord-1:/root/.fustor/sensord-config
       - /mnt/data/shard-01:/data
@@ -155,7 +155,7 @@ services:
 
   sensord-2:
     image: python:3.11-slim
-    command: fustor-sensord start
+    command: sensord start
     volumes:
       - ./config/sensord-2:/root/.fustor/sensord-config
       - /mnt/data/shard-02:/data
@@ -165,7 +165,7 @@ services:
 
 ## 5. 验证与使用
 
-启动后，您可以通过 Fusion 的 API 访问聚合视图。
+启动后，您可以通过 fustord 的 API 访问聚合视图。
 
 ### 5.1 查询聚合目录树
 ```bash
@@ -191,7 +191,7 @@ curl -H "X-API-Key: public-read-key" \
 ```
 
 ### 5.2 智能路由查询 (Best View)
-如果您只关心“最新”或“最大”的分片数据，可以使用 `?best=<STRATEGY>` 参数，Fusion 会自动根据策略选择一个最佳视图返回，从而减少数据传输量。
+如果您只关心“最新”或“最大”的分片数据，可以使用 `?best=<STRATEGY>` 参数，fustord 会自动根据策略选择一个最佳视图返回，从而减少数据传输量。
 
 **支持的策略**:
 *   `latest_mtime`: 选择最后修改时间最新的分片（适用于热数据查询）。
@@ -229,11 +229,11 @@ curl -H "X-API-Key: public-read-key" \
 
 本节介绍如何在 **不停止服务** 的情况下，向现有 sensord 添加新的 NFS 挂载源，并使其出现在 Forest View 聚合视图中。
 
-由于 Fusion 的 `API Key` 与 `Pipe` 是 1:1 绑定的，新增 Source 需要同时更新 Fusion 和 sensord 的配置。
+由于 fustord 的 `API Key` 与 `Pipe` 是 1:1 绑定的，新增 Source 需要同时更新 fustord 和 sensord 的配置。
 
-### 步骤 1: 修改 Fusion 配置 (fusion.yaml)
+### 步骤 1: 修改 fustord 配置 (fustord.yaml)
 
-在 Fusion 侧做好接收准备：
+在 fustord 侧做好接收准备：
 1.  **定义新 Pipe**: 路由数据到现有的 Forest View。
 2.  **分配新 Key**: 在 Receiver 中为新 Pipe 分配专用 Key。
 
@@ -257,13 +257,13 @@ receivers:
         pipe_id: "pipe-new-nfs" #       映射到新 Pipe
 ```
 
-### 步骤 2: 热重载 Fusion
+### 步骤 2: 热重载 fustord
 
-使用 CLI 命令让 Fusion 加载新配置 (View 和 Pipe 支持热添加)：
+使用 CLI 命令让 fustord 加载新配置 (View 和 Pipe 支持热添加)：
 
 ```bash
 # 安全重载配置 (不会停止服务)
-fustor-fusion reload
+fustord reload
 ```
 
 ### 步骤 3: 修改 sensord 配置 (sensord.yaml)
@@ -280,10 +280,10 @@ sources:
 senders:
   # ... 原有 sender ...
   sender-for-new-nfs:     # [新增] 2. 定义新 Sender (为了用新 Key)
-    driver: fusion
-    uri: "http://fusion-ip:18101"
+    driver: fustord
+    uri: "http://fustord-ip:18101"
     credential:
-      key: "new-nfs-key"  # <--- 对应 Fusion 侧的新 Key
+      key: "new-nfs-key"  # <--- 对应 fustord 侧的新 Key
 
 pipes:
   # ... 原有 pipes ...
@@ -298,7 +298,7 @@ pipes:
 
 ```bash
 # 安全重载配置 (不会停止服务)
-fustor-sensord reload
+sensord reload
 ```
 
 完成上述步骤后，新挂载点的数据将自动同步，并可通过 Forest View API 查询到（作为新的 tree key）。

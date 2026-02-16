@@ -26,7 +26,7 @@ class TestsensordPipeResume:
     async def test_resume_from_committed_index(self, sensord_pipe, mock_sender_with_index):
         """
         Verify that the pipe initializes its statistics with the 
-        committed index fetched from Fusion on startup.
+        committed index fetched from fustord on startup.
         """
         # Start pipe
         await sensord_pipe.start()

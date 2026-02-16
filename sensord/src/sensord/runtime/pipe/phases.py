@@ -96,7 +96,7 @@ async def run_bus_message_sync(pipe: "sensordPipe") -> None:
             
             pipe.is_realtime_ready = True
                 
-            # 2. Send to fusion
+            # 2. Send to fustord
             events = pipe.map_batch(events)
             
             success, response = await pipe.sender_handler.send_batch(
@@ -195,7 +195,7 @@ async def run_audit_sync(pipe: "sensordPipe") -> None:
         # We don't need to send an empty final batch here anymore if we sent it above,
         # but for safety against errors during the loop, we ensure the signal is sent.
         # However, we should check if we already successfully sent is_final.
-        # Actually, let's just make it robust: Fusion handle_audit_end is idempotent.
+        # Actually, let's just make it robust: fustord handle_audit_end is idempotent.
         if pipe.has_active_session():
             try:
                 # If we get here via 'break' or exception, we still need to end the audit
@@ -215,7 +215,7 @@ async def run_sentinel_check(pipe: "sensordPipe") -> None:
         # P1-2: Heartbeat for zombie detection
         pipe._task_last_active["sentinel"] = asyncio.get_event_loop().time()
         
-        # 1. Fetch tasks from Fusion
+        # 1. Fetch tasks from fustord
         task_batch = await pipe.sender_handler.get_sentinel_tasks()
         
         if not task_batch or not task_batch.get("paths"):
@@ -228,7 +228,7 @@ async def run_sentinel_check(pipe: "sensordPipe") -> None:
         results = pipe.source_handler.perform_sentinel_check(task_batch)
         
         if results:
-            # 3. Submit results back to Fusion
+            # 3. Submit results back to fustord
             success = await pipe.sender_handler.submit_sentinel_results(results)
             if success:
                 logger.debug(f"Pipe {pipe.id}: Submitted sentinel results for {len(results.get('updates', []))} items")

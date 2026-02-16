@@ -36,7 +36,7 @@ The Fustor Pipe uses an `IntFlag` bitmask to represent its current state. This a
 4. **Error Recovery**: `RUNNING | ...` -> `RUNNING | RECONNECTING` -> `RUNNING | ...` (if successful) or `ERROR` (if failed max retries)
 5. **Stop**: `RUNNING | ...` -> `STOPPING` -> `DRAINING` -> `STOPPED`
 
-## State Transitions (Fusion)
+## State Transitions (fustord)
 
 1. **Start**: `STOPPED` -> `INITIALIZING` -> `RUNNING`
 2. **Session Active**: `RUNNING` (state doesn't change per session, but individual sessions track their own status)

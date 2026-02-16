@@ -33,18 +33,18 @@ logger = logging.getLogger("fustor_test")
 
 
 @pytest.fixture
-def wait_for_audit(fusion_client):
+def wait_for_audit(fustord_client):
     """
     Return a function that waits for audit cycle to complete.
     """
     def _wait(timeout: int = AUDIT_WAIT_TIMEOUT):
-        if not fusion_client.wait_for_audit(timeout=timeout):
+        if not fustord_client.wait_for_audit(timeout=timeout):
              logger.warning(f"Timeout waiting for audit cycle ({timeout}s)")
     return _wait
 
 
 @pytest.fixture(scope="function")
-def leader_follower_sensords(setup_sensords, fusion_client):
+def leader_follower_sensords(setup_sensords, fustord_client):
     """
     Ensure we have a stable leader and follower sensord set up.
     
@@ -60,7 +60,7 @@ def leader_follower_sensords(setup_sensords, fusion_client):
     client_B = CONTAINER_CLIENT_B
 
     # Check current state
-    sessions = fusion_client.get_sessions()
+    sessions = fustord_client.get_sessions()
     leader = next((s for s in sessions if s.get("role") == "leader"), None)
     
     is_clean = False
@@ -87,7 +87,7 @@ def leader_follower_sensords(setup_sensords, fusion_client):
     logger.info("Waiting for stale sessions to expire...")
     start_cleanup = time.time()
     while time.time() - start_cleanup < SESSION_VANISH_TIMEOUT:
-        if not fusion_client.get_sessions():
+        if not fustord_client.get_sessions():
             break
         time.sleep(POLL_INTERVAL)
         
@@ -98,7 +98,7 @@ def leader_follower_sensords(setup_sensords, fusion_client):
     # Wait for A to become leader - use polling
     start_wait = time.time()
     while time.time() - start_wait < AGENT_READY_TIMEOUT:
-        leader = fusion_client.get_leader_session()
+        leader = fustord_client.get_leader_session()
         if leader and "client-a" in leader.get("sensord_id", ""):
             break
         time.sleep(POLL_INTERVAL)
@@ -110,7 +110,7 @@ def leader_follower_sensords(setup_sensords, fusion_client):
     # Wait for B - use polling
     start_wait = time.time()
     while time.time() - start_wait < AGENT_READY_TIMEOUT:
-        sessions = fusion_client.get_sessions()
+        sessions = fustord_client.get_sessions()
         if any("client-b" in s.get("sensord_id", "") for s in sessions):
             break
         time.sleep(POLL_INTERVAL)
@@ -123,7 +123,7 @@ def leader_follower_sensords(setup_sensords, fusion_client):
     }
 
 @pytest.fixture
-def reset_leadership(setup_sensords, fusion_client):
+def reset_leadership(setup_sensords, fustord_client):
     """
     Fixture to manually trigger a leadership reset.
     """
@@ -139,7 +139,7 @@ def reset_leadership(setup_sensords, fusion_client):
         # Wait for sessions to vanish
         start_cleanup = time.time()
         while time.time() - start_cleanup < SESSION_VANISH_TIMEOUT:
-            if not fusion_client.get_sessions():
+            if not fustord_client.get_sessions():
                 break
             time.sleep(POLL_INTERVAL)
 
@@ -148,14 +148,14 @@ def reset_leadership(setup_sensords, fusion_client):
         # Polling for sensord A
         start = time.time()
         while time.time() - start < AGENT_READY_TIMEOUT:
-            if fusion_client.get_leader_session(): break
+            if fustord_client.get_leader_session(): break
             time.sleep(POLL_INTERVAL)
 
         ensure_sensord_running(CONTAINER_CLIENT_B, api_key, view_id)
         # Polling for sensord B
         start = time.monotonic()
         while time.monotonic() - start < AGENT_READY_TIMEOUT:
-            sessions = fusion_client.get_sessions()
+            sessions = fustord_client.get_sessions()
             if any("client-b" in s.get("sensord_id", "") for s in sessions): break
             time.sleep(POLL_INTERVAL)
 

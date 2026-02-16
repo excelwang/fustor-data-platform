@@ -52,9 +52,9 @@ def get_env_hash():
     files_to_hash.extend(glob.glob(str(_it_dir.parent / "extensions/*/pyproject.toml")))
     files_to_hash.extend(glob.glob(str(_it_dir.parent / "core/pyproject.toml")))
     files_to_hash.extend(glob.glob(str(_it_dir.parent / "sensord-sdk/pyproject.toml")))
-    files_to_hash.extend(glob.glob(str(_it_dir.parent / "fusion-sdk/pyproject.toml")))
+    files_to_hash.extend(glob.glob(str(_it_dir.parent / "fustord-sdk/pyproject.toml")))
     files_to_hash.extend(glob.glob(str(_it_dir.parent / "sensord/pyproject.toml")))
-    files_to_hash.extend(glob.glob(str(_it_dir.parent / "fusion/pyproject.toml")))
+    files_to_hash.extend(glob.glob(str(_it_dir.parent / "fustord/pyproject.toml")))
     
     hasher = hashlib.md5()
     for f in sorted(files_to_hash):
@@ -68,7 +68,7 @@ def get_env_hash():
 def docker_env(request):
     """
     Session-scoped fixture that manages the Docker Compose environment.
-    Initializes Fusion with static configuration.
+    Initializes fustord with static configuration.
     """
     fast_mode = request.config.getoption("--fast")
     state_file = _it_dir / ".env_state"
@@ -109,13 +109,13 @@ def docker_env(request):
                 break
     
     # --- Configuration Hook ---
-    # Fusion configuration logic:
-    # 1. Templates mounted to /config/fusion-config (read-only from host ./config/fusion-config)
+    # fustord configuration logic:
+    # 1. Templates mounted to /config/fustord-config (read-only from host ./config/fustord-config)
     # 2. Entrypoint runs `envsubst` to inject test variables (TEST_VIEW_ID, TEST_API_KEY)
-    # 3. Processed configs written to /root/.fustor/fusion-config (Fusion's active config dir)
-    logger.info("Fusion config: envsubst(/config/fusion-config) -> /root/.fustor/fusion-config")
+    # 3. Processed configs written to /root/.fustor/fustord-config (fustord's active config dir)
+    logger.info("fustord config: envsubst(/config/fustord-config) -> /root/.fustor/fustord-config")
 
-    # 5. Reload Fusion
+    # 5. Reload fustord
 
     # 5. Reload environment if needed
     if needs_rebuild:
@@ -124,14 +124,14 @@ def docker_env(request):
             docker_manager.restart_container(container)
             docker_manager.wait_for_health(container)
     elif not fast_mode:
-        # If we are reusing, we still might want to restart Fusion once per session 
+        # If we are reusing, we still might want to restart fustord once per session 
         # to ensure it picked up the (potentially) updated static configs.
-        logger.info("Restarting Fusion to apply static configs...")
+        logger.info("Restarting fustord to apply static configs...")
         docker_manager.restart_container(CONTAINER_FUSION)
         docker_manager.wait_for_health(CONTAINER_FUSION)
     
     # 5. Log Environment Skew
-    logger.info("Clock skew environment active: A:+2h, B:-1h, Fusion/NFS/Host:0")
+    logger.info("Clock skew environment active: A:+2h, B:-1h, fustord/NFS/Host:0")
     try:
         for container in [CONTAINER_FUSION, CONTAINER_CLIENT_A, CONTAINER_CLIENT_B, CONTAINER_NFS_SERVER]:
             t = docker_manager.exec_in_container(container, ["date", "-u"])
@@ -139,7 +139,7 @@ def docker_env(request):
     except Exception as e:
         logger.warning(f"Could not log container times: {e}")
 
-    logger.info("All containers healthy and Fusion configured with clock skew.")
+    logger.info("All containers healthy and fustord configured with clock skew.")
     yield docker_manager
     logger.info("Keeping Docker Compose environment running")
 

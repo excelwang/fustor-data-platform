@@ -1,7 +1,7 @@
 """
 Tests for LogicalClock — skew calculation, monotonicity, and reset.
 
-LogicalClock.watermark = Fusion_Physical_Time - Mode_Skew(observed mtimes).
+LogicalClock.watermark = fustord_Physical_Time - Mode_Skew(observed mtimes).
 The skew is the mode of (time.time() - observed_mtime) samples.
 """
 import pytest

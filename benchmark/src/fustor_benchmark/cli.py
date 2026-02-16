@@ -17,14 +17,14 @@ def cli():
 @click.option("-n", "--num-requests", default=200, help="Total number of requests to perform.")
 @click.option("-d", "--target-depth", default=5, help="Relative depth to probe for targets.")
 @click.option("--integrity-interval", default=60.0, help="Wait interval (seconds) for OS Integrity check (simulating NFS sync).")
-@click.option("--fusion-api", help="External Fusion API URL (skips local setup).")
-@click.option("--api-key", help="API Key for external Fusion API.")
+@click.option("--fustord-api", help="External fustord API URL (skips local setup).")
+@click.option("--api-key", help="API Key for external fustord API.")
 @click.option("--view-id", default="bench-view", help="View ID to query.")
 @click.option("--base-port", default=18100, help="Base port for benchmark microservices.")
-def query(target_dir, concurrency, num_requests, target_depth, integrity_interval, fusion_api, api_key, view_id, base_port):
+def query(target_dir, concurrency, num_requests, target_depth, integrity_interval, fustord_api, api_key, view_id, base_port):
     """Executes the automated metadata query & performance benchmark."""
     run_dir = os.path.abspath(DEFAULT_RUN_DIR)
-    runner = BenchmarkRunner(run_dir, target_dir, fusion_api, api_key, base_port=base_port, view_id=view_id)
+    runner = BenchmarkRunner(run_dir, target_dir, fustord_api, api_key, base_port=base_port, view_id=view_id)
     runner.run(
         concurrency=concurrency, 
         reqs=num_requests, 

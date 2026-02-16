@@ -25,7 +25,7 @@ class ViewDriver(ABC):
     Abstract Base Class for View Drivers.
     
     A ViewDriver consumes events and maintains a consistent, queryable view of data.
-    This is the Fusion-side counterpart to SourceDriver (sensord-side).
+    This is the fustord-side counterpart to SourceDriver (sensord-side).
     
     View drivers are discovered via the 'fustor.view_drivers' entry point group.
     """
@@ -138,7 +138,7 @@ class SenderDriver(ABC):
     Abstract Base Class for all Sender drivers.
 
     Defines the contract for drivers that receive data from the Fusensord core
-    and transmit it to a destination (e.g., Fusion, Object Storage).
+    and transmit it to a destination (e.g., fustord, Object Storage).
     """
 
     def __init__(self, id: str, config: SenderConfig):

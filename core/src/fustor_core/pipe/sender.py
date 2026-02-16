@@ -2,7 +2,7 @@
 """
 Sender Handler abstraction for sensord Pipes.
 
-A Sender handler transmits events from sensord to Fusion.
+A Sender handler transmits events from sensord to fustord.
 This is the counterpart to SourceHandler.
 """
 from abc import ABC, abstractmethod
@@ -19,7 +19,7 @@ class SenderHandler(Handler):
     """
     Base class for sender handlers (data transmitters).
     
-    Sender handlers transmit events to remote Fusion instances.
+    Sender handlers transmit events to remote fustord instances.
     They are used on the sensord side.
     
     This is the V2 architecture replacement for the driver-based
@@ -35,7 +35,7 @@ class SenderHandler(Handler):
         **kwargs
     ) -> Tuple[str, Dict[str, Any]]:
         """
-        Create a new session with the Fusion endpoint.
+        Create a new session with the fustord endpoint.
         
         Args:
             task_id: Unique identifier for the pipe 
@@ -69,7 +69,7 @@ class SenderHandler(Handler):
         batch_context: Optional[Dict[str, Any]] = None
     ) -> Tuple[bool, Dict[str, Any]]:
         """
-        Send a batch of events to Fusion.
+        Send a batch of events to fustord.
         
         Args:
             session_id: The session identifier
@@ -97,7 +97,7 @@ class SenderHandler(Handler):
     @abstractmethod
     async def get_latest_committed_index(self, session_id: str) -> int:
         """
-        Get the latest committed event index from Fusion.
+        Get the latest committed event index from fustord.
         
         Args:
             session_id: The session identifier
@@ -109,7 +109,7 @@ class SenderHandler(Handler):
     
     async def test_connection(self, **kwargs) -> Tuple[bool, str]:
         """
-        Test connectivity to the Fusion endpoint.
+        Test connectivity to the fustord endpoint.
         
         Returns:
             Tuple of (success, message)

@@ -9,12 +9,12 @@
 ## Centralized sensord Management (Control Plane)
 - [ ] **Architecture**: Research Control/Data Plane Separation (Ref: `under-review/2026-02-12-architecture-split.md`)
 - [ ] Implement "Configuration Signature" based Hot Reload (Prerequisite).
-- [ ] Design Fusion Management API (Config + State).
-- [ ] Implement `RemoteConfigProvider` in sensord (polling Fusion).
+- [ ] Design fustord Management API (Config + State).
+- [ ] Implement `RemoteConfigProvider` in sensord (polling fustord).
 - [ ] Implement `SelfUpdater` in sensord (upgrade strategy).
 - [ ] **Architecture**: Generalize `on_session_created` pattern to Sender side for full negotiation decoupling.
 - [ ] **Testing**: Add integration tests covering dynamic `source_uri` changes in ForestView.】
 
 ## source-fs
 考虑到一个sensord可能需要监听十几个fs source。如果每个source都能监控1000万个文件的inotify，cpu、内存开销会有多大？是否要改进。如设置监听年龄上限。
-- [ ] **Architecture**: Revisit `FusionPipe.get_session_role` implementation. Currently uses `is_any_leader` logic (one-size-fits-all) for M:N mapping due to sensord's single-channel nature. Future work should consider per-view role negotiation if sensords need to support mixed Leader/Follower states across different views on the same pipe.
+- [ ] **Architecture**: Revisit `fustordPipe.get_session_role` implementation. Currently uses `is_any_leader` logic (one-size-fits-all) for M:N mapping due to sensord's single-channel nature. Future work should consider per-view role negotiation if sensords need to support mixed Leader/Follower states across different views on the same pipe.

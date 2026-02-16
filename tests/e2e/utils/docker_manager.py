@@ -316,7 +316,7 @@ class DockerManager:
         """Kill sensord and remove state/pid files."""
         # 1. Kill any existing sensord processes
         try:
-            self.exec_in_container(container, ["pkill", "-9", "-f", "fustor-sensord"], timeout=10)
+            self.exec_in_container(container, ["pkill", "-9", "-f", "sensord"], timeout=10)
         except Exception:
             pass
         # 2. Remove state files

@@ -20,7 +20,7 @@ sources:
     uri: "/tmp"
 senders:
   snd1:
-    driver: fusion
+    driver: fustord
     uri: "http://localhost"
 pipes:
   pipe1:

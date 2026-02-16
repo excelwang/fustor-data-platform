@@ -64,7 +64,7 @@ async def test_handle_command_update_config(tmp_path):
     with patch("fustor_core.common.get_fustor_home_dir", return_value=tmp_path):
         with patch("os.kill") as mock_kill:
             # Valid config
-            valid_yaml = "sensord_id: test\nsources: {s1: {driver: fs, uri: /tmp}}\nsenders: {f1: {driver: fusion, uri: http://f}}\npipes: {p1: {source: s1, sender: f1}}"
+            valid_yaml = "sensord_id: test\nsources: {s1: {driver: fs, uri: /tmp}}\nsenders: {f1: {driver: fustord, uri: http://f}}\npipes: {p1: {source: s1, sender: f1}}"
             cmd = {"type": "update_config", "config_yaml": valid_yaml, "filename": "default.yaml"}
             
             processor._handle_command_update_config(pipe, cmd)

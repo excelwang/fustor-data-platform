@@ -17,7 +17,7 @@ This idea formalizes the shift from a "Command-Response" model to a "Neutral Add
 
 ### L1: Contracts (Rules)
 - **NEUTRALITY**: The `SessionManager` MUST NOT contain string literals or logic related to `scan`, `snapshot`, `job_id`, or `path`.
-- **ADDRESSING_ONLY**: Every packet sent from Fusion to sensord MUST be either `unicast(target_id)` or `broadcast(view_id)`.
+- **ADDRESSING_ONLY**: Every packet sent from fustord to sensord MUST be either `unicast(target_id)` or `broadcast(view_id)`.
 - **PAYLOAD_OPACITY**: L1 MUST treat all command payloads as opaque dictionaries.
 
 ### L2: Architecture (Components)

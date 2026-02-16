@@ -350,7 +350,7 @@ class TestSenderHandlerFactory:
         # Create mock config
         mock_config = MagicMock()
         mock_config.driver = "http"
-        mock_config.endpoint = "http://fusion:8080"
+        mock_config.endpoint = "http://fustord:8080"
         mock_config.credential.model_dump.return_value = {"key": "test-key"}
         mock_config.batch_size = 100
         mock_config.driver_params = {}

@@ -25,20 +25,20 @@ class TestFollowerIOIsolation:
     def test_second_sensord_becomes_follower(
         self,
         docker_env,
-        fusion_client,
+        fustord_client,
         setup_sensords,
         clean_shared_dir
     ):
         """
-        场景: sensord A 已经是 Leader，sensord B 连接到 Fusion
+        场景: sensord A 已经是 Leader，sensord B 连接到 fustord
         预期: sensord B 被标记为 Follower
         验证方法: 查询 Sessions，确认 sensord B 的 role 为 "follower"
         """
         # Wait for sensords to establish sessions and view to be ready
-        assert fusion_client.wait_for_view_ready(timeout=VIEW_READY_TIMEOUT), "View did not become ready for sensord A"
+        assert fustord_client.wait_for_view_ready(timeout=VIEW_READY_TIMEOUT), "View did not become ready for sensord A"
         
         # Get all sessions
-        sessions = fusion_client.get_sessions()
+        sessions = fustord_client.get_sessions()
         
         # Find follower session
         follower_session = None
@@ -68,7 +68,7 @@ class TestFollowerIOIsolation:
     def test_follower_only_sends_realtime_events(
         self,
         docker_env,
-        fusion_client,
+        fustord_client,
         setup_sensords,
         clean_shared_dir
     ):
@@ -83,11 +83,11 @@ class TestFollowerIOIsolation:
         test_file = f"{MOUNT_POINT}/test_follower_realtime_{int(time.time()*1000)}.txt"
         
         # Wait for sensord B to be registered and ready (post-prescan)
-        if not fusion_client.wait_for_sensord_ready("client-b", timeout=AGENT_B_READY_TIMEOUT):
+        if not fustord_client.wait_for_sensord_ready("client-b", timeout=AGENT_B_READY_TIMEOUT):
              pytest.fail(f"sensord B did not become ready (can_realtime=True) within {AGENT_B_READY_TIMEOUT}s")
         
         # Get session info to verify it's a follower
-        sessions = fusion_client.get_sessions()
+        sessions = fustord_client.get_sessions()
         follower_session = next((s for s in sessions if "client-b" in s.get("sensord_id", "")), None)
         assert follower_session is not None, "sensord B session not found"
         assert follower_session.get("role") == "follower", \
@@ -100,7 +100,7 @@ class TestFollowerIOIsolation:
         
         # Check against relative path since Source-FS emits relative keys
         warmup_rel = "/" + os.path.relpath(warmup_file, MOUNT_POINT)
-        if not fusion_client.wait_for_file_in_tree(warmup_rel, timeout=SHORT_TIMEOUT):
+        if not fustord_client.wait_for_file_in_tree(warmup_rel, timeout=SHORT_TIMEOUT):
             pytest.fail("Follower sensord B failed to detect warmup file. FS Driver might not be ready.")
         
         # Create file on follower's mount
@@ -110,7 +110,7 @@ class TestFollowerIOIsolation:
             content="realtime test"
         )
         
-        # Wait for event to be processed (Follower -> Fusion)
+        # Wait for event to be processed (Follower -> fustord)
         # We poll to observe the arrival as soon as possible
         found = None
         start = time.time()
@@ -118,7 +118,7 @@ class TestFollowerIOIsolation:
         
         while time.time() - start < LONG_TIMEOUT:
             # Short-circuit if found
-            found = fusion_client.wait_for_file_in_tree(
+            found = fustord_client.wait_for_file_in_tree(
                 file_path=test_file_rel,
                 timeout=SHORT_TIMEOUT
             )
@@ -134,7 +134,7 @@ class TestFollowerIOIsolation:
         start = time.time()
         flags = {}
         while time.time() - start < MEDIUM_TIMEOUT:
-            flags = fusion_client.check_file_flags(test_file_rel)
+            flags = fustord_client.check_file_flags(test_file_rel)
             if flags.get("sensord_missing") is False:
                 cleared = True
                 break

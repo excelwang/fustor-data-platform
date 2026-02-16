@@ -1,7 +1,7 @@
 # .github/workflows/integration-tests.yml
 # Integration test workflow for Fustor NFS multi-mount consistency tests
 # 
-# Runs integration tests for the Fusion Pipe architecture.
+# Runs integration tests for the fustord Pipe architecture.
 
 name: Integration Tests
 
@@ -10,7 +10,7 @@ on:
     branches: [master, develop, 'refactor/*', 'feature/*']
     paths:
       - 'sensord/**'
-      - 'fusion/**'
+      - 'fustord/**'
       - 'benchmark/**'
       - 'packages/**'
       - 'tests/e2e/**'
@@ -19,7 +19,7 @@ on:
     branches: [master, develop]
     paths:
       - 'sensord/**'
-      - 'fusion/**'
+      - 'fustord/**'
       - 'benchmark/**'
       - 'packages/**'
       - 'tests/e2e/**'
@@ -48,7 +48,7 @@ jobs:
 
       - name: Save Docker images
         run: |
-          docker save fustor-integration-fusion fustor-integration-nfs-client > /tmp/it-images.tar
+          docker save fustor-integration-fustord fustor-integration-nfs-client > /tmp/it-images.tar
 
       - name: Upload images artifact
         uses: actions/upload-artifact@v4
@@ -113,7 +113,7 @@ jobs:
         run: |
           cd tests/e2e
           docker compose logs > docker-compose-logs.txt
-          for container in fustor-fusion fustor-nfs-client-a fustor-nfs-client-b; do
+          for container in fustord fustor-nfs-client-a fustor-nfs-client-b; do
             docker logs $container > ${container}-logs.txt 2>&1 || true
           done
 

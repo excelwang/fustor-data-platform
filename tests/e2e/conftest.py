@@ -5,7 +5,7 @@ Pytest configuration for NFS multi-mount consistency integration tests.
 This conftest imports modular fixtures from the fixtures/ package.
 For implementation details, see:
 - fixtures/docker.py: Docker environment management
-- fixtures/fusion.py: Fusion client and configuration
+- fixtures/fustord.py: fustord client and configuration
 - fixtures/sensords.py: sensord setup and configuration
 - fixtures/leadership.py: Leadership management and audit control
 """
@@ -21,7 +21,7 @@ _it_dir = Path(__file__).parent
 if str(_it_dir) not in sys.path:
     sys.path.insert(0, str(_it_dir))
 
-from utils import docker_manager, FusionClient
+from utils import docker_manager, fustordClient
 
 # ============================================================================
 # Logging Setup
@@ -62,7 +62,7 @@ def pytest_addoption(parser):
 # so we re-export fixtures here for pytest to discover them.
 
 from fixtures.docker import docker_env, clean_shared_dir
-from fixtures.fusion import test_view, test_api_key, test_query_key, fusion_client
+from fixtures.fustord import test_view, test_api_key, test_query_key, fustord_client
 from fixtures.sensords import setup_sensords, setup_unskewed_sensords
 from fixtures.leadership import wait_for_audit, reset_leadership
 
@@ -72,14 +72,14 @@ from fixtures.leadership import wait_for_audit, reset_leadership
 # ============================================================================
 
 @pytest.fixture
-def reset_fusion_state(request, fusion_client, clean_shared_dir):
+def reset_fustord_state(request, fustord_client, clean_shared_dir):
     """
     Aggressively reset environment before each test.
     NOT autouse — tests that need a clean slate should declare this explicitly.
     
     What it does:
     1. Kill all sensords in ALL containers (and wait for death) [SKIPPED IN FAST MODE]
-    2. Reset Fusion state via API (clears sessions, views)
+    2. Reset fustord state via API (clears sessions, views)
     3. Verify no stale sessions remain
     """
     fast_mode = request.config.getoption("--fast")
@@ -94,22 +94,22 @@ def reset_fusion_state(request, fusion_client, clean_shared_dir):
         # and their last heartbeats/requests have been processed
         time.sleep(1.0)
     else:
-        logger.info("⚡ Fast mode: Skipping sensord termination. Only resetting Fusion/NFS.")
+        logger.info("⚡ Fast mode: Skipping sensord termination. Only resetting fustord/NFS.")
     
-    # 2. Reset Fusion state (AFTER sensords are dead, so no re-registration)
+    # 2. Reset fustord state (AFTER sensords are dead, so no re-registration)
     try:
-        fusion_client.reset()
+        fustord_client.reset()
         
         # Wait for all stale sessions to vanish
         logger.debug("Waiting for sessions to vanish after reset...")
         for _ in range(15):
-            sessions = fusion_client.get_sessions()
+            sessions = fustord_client.get_sessions()
             if not sessions:
                 break
             logger.debug(f"Still {len(sessions)} sessions remaining, waiting...")
             time.sleep(1)
         else:
-            remaining = fusion_client.get_sessions()
+            remaining = fustord_client.get_sessions()
             if remaining:
                 logger.warning(f"Sessions still exist after reset wait: {[s.get('sensord_id') for s in remaining]}")
         
@@ -118,19 +118,19 @@ def reset_fusion_state(request, fusion_client, clean_shared_dir):
         max_retries = 30
         for i in range(max_retries):
             try:
-                fusion_client.get_stats()
+                fustord_client.get_stats()
                 break
             except Exception:
                 if i == max_retries - 1:
                     logger.warning("View failed to become ready after reset (timeout)")
                 time.sleep(1)
     except Exception as e:
-        logger.debug(f"Fusion reset failed: {e}")
+        logger.debug(f"fustord reset failed: {e}")
     
     # 3. Clear logs
     for container in containers + [CONTAINER_FUSION]:
         try:
-            log_path = "/root/.fustor/logs/sensord.log" if "client" in container else "/root/.fustor/logs/fusion.log"
+            log_path = "/root/.fustor/logs/sensord.log" if "client" in container else "/root/.fustor/logs/fustord.log"
             docker_manager.exec_in_container(container, ["sh", "-c", f"> {log_path}"], timeout=5)
         except Exception:
             pass

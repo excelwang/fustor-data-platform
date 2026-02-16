@@ -26,7 +26,7 @@ class FSArbitrator:
         self.state = state
         self.tree_manager = tree_manager
         self.hot_file_threshold = hot_file_threshold
-        self.logger = logging.getLogger(f"fustor_fusion.view_fs.arbitrator.{state.view_id}")
+        self.logger = logging.getLogger(f"fustord.view_fs.arbitrator.{state.view_id}")
         self.suspect_cleanup_interval = self.DEFAULT_CLEANUP_INTERVAL
 
     async def process_event(self, event: Any) -> bool:
@@ -163,7 +163,7 @@ class FSArbitrator:
         final_last_updated_at = time.time() if is_fresh_confirmation else old_last_updated_at
 
         # Perform the actual update (last_updated_at is set correctly by tree.py)
-        # Extract lineage info from event metadata (injected by FusionPipe)
+        # Extract lineage info from event metadata (injected by fustordPipe)
         metadata = getattr(event, 'metadata', {}) or {}
         lineage_info = {
             'last_sensord_id': metadata.get('sensord_id'),

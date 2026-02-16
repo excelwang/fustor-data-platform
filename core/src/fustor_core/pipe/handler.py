@@ -140,7 +140,7 @@ class ViewHandler(Handler):
     Base class for view handlers (data consumers).
     
     View handlers consume events and maintain queryable views.
-    They are used on the Fusion side.
+    They are used on the fustord side.
     """
     
     @abstractmethod

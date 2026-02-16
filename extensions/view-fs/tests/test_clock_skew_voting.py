@@ -22,8 +22,8 @@ def test_majority_skew_wins():
     When multiple sensords contribute different skews,
     Mode selects the skew with the most samples.
     
-    sensord B (5 samples, skew=100):  Fusion=2000, mtime=1900
-    sensord A (2 samples, skew=-500): Fusion=2000, mtime=2500
+    sensord B (5 samples, skew=100):  fustord=2000, mtime=1900
+    sensord A (2 samples, skew=-500): fustord=2000, mtime=2500
     → Mode = 100 (sensord B wins)
     """
     with patch('time.time', return_value=2000.0):

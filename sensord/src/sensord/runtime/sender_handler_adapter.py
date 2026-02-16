@@ -31,7 +31,7 @@ class SenderHandlerAdapter(SenderHandler):
         
         sender = HTTPSender(
             sender_id="my-sender",
-            endpoint="http://fusion:8080",
+            endpoint="http://fustord:8080",
             credential={"key": "my-api-key"}
         )
         handler = SenderHandlerAdapter(sender)
@@ -96,7 +96,7 @@ class SenderHandlerAdapter(SenderHandler):
         **kwargs
     ) -> Tuple[str, Dict[str, Any]]:
         """
-        Create a new session with Fusion.
+        Create a new session with fustord.
         
         Delegates to the underlying Sender's create_session method.
         """
@@ -148,7 +148,7 @@ class SenderHandlerAdapter(SenderHandler):
         batch_context: Optional[Dict[str, Any]] = None
     ) -> Tuple[bool, Dict[str, Any]]:
         """
-        Send a batch of events to Fusion.
+        Send a batch of events to fustord.
         
         Delegates to the underlying Sender's send_events method.
         """
@@ -208,7 +208,7 @@ class SenderHandlerAdapter(SenderHandler):
     
     async def get_latest_committed_index(self, session_id: str) -> int:
         """
-        Get the latest committed event index from Fusion.
+        Get the latest committed event index from fustord.
         
         Delegates to the underlying Sender's get_latest_committed_index method.
         """
@@ -235,11 +235,11 @@ class SenderHandlerAdapter(SenderHandler):
     # --- Sentinel support ---
     
     async def get_sentinel_tasks(self) -> Optional[Dict[str, Any]]:
-        """Get sentinel verification tasks from Fusion."""
+        """Get sentinel verification tasks from fustord."""
         return await self._sender.get_sentinel_tasks()
     
     async def submit_sentinel_results(self, results: Dict[str, Any]) -> bool:
-        """Submit sentinel verification results to Fusion."""
+        """Submit sentinel verification results to fustord."""
         return await self._sender.submit_sentinel_results(results)
 
 

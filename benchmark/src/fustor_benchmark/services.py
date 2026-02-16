@@ -16,11 +16,11 @@ class ServiceManager:
         # 系统环境主目录 (FUSTOR_HOME)
         self.env_dir = os.path.join(self.run_dir, ".fustor")
         
-        self.fusion_port = base_port + 2 # Management API
+        self.fustord_port = base_port + 2 # Management API
         self.ingest_port = base_port + 3 # Data Receiver
         self.sensord_port = base_port
         
-        self.fusion_process = None
+        self.fustord_process = None
         self.sensord_process = None
         self.processes = [] # Backwards compatibility for stop_all fallback
 
@@ -43,10 +43,10 @@ class ServiceManager:
             f.write(f"FUSTOR_HOME={self.env_dir}\n")
             f.write(f"FUSTOR_LOG_LEVEL=DEBUG\n")
         
-        # V2: Unified Config for Fusion
-        os.makedirs(os.path.join(self.env_dir, "fusion-config"), exist_ok=True)
+        # V2: Unified Config for fustord
+        os.makedirs(os.path.join(self.env_dir, "fustord-config"), exist_ok=True)
         self.api_key = "bench-api-key-123456"
-        fusion_config = {
+        fustord_config = {
             "receivers": {
                 "bench-http": {
                     "driver": "http",
@@ -70,8 +70,8 @@ class ServiceManager:
                 }
             }
         }
-        with open(os.path.join(self.env_dir, "fusion-config/default.yaml"), "w") as f:
-            yaml.dump(fusion_config, f)
+        with open(os.path.join(self.env_dir, "fustord-config/default.yaml"), "w") as f:
+            yaml.dump(fustord_config, f)
 
     def _wait_for_service(self, url: str, name: str, timeout: int = 30):
         click.echo(f"Waiting for {name} at {url}...")
@@ -91,30 +91,30 @@ class ServiceManager:
         click.echo("System configured via static YAML.")
         return self.api_key
 
-    def start_fusion(self):
+    def start_fustord(self):
         cmd = [
-            "fustor-fusion", "start",
-            "-p", str(self.fusion_port)
+            "fustord", "start",
+            "-p", str(self.fustord_port)
         ]
-        log_file = open(os.path.join(self.env_dir, "fusion.log"), "a")
+        log_file = open(os.path.join(self.env_dir, "fustord.log"), "a")
         env = os.environ.copy()
         env["FUSTOR_HOME"] = self.env_dir
         
         p = subprocess.Popen(cmd, env=env, stdout=log_file, stderr=subprocess.STDOUT)
         log_file.close()
-        self.fusion_process = p
+        self.fustord_process = p
         self.processes.append(p)
         
-        click.echo(f"Waiting for Fusion at http://localhost:{self.fusion_port}...")
+        click.echo(f"Waiting for fustord at http://localhost:{self.fustord_port}...")
         start = time.time()
         while time.time() - start < 30:
             try:
-                requests.get(f"http://localhost:{self.fusion_port}/", timeout=1)
-                click.echo("Fusion is up.")
+                requests.get(f"http://localhost:{self.fustord_port}/", timeout=1)
+                click.echo("fustord is up.")
                 return
             except requests.ConnectionError:
                 time.sleep(0.5)
-        raise RuntimeError("Fusion start failed")
+        raise RuntimeError("fustord start failed")
 
     def start_sensord(self, api_key: str, **kwargs):
         # Clean up stale PID file to allow restart
@@ -136,8 +136,8 @@ class ServiceManager:
                 }
             },
             "senders": {
-                "bench-fusion": {
-                    "driver": "fusion",
+                "bench-fustord": {
+                    "driver": "fustord",
                     "uri": f"http://127.0.0.1:{self.ingest_port}",
                     "credential": {"key": api_key}
                 }
@@ -145,7 +145,7 @@ class ServiceManager:
             "pipes": {
                 "bench-pipe": {
                     "source": "bench-fs",
-                    "sender": "bench-fusion",
+                    "sender": "bench-fustord",
                     "audit_interval_sec": kwargs.get("audit_interval", 0),
                     "sentinel_interval_sec": kwargs.get("sentinel_interval", 0)
                 }
@@ -155,7 +155,7 @@ class ServiceManager:
             yaml.dump(sensord_config, f)
             
         cmd = [
-            "fustor-sensord", "start"
+            "sensord", "start"
         ]
         log_file = open(os.path.join(self.env_dir, "sensord.log"), "a")
         env = os.environ.copy()
@@ -205,8 +205,8 @@ class ServiceManager:
     def get_sensord_log_path(self):
         return os.path.join(self.env_dir, "sensord.log")
 
-    def get_fusion_log_path(self):
-        return os.path.join(self.env_dir, "fusion.log")
+    def get_fustord_log_path(self):
+        return os.path.join(self.env_dir, "fustord.log")
 
     def get_log_size(self, log_path):
         if not os.path.exists(log_path): return 0
@@ -235,8 +235,8 @@ class ServiceManager:
         return None
 
     def trigger_sensord_audit(self, pipe_id="bench-pipe"):
-        """Triggers audit for a view via Fusion API."""
-        url = f"http://localhost:{self.fusion_port}/api/v1/pipe/consistency/audit/start"
+        """Triggers audit for a view via fustord API."""
+        url = f"http://localhost:{self.fustord_port}/api/v1/pipe/consistency/audit/start"
         headers = {"X-API-Key": self.api_key}
         res = requests.post(url, headers=headers)
         res.raise_for_status()
@@ -244,7 +244,7 @@ class ServiceManager:
 
     def trigger_sensord_sentinel(self, pipe_id="bench-pipe"):
         """Sentinel check is passive in V2, but we can check tasks."""
-        url = f"http://localhost:{self.fusion_port}/api/v1/pipe/consistency/sentinel/tasks"
+        url = f"http://localhost:{self.fustord_port}/api/v1/pipe/consistency/sentinel/tasks"
         headers = {"X-API-Key": self.api_key}
         res = requests.get(url, headers=headers)
         res.raise_for_status()

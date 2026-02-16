@@ -164,7 +164,7 @@ def test_validate_config_dict_sensord_id_removed_from_config():
     """Test that sensord_id is no longer expected in the config dictionary."""
     config_dict = {
         "sources": {"s1": {"driver": "fs", "uri": "/tmp"}},
-        "senders": {"se1": {"driver": "fusion", "uri": "http://1.2.3.4:8102"}},
+        "senders": {"se1": {"driver": "fustord", "uri": "http://1.2.3.4:8102"}},
         "pipes": {
             "p1": {"source": "s1", "sender": "se1"}
         }

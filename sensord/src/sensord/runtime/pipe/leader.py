@@ -26,9 +26,9 @@ class PipeLeaderMixin:
             from .phases import run_snapshot_sync
             await run_snapshot_sync(self)
             
-            # In Bus mode, we also signal completion so Fusion can transition its view state
+            # In Bus mode, we also signal completion so fustord can transition its view state
             if self._bus:
-                logger.info(f"Pipe {self.id}: Bus mode snapshot scan complete - signaling readiness to Fusion")
+                logger.info(f"Pipe {self.id}: Bus mode snapshot scan complete - signaling readiness to fustord")
                 await self.sender_handler.send_batch(
                     self.session_id, [], {"phase": "snapshot", "is_final": True}
                 )

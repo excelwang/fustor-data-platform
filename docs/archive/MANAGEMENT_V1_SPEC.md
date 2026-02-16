@@ -1,16 +1,16 @@
-# Fusion Management Module (V1 Archive)
+# fustord Management Module (V1 Archive)
 
-This document describes the functionality of the `fustor-management` module that was removed from the Fusion service in v0.9.x. This serves as a reference for reimplementing or extending these features in future iterations.
+This document describes the functionality of the `fustor-management` module that was removed from the fustord service in v0.9.x. This serves as a reference for reimplementing or extending these features in future iterations.
 
 ## 1. Module Overview
 
 The Management Module provided a centralized control plane for the Fustor cluster. It consisted of two parts:
-1.  **Backend API (`fusion/api/management.py`)**: A set of REST endpoints integrated into the Fusion service.
+1.  **Backend API (`fustord/api/management.py`)**: A set of REST endpoints integrated into the fustord service.
 2.  **Frontend UI (`management-ui/`)**: A static web interface for visualization and configuration.
 
 ### Key Responsibilities
 *   **Cluster Monitoring**: Real-time dashboard of all connected sensords, active Pipes, and client Sessions.
-*   **Configuration Management**: Centralized editing of `fusion.yaml` and remote `sensord.yaml` configurations.
+*   **Configuration Management**: Centralized editing of `fustord.yaml` and remote `sensord.yaml` configurations.
 *   **Remote Command Dispatch**: Ability to send control commands (reload, upgrade, scan) to sensords via the existing heartbeat channel.
 
 ---
@@ -25,7 +25,7 @@ The dashboard provided a real-time snapshot of the system state by querying the 
     *   Show connection status (Active/Idle), Client IP, and Version.
     *   Track number of active sessions per sensord.
 *   **Pipes**:
-    *   List all configured Fusion Pipes.
+    *   List all configured fustord Pipes.
     *   Show state (`RUNNING`, `STOPPED`, `ERROR`).
     *   Show associated Views and Receivers.
 *   **Sessions**:
@@ -35,8 +35,8 @@ The dashboard provided a real-time snapshot of the system state by querying the 
 
 ### 2.2 Configuration Management
 
-#### Fusion Configuration
-*   **Direct Edit**: Allowed editing of the `fusion.yaml` file on the server.
+#### fustord Configuration
+*   **Direct Edit**: Allowed editing of the `fustord.yaml` file on the server.
 *   **Validation**: Implemented strict reference integrity checks:
     *   Pipes must reference valid Receivers and Views.
     *   Receivers must use valid Drivers.
@@ -63,16 +63,16 @@ The module used the `SessionManager`'s command queue to send instructions to sen
 ## 3. Architecture & Data Flow
 
 ### 3.1 Command Queue Pattern
-Since sensords sit behind firewalls (NAT), Fusion cannot initiate connections to them. The Management module used a **Reverse Command Pattern**:
+Since sensords sit behind firewalls (NAT), fustord cannot initiate connections to them. The Management module used a **Reverse Command Pattern**:
 
 1.  **User Action**: Admin clicks "Reload sensord" in UI.
 2.  **Queue**: API adds a command object to `SessionInfo.pending_commands` in memory.
-3.  **Heartbeat**: sensord sends a heartbeat (or data push) to Fusion.
-4.  **Dispatch**: Fusion checks the queue and attaches the command to the HTTP response.
+3.  **Heartbeat**: sensord sends a heartbeat (or data push) to fustord.
+4.  **Dispatch**: fustord checks the queue and attaches the command to the HTTP response.
 5.  **Execution**: sensord receives the response, extracts the command, and executes it locally.
 
 ### 3.2 Security
-*   **Authentication**: All management endpoints were protected by a `X-Management-Key` header (HMAC validation against `fusion.yaml` config).
+*   **Authentication**: All management endpoints were protected by a `X-Management-Key` header (HMAC validation against `fustord.yaml` config).
 *   **Network**: The Management API ran on the same port as the Data API but under a distinct `/api/v1/management` path.
 
 ---
@@ -89,16 +89,16 @@ Since sensords sit behind firewalls (NAT), Fusion cannot initiate connections to
 *   `POST /api/v1/management/sensords/{sensord_id}/config`: Push new config (raw YAML).
 *   `POST /api/v1/management/sensords/{sensord_id}/config/structured`: Push new config (JSON).
 
-### Fusion Control
-*   `GET /api/v1/management/config`: Get current `fusion.yaml`.
-*   `POST /api/v1/management/config`: Update `fusion.yaml`.
+### fustord Control
+*   `GET /api/v1/management/config`: Get current `fustord.yaml`.
+*   `POST /api/v1/management/config`: Update `fustord.yaml`.
 *   `POST /api/v1/management/reload`: Trigger SIGHUP signal.
 
 ---
 
 ## 5. Known Limitations (Reasons for Removal)
 
-1.  **State Ephemerality**: sensord configurations were cached in memory (in `SessionInfo`). Restarting Fusion meant losing the ability to view sensord configs until they re-reported.
+1.  **State Ephemerality**: sensord configurations were cached in memory (in `SessionInfo`). Restarting fustord meant losing the ability to view sensord configs until they re-reported.
 2.  **Concurrency Risks**: Configuration updates (file writes) lacked locking or versioning, leading to potential race conditions.
 3.  **Deployment Coupling**: The UI was bundled as a static asset within the Python package, making frontend updates difficult.
 4.  **Security Model**: Shared API key was insufficient for granular access control.

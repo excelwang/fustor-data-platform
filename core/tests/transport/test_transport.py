@@ -49,8 +49,8 @@ class ConcreteSender(Sender):
 
 @pytest.mark.asyncio
 async def test_sender_base():
-    s = ConcreteSender("s1", "http://fusion:8080", {"key": "abc"})
-    assert s.endpoint == "http://fusion:8080"
+    s = ConcreteSender("s1", "http://fustord:8080", {"key": "abc"})
+    assert s.endpoint == "http://fustord:8080"
     
     res = await s.send_events([object(), object()], source_type="snapshot")
     assert res["count"] == 2

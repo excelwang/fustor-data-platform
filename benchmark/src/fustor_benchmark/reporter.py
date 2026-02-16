@@ -37,8 +37,8 @@ def generate_html_report(results, output_path):
         return
 
     # Calculate gains against OS Integrity
-    gain_latency = results['os_integrity']['avg'] / results['fusion']['avg'] if results['fusion']['avg'] > 0 else 0
-    gain_qps = results['fusion']['qps'] / results['os_integrity']['qps'] if results['os_integrity']['qps'] > 0 else 0
+    gain_latency = results['os_integrity']['avg'] / results['fustord']['avg'] if results['fustord']['avg'] > 0 else 0
+    gain_qps = results['fustord']['qps'] / results['os_integrity']['qps'] if results['os_integrity']['qps'] > 0 else 0
     
     summary = {
         "timestamp": results['timestamp'],
@@ -51,12 +51,12 @@ def generate_html_report(results, output_path):
         
         "os_avg": f"{results['os']['avg']:.2f}",
         "os_integrity_avg": f"{results['os_integrity']['avg']:.2f}",
-        "fusion_avg": f"{results['fusion']['avg']:.2f}",
+        "fustord_avg": f"{results['fustord']['avg']:.2f}",
         "gain_latency": f"{gain_latency:.1f}x",
         
         "os_qps": f"{results['os']['qps']:.1f}",
         "os_integrity_qps": f"{results['os_integrity']['qps']:.1f}",
-        "fusion_qps": f"{results['fusion']['qps']:.1f}",
+        "fustord_qps": f"{results['fustord']['qps']:.1f}",
         "gain_qps": f"{gain_qps:.1f}x"
     }
 

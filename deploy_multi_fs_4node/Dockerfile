@@ -17,8 +17,8 @@ COPY . .
 RUN uv pip install --system \
     ./core \
     ./sensord-sdk \
-    ./management-ui ./fusion-sdk \
-    ./management-ui ./fusion \
+    ./management-ui ./fustord-sdk \
+    ./management-ui ./fustord \
     ./sensord \
     ./benchmark \
     ./extensions/view-fs \
@@ -28,7 +28,7 @@ RUN uv pip install --system \
     ./extensions/receiver-http
 
 # Create necessary directories
-RUN mkdir -p /root/.fustor/fusion-config \
+RUN mkdir -p /root/.fustor/fustord-config \
     && mkdir -p /root/.fustor/sensord-config \
     && mkdir -p /root/.fustor/logs
 

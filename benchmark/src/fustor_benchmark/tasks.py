@@ -30,9 +30,9 @@ def run_find_recursive_metadata_task(args):
             parsed_data.append(node)
     return time.time() - start
 
-def run_single_fusion_req(url, headers, path, dry_run=False, dry_net=False):
+def run_single_fustord_req(url, headers, path, dry_run=False, dry_net=False):
     """
-    Executes a single Fusion API request.
+    Executes a single fustord API request.
     """
     start = time.time()
     try:
@@ -46,7 +46,7 @@ def run_single_fusion_req(url, headers, path, dry_run=False, dry_net=False):
             # Actually, the URL passed here should already contain the full path or we should pass view_id
             # Re-evaluating: let's change the caller to pass the full URL or include view_id.
             # For now, I will assume the caller provides a URL that we can append to.
-            # But the caller in runner.py passes fusion_url (base).
+            # But the caller in runner.py passes fustord_url (base).
             
             # Let's fix runner.py to pass the correct view-specific base URL or just fix it here to match runner.py's expected view.
             view_id = headers.get("X-View-ID", "bench-view")

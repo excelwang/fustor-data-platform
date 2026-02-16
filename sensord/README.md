@@ -1,11 +1,11 @@
 # Fustor sensord 服务
 
-Fustor sensord 是一款轻量、可扩展的数据采集与推送工具。它负责监听数据源变更，并将其实时推送到 Fustor Fusion 服务。
+Fustor sensord 是一款轻量、可扩展的数据采集与推送工具。它负责监听数据源变更，并将其实时推送到 Fustor fustord 服务。
 
 ## 安装
 
 ```bash
-pip install fustor-sensord
+pip install sensord
 # 安装文件系统源驱动
 pip install fustor-source-fs
 ```
@@ -35,16 +35,16 @@ sources:
 
 ### 2. 配置 Sender (推送目标)
 
-通常推送到 Fusion 服务：
+通常推送到 fustord 服务：
 
 ```yaml
 senders:
-  - id: "to-fusion"            # 唯一 ID
-    type: "fusion"             # 驱动类型
+  - id: "to-fustord"            # 唯一 ID
+    type: "fustord"             # 驱动类型
     config:
-      # Fusion 服务的 Ingest API 基准地址
+      # fustord 服务的 Ingest API 基准地址
       endpoint: "http://localhost:8102"
-      # 从 Fusion 管理员处获取的 API Key，用于鉴权
+      # 从 fustord 管理员处获取的 API Key，用于鉴权
       credential: "YOUR_API_KEY_HERE"
 ```
 
@@ -54,21 +54,21 @@ senders:
 
 ```yaml
 pipes:
-  - id: "phase-files-to-fusion"
+  - id: "phase-files-to-fustord"
     source_id: "my-local-files"
-    sender_id: "to-fusion"
+    sender_id: "to-fustord"
     enabled: true              # 设置为 true 以自动启动
 ```
 
 ## 命令指南
 
-*   **启动服务**: `fustor-sensord start -D` (后台运行) 或 `fustor-sensord start` (前台运行)
-*   **停止服务**: `fustor-sensord stop`
+*   **启动服务**: `sensord start -D` (后台运行) 或 `sensord start` (前台运行)
+*   **停止服务**: `sensord stop`
 *   **查看状态**: 访问 `http://localhost:8100` 查看 Web 控制台。
 
 ## 数据可靠性保证 (Data Reliability)
 
-sensord 遵循 **"瘦 sensord 感知 + 胖 Fusion 裁决"** 架构。
+sensord 遵循 **"瘦 sensord 感知 + 胖 fustord 裁决"** 架构。
 
 ### Leader/Follower 模式
 
@@ -78,7 +78,7 @@ sensord 遵循 **"瘦 sensord 感知 + 胖 Fusion 裁决"** 架构。
 | **Follower** | ✅ | ❌ | ❌ | ❌ |
 
 - **先到先得**：第一个建立 Session 的 sensord 成为 Leader
-- **故障转移**：仅当 Leader 心跳超时后，Fusion 才释放 Leader 锁
+- **故障转移**：仅当 Leader 心跳超时后，fustord 才释放 Leader 锁
 
 ### 消息类型 (`message_source`)
 

@@ -2,7 +2,7 @@
 Receiver abstraction for Fustor.
 
 A Receiver is responsible for accepting events over a transport protocol
-(HTTP, gRPC, etc.) on the Fusion side.
+(HTTP, gRPC, etc.) on the fustord side.
 """
 from abc import ABC, abstractmethod
 from typing import Any, Dict, List, Optional, Callable, Awaitable, Type

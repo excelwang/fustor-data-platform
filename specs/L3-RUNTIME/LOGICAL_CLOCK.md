@@ -27,7 +27,7 @@ Fustor 严格区分"数据一致性时间"与"系统运行时间"，并在架构
 | 层面 | 组件 | 核心逻辑 | 目的 |
 | :--- | :--- | :--- | :--- |
 | **sensord 层** | **Source FS Clock** | **影子参考系 (Shadow Reference Frame)** | 保护本地 LRU 和扫描频率，防止受 NFS 时间跳变干扰 |
-| **Fusion 层** | **View FS Clock** | **统计逻辑水位线 (Watermark)** | 驱动全局一致性判定 (Suspect/Tombstone)，提供真实 Age |
+| **fustord 层** | **View FS Clock** | **统计逻辑水位线 (Watermark)** | 驱动全局一致性判定 (Suspect/Tombstone)，提供真实 Age |
 
 ---
 
@@ -77,7 +77,7 @@ self.watch_manager.schedule(path, lru_timestamp)
 
 ### 3.3 职责限制
 
-sensord 侧的时钟逻辑主要用于本地资源管理 (LRU) 和 **维持内部事件单调性**，但也通过 `index` 字段将校准后的时间传递给 Fusion。时间异常的最终裁决仍由 Fusion 侧的 LogicalClock 负责。
+sensord 侧的时钟逻辑主要用于本地资源管理 (LRU) 和 **维持内部事件单调性**，但也通过 `index` 字段将校准后的时间传递给 fustord。时间异常的最终裁决仍由 fustord 侧的 LogicalClock 负责。
 
 sensord 发送的消息携带：
 - 原始 `mtime` (NFS 及其逻辑时间)
@@ -85,35 +85,35 @@ sensord 发送的消息携带：
 
 ---
 
-## 4. Fusion 侧：View FS 时钟 (全局裁决)
+## 4. fustord 侧：View FS 时钟 (全局裁决)
 
-Fusion 侧的逻辑时钟（Watermark）是系统的"真相之钟"，它决定了如何合并来自不同 sensord 的消息。
+fustord 侧的逻辑时钟（Watermark）是系统的"真相之钟"，它决定了如何合并来自不同 sensord 的消息。
 
 ### 4.1 简化逻辑时钟算法 (Simplified Logical Clock)
 
-Fusion 采用 **纯物理时间驱动的水位线**，完全免疫 mtime 异常。
+fustord 采用 **纯物理时间驱动的水位线**，完全免疫 mtime 异常。
 
 **公式**：
 
 ```python
-Watermark = Fusion_Physical_Time - Mode_Skew
+Watermark = fustord_Physical_Time - Mode_Skew
 ```
 
 **实现** (`fustor_core/clock/logical_clock.py`)：
 
 #### A. Skew 采样
 
-对于每个 Realtime 事件，计算 Fusion 本地时间与 mtime 的差异：
+对于每个 Realtime 事件，计算 fustord 本地时间与 mtime 的差异：
 
 ```python
 if mtime and can_sample_skew:
-    reference_time = time.time()  # Fusion Local Time
+    reference_time = time.time()  # fustord Local Time
     diff = int(reference_time - mtime)
     self._global_buffer.append(diff)
     self._global_histogram[diff] += 1
 ```
 
-- **免疫力**: 使用 Fusion Local Time 作为参考系，免疫 sensord 时钟偏差
+- **免疫力**: 使用 fustord Local Time 作为参考系，免疫 sensord 时钟偏差
 
 #### B. Mode Skew 选举
 
@@ -144,7 +144,7 @@ class LogicalClock:
     def update(self, mtime: Optional[float], can_sample_skew: bool = True) -> float:
         """更新时钟状态，返回当前水位线
         
-        注：始终使用 Fusion Local Time 作为物理参考，免疫 sensord 时钟偏差
+        注：始终使用 fustord Local Time 作为物理参考，免疫 sensord 时钟偏差
         """
     
     def get_watermark(self) -> float:
@@ -164,7 +164,7 @@ class LogicalClock:
 ### 5.1 冷启动问题 (Cold Start Issue)
 
 **场景描述**：
-当 Fusion 刚启动或 View 刚创建时，若第一批事件为 Snapshot/Audit（而非 Realtime），逻辑时钟可能出现以下行为：
+当 fustord 刚启动或 View 刚创建时，若第一批事件为 Snapshot/Audit（而非 Realtime），逻辑时钟可能出现以下行为：
 
 1. **Skew 采样不足**：`_global_histogram` 为空，`_compute_mode_skew()` 返回 0
 2. **Watermark 回退到物理时间**：`baseline = time.time() - 0 = time.time()`
@@ -184,14 +184,14 @@ def get_watermark(self) -> float:
 - 这确保了 Age 不会为负值，但可能导致冷启动时的 Suspect 判定偏宽松
 
 **建议处理方式**：
-- 在生产环境中，sensord 应优先建立 Realtime 连接，使 Fusion 有机会在 Snapshot 前校准 Skew
+- 在生产环境中，sensord 应优先建立 Realtime 连接，使 fustord 有机会在 Snapshot 前校准 Skew
 - 对于关键场景，可在配置中增加 `initial_suspect_window` 参数，冷启动期间采用更宽松的 Suspect 阈值
 
 ---
 
 ## 6. 处理策略对照表
 
-| 场景 | sensord (Source FS) 行为 | Fusion (View FS) 行为 |
+| 场景 | sensord (Source FS) 行为 | fustord (View FS) 行为 |
 | :--- | :--- | :--- |
 | **正常流逝** | 顺延 P99 校准，LRU 保持稳定 | Watermark 随流逝时间稳健推进 |
 | **mtime 跳向未来** | 归一化时间保持稳定 | **拒绝推进水位线**；标记该文件为 `integrity_suspect` |
@@ -216,8 +216,8 @@ def get_watermark(self) -> float:
 
 ## 8. 优势总结
 
-1.  **层级隔离**: sensord 保护本地资源，Fusion 保护全局一致性
-2.  **免疫单点故障**: 即使某个 sensord 时钟彻底错乱，Fusion 通过全局 Mode 选举将其样本识别为异常并剔除
+1.  **层级隔离**: sensord 保护本地资源，fustord 保护全局一致性
+2.  **免疫单点故障**: 即使某个 sensord 时钟彻底错乱，fustord 通过全局 Mode 选举将其样本识别为异常并剔除
 3.  **高精度与强健性**: 兼顾了实时快进的高精度和基准线流逝的强健性
 4.  **自愈能力**: 长期无写入时，Watermark 随物理时间自动推进，避免 Suspect 永久滞留
 5.  **可观测性**: 通过 `logical_clock.hybrid_now()` 可获取当前混合时间，便于监控和调试

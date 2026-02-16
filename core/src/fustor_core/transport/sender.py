@@ -2,7 +2,7 @@
 Sender abstraction for Fustor.
 
 A Sender is responsible for transmitting events over a transport protocol
-(HTTP, gRPC, etc.) from sensord to Fusion.
+(HTTP, gRPC, etc.) from sensord to fustord.
 """
 import time
 from abc import ABC, abstractmethod
@@ -21,7 +21,7 @@ class Sender(ABC):
     
     A Sender handles:
     - Transport protocol implementation (HTTP, gRPC)
-    - Session creation with Fusion
+    - Session creation with fustord
     - Event batch transmission
     - Heartbeat maintenance
     
@@ -72,7 +72,7 @@ class Sender(ABC):
         session_timeout_seconds: Optional[int] = None
     ) -> Dict[str, Any]:
         """
-        Create a new session with the Fusion receiver.
+        Create a new session with the fustord receiver.
         
         Args:
             task_id: Identifier for this pipe 
@@ -95,7 +95,7 @@ class Sender(ABC):
         metadata: Optional[Dict[str, Any]] = None
     ) -> Dict[str, Any]:
         """
-        Send a batch of events to Fusion.
+        Send a batch of events to fustord.
         This is a template method that wraps the actual implementation with metrics.
         
         Args:

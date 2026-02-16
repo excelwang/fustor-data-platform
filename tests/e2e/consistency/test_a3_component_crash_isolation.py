@@ -29,7 +29,7 @@ class TestComponentCrashIsolation:
     def test_source_component_isolation_partial_failure(
         self,
         docker_env,
-        fusion_client,
+        fustord_client,
         setup_sensords,
         clean_shared_dir,
         wait_for_audit
@@ -57,7 +57,7 @@ class TestComponentCrashIsolation:
         wait_for_audit()
 
         # 3. Verify Isolation — readable file should still be synced
-        assert fusion_client.wait_for_file_in_tree(
+        assert fustord_client.wait_for_file_in_tree(
             f"/{os.path.relpath(readable_dir, MOUNT_POINT)}/file1.txt",
             timeout=SHORT_TIMEOUT
         ), "Readable file should be synced despite sibling permission error"
@@ -84,26 +84,26 @@ class TestComponentCrashIsolation:
     def test_sender_pipe_isolation_network_partition(
         self,
         docker_env,
-        fusion_client,
+        fustord_client,
         setup_sensords,
         clean_shared_dir
     ):
         """
-        Scenario: Sender/Pipe Component Isolation (Fusion 不可用).
-        验证 sensord Pipe 在 Fusion 不可用时不崩溃，恢复后自动续传。
+        Scenario: Sender/Pipe Component Isolation (fustord 不可用).
+        验证 sensord Pipe 在 fustord 不可用时不崩溃，恢复后自动续传。
         Spec 依据: specs/05-Stability.md §1.1 (连接重试: 指数退避)
         """
-        assert fusion_client.wait_for_view_ready(timeout=MEDIUM_TIMEOUT)
+        assert fustord_client.wait_for_view_ready(timeout=MEDIUM_TIMEOUT)
 
         # 提前定义变量，避免 NameError
         test_file = f"{MOUNT_POINT}/sender_isolation_{int(time.time())}.txt"
         test_file_rel = "/" + os.path.relpath(test_file, MOUNT_POINT)
 
-        # 1. 暂停 Fusion 容器（只用 docker pause，不要 kill -STOP）
+        # 1. 暂停 fustord 容器（只用 docker pause，不要 kill -STOP）
         subprocess.run(["docker", "pause", CONTAINER_FUSION], check=True)
 
         try:
-            # 2. 在 Fusion 不可用期间产生事件
+            # 2. 在 fustord 不可用期间产生事件
             docker_manager.create_file_in_container(
                 CONTAINER_CLIENT_A, test_file, "buffered content"
             )
@@ -117,20 +117,20 @@ class TestComponentCrashIsolation:
                 ["sh", "-c", "cat /root/.fustor/sensord.pid && kill -0 $(cat /root/.fustor/sensord.pid)"]
             )
             assert check_sensord.returncode == 0, \
-                "sensord 进程应在 Fusion 不可用时存活 (specs/05-Stability.md §1.1)"
+                "sensord 进程应在 fustord 不可用时存活 (specs/05-Stability.md §1.1)"
 
         finally:
-            # 4. 恢复 Fusion
+            # 4. 恢复 fustord
             subprocess.run(["docker", "unpause", CONTAINER_FUSION], check=True)
 
-        # 5. 验证数据恢复 — Pipe 应在 Fusion 恢复后自动重传缓冲事件
-        assert fusion_client.wait_for_file_in_tree(test_file_rel, timeout=LONG_TIMEOUT), \
-            "Pipe 应在 Fusion 恢复后续传缓冲事件 (specs/05-Stability.md §1.1)"
+        # 5. 验证数据恢复 — Pipe 应在 fustord 恢复后自动重传缓冲事件
+        assert fustord_client.wait_for_file_in_tree(test_file_rel, timeout=LONG_TIMEOUT), \
+            "Pipe 应在 fustord 恢复后续传缓冲事件 (specs/05-Stability.md §1.1)"
 
     def test_receiver_isolation_malformed_payload(
         self,
         docker_env,
-        fusion_client,
+        fustord_client,
         setup_sensords,
         clean_shared_dir
     ):
@@ -138,7 +138,7 @@ class TestComponentCrashIsolation:
         Scenario: Receiver 接收畸形数据后不崩溃。
         Spec 依据: specs/05-Stability.md §1.2 (异常隔离)
         """
-        assert fusion_client.wait_for_view_ready(timeout=MEDIUM_TIMEOUT)
+        assert fustord_client.wait_for_view_ready(timeout=MEDIUM_TIMEOUT)
 
         # Use exposed receiver port (18889) to test receiver isolation specifically.
         # Note: main port (8102) now also has ingestion routes via pipe_router,
@@ -166,18 +166,18 @@ class TestComponentCrashIsolation:
         assert resp.status_code in [400, 422, 500], \
             f"Schema 不匹配应被拒绝, 实际返回: {resp.status_code} {resp.text}"
 
-        # --- 验证: Fusion 在接受畸形数据后仍能正常处理合法请求 ---
+        # --- 验证: fustord 在接受畸形数据后仍能正常处理合法请求 ---
         test_file = f"{MOUNT_POINT}/receiver_isolation_{int(time.time())}.txt"
         test_file_rel = "/" + os.path.relpath(test_file, MOUNT_POINT)
         docker_manager.create_file_in_container(CONTAINER_CLIENT_A, test_file, "content")
 
-        assert fusion_client.wait_for_file_in_tree(test_file_rel, timeout=MEDIUM_TIMEOUT), \
-            "Fusion 应在处理畸形请求后继续正常工作 (specs/05-Stability.md §1.2)"
+        assert fustord_client.wait_for_file_in_tree(test_file_rel, timeout=MEDIUM_TIMEOUT), \
+            "fustord 应在处理畸形请求后继续正常工作 (specs/05-Stability.md §1.2)"
 
     def test_view_component_empty_and_oversized_batch_isolation(
         self,
         docker_env,
-        fusion_client,
+        fustord_client,
         setup_sensords,
         clean_shared_dir
     ):
@@ -186,7 +186,7 @@ class TestComponentCrashIsolation:
         Spec 依据: specs/05-Stability.md §4
         替换原 test_view_component_logic_error_isolation（与 test_i 重复）。
         """
-        assert fusion_client.wait_for_view_ready(timeout=MEDIUM_TIMEOUT)
+        assert fustord_client.wait_for_view_ready(timeout=MEDIUM_TIMEOUT)
         # Use exposed receiver port (18889)
         base_url = "http://localhost:18889"
 
@@ -201,9 +201,9 @@ class TestComponentCrashIsolation:
         assert resp.status_code != 500, \
             f"空 Batch 不应导致 500 错误, 实际: {resp.status_code}"
 
-        # --- 验证 Fusion 仍正常工作 ---
+        # --- 验证 fustord 仍正常工作 ---
         test_file = f"{MOUNT_POINT}/batch_isolation_{int(time.time())}.txt"
         test_file_rel = "/" + os.path.relpath(test_file, MOUNT_POINT)
         docker_manager.create_file_in_container(CONTAINER_CLIENT_A, test_file, "ok")
-        assert fusion_client.wait_for_file_in_tree(test_file_rel, timeout=MEDIUM_TIMEOUT), \
-            "Fusion 应在处理异常 Batch 后继续正常工作"
+        assert fustord_client.wait_for_file_in_tree(test_file_rel, timeout=MEDIUM_TIMEOUT), \
+            "fustord 应在处理异常 Batch 后继续正常工作"

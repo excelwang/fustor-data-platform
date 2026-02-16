@@ -11,7 +11,7 @@
 ├─────────────────────────────────────────────────────────────────────────┤
 │                                                                         │
 │                    ┌─────────────┐   ┌─────────────────────────────────┐│
-│                    │   Fusion    │   │         NFS Server              ││
+│                    │   fustord    │   │         NFS Server              ││
 │                    │   :18102    │   │      /exports                   ││
 │                    └─────────────┘   └─────────────────────────────────┘│
 │                          │                         │                     │
@@ -55,7 +55,7 @@ uv run pytest tests/e2e/consistency/test_a1_leader_election_first.py -v
 
 本框架引入了**智能环境复用机制**
 - **自动检测**: 每次启动测试时，系统会计算 `docker-compose.yml`、`Dockerfile` 以及所有 `pyproject.toml` 的哈希值。
-- **智能复用**: 如果配置和依赖未发生变化，系统将直接复用运行中的容器，仅重启 Fusion 以应用最新配置（启动时间 ~5s）。
+- **智能复用**: 如果配置和依赖未发生变化，系统将直接复用运行中的容器，仅重启 fustord 以应用最新配置（启动时间 ~5s）。
 - **自动重建**: 如果检测到任何影响环境的变更，系统会自动执行 `docker-compose up --build` 进行冷启动。
 
 ## 环境管理与注意事项
@@ -73,13 +73,13 @@ rm tests/e2e/.env_state  # 强制刷新哈希状态
 ```
 
 ### 2. 代码生效机制
-- **热生效**: 核心代码（`fustor_core`, `sensord`, `fustor_fusion` 等）已通过 **Volume 挂载**。修改 `src` 目录代码后，测试固件会自动重启进程使代码生效，**无需重启容器**。
+- **热生效**: 核心代码（`fustor_core`, `sensord`, `fustord` 等）已通过 **Volume 挂载**。修改 `src` 目录代码后，测试固件会自动重启进程使代码生效，**无需重启容器**。
 - **三方库变更**: 修改了 `pyproject.toml` 中的 `dependencies` 后，系统会自动触发镜像重建。
 
 ### 3. 排障与日志
 测试失败时，可以通过以下命令查看实时日志：
-- **Fusion 日志**: `docker logs -f fustor-fusion`
-- **sensord 日志**: `docker exec client-a cat /tmp/fustor-sensord.log`
+- **fustord 日志**: `docker logs -f fustord`
+- **sensord 日志**: `docker exec client-a cat /tmp/sensord.log`
 - **查看状态**: `docker compose -f tests/e2e/docker-compose.yml ps`
 
 ## 测试用例清单

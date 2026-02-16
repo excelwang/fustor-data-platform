@@ -1,6 +1,6 @@
 # Fustor 平台部署安装指南
 
-本文档旨在指导管理员从零开始部署 Fustor 数据融合存储平台，包括 **Fusion（服务端）** 和 **sensord（采集端）** 的安装、配置与启动。
+本文档旨在指导管理员从零开始部署 Fustor 数据融合存储平台，包括 **fustord（服务端）** 和 **sensord（采集端）** 的安装、配置与启动。
 
 ## 1. 环境准备
 
@@ -27,7 +27,7 @@ Fustor 使用统一的主目录来存放配置、日志和持久化数据。
 *   **建议的目录结构：**
 ```text
 ~/.fustor/
-├── fusion-config/       # Fusion 服务端配置文件
+├── fustord-config/       # fustord 服务端配置文件
 │   └── default.yaml     # 核心配置文件，包含全局设置和默认
 ├── sensord-config/        # sensord 采集端配置文件
 │   └── default.yaml     # 核心配置文件，包含日志和全局设置
@@ -37,25 +37,25 @@ Fustor 使用统一的主目录来存放配置、日志和持久化数据。
 
 ---
 
-## 3. 部署 Fusion (服务端)
+## 3. 部署 fustord (服务端)
 
-Fusion 是 Fustor 的核心存储引擎，负责接收数据并提供查询视图。
+fustord 是 Fustor 的核心存储引擎，负责接收数据并提供查询视图。
 
 ### 3.1 安装
 
 ```bash
 # 推荐使用 uv
-uv pip install fustor-fusion fustor-view-fs fustor-receiver-http
+uv pip install fustord fustor-view-fs fustor-receiver-http
 
 # 或使用 pip
-pip install fustor-fusion fustor-view-fs fustor-receiver-http
+pip install fustord fustor-view-fs fustor-receiver-http
 ```
 
 ### 3.2 配置
 
-在 `~/.fustor/fusion-config/` 目录下创建配置文件（例如 `default.yaml`）。该目录下所有 `.yaml` 文件会被合并加载，支持跨文件引用。
+在 `~/.fustor/fustord-config/` 目录下创建配置文件（例如 `default.yaml`）。该目录下所有 `.yaml` 文件会被合并加载，支持跨文件引用。
 
-# 样例配置 (`~/.fustor/fusion-config/default.yaml`):
+# 样例配置 (`~/.fustor/fustord-config/default.yaml`):
 
 ```yaml
 # 0. 全局设置 (可选)
@@ -98,29 +98,29 @@ pipes:
 
 ```bash
 # 前台启动（加载且仅加载 default.yaml 中的配置）
-fustor-fusion start
+fustord start
 
 # 启动特定配置文件中的 Pipes
-fustor-fusion start my-custom-pipes.yaml
+fustord start my-custom-pipes.yaml
 
 # 或后台启动
-fustor-fusion start -D
+fustord start -D
 ```
 
 ---
 
 ## 4. 部署 sensord (采集端)
 
-sensord 部署在数据源所在的机器上，负责监听数据源变更并推送给 Fusion。
+sensord 部署在数据源所在的机器上，负责监听数据源变更并推送给 fustord。
 
 ### 4.1 安装
 
 ```bash
 # 推荐使用 uv
-uv pip install fustor-sensord fustor-source-fs fustor-sender-http
+uv pip install sensord fustor-source-fs fustor-sender-http
 
 # 或使用 pip
-pip install fustor-sensord fustor-source-fs fustor-sender-http
+pip install sensord fustor-source-fs fustor-sender-http
 ```
 
 ### 4.2 配置
@@ -146,19 +146,19 @@ sources:
 
 # 2. 定义发送器 (Sender): 推送目标
 senders:
-  fusion-server:
-    driver: fusion        # 使用 Fusion HTTP 驱动
-    uri: "http://<FUSION_SERVER_IP>:18888"  # Fusion 服务器接收端口
+  fustord-server:
+    driver: fustord        # 使用 fustord HTTP 驱动
+    uri: "http://<FUSION_SERVER_IP>:18888"  # fustord 服务器接收端口
     batch_size: 1000      # 批量发送条数
     timeout_sec: 30       # 请求超时时间
     credential:
-      key: "sensord-ingestion-key" # 必须与 Fusion receivers 配置中的 key 一致
+      key: "sensord-ingestion-key" # 必须与 fustord receivers 配置中的 key 一致
 
 # 3. 定义同步管道 (Pipe): 绑定源与目标
 pipes:
   research-sync-task:
     source: local-research-files  # 引用 source id
-    sender: fusion-server         # 引用 sender id
+    sender: fustord-server         # 引用 sender id
     # 错误重试配置
     error_retry_interval: 5.0     # 初始重试间隔
     max_consecutive_errors: 5     # 最大连续错误数
@@ -168,10 +168,10 @@ pipes:
 
 ```bash
 # 前台启动 (仅加载 default.yaml)
-fustor-sensord start
+sensord start
 
 # 后台启动
-fustor-sensord start -D
+sensord start -D
 ```
 
 ---
@@ -184,19 +184,19 @@ Fustor 支持在不重启服务的情况下动态更新配置。
 当你修改了 YAML 配置文件后，可以运行以下命令让正在运行的守护进程重新加载配置：
 
 ```bash
-# 重载 Fusion 配置
-fustor-fusion reload
+# 重载 fustord 配置
+fustord reload
 
 # 重载 sensord 配置
-fustor-sensord reload
+sensord reload
 ```
 
 ### 5.2 运行机制
 *   **信号触发**: CLI 命令本质上是向后台进程发送了 `SIGHUP` 信号。
 *   **增量更新**: 系统会计算配置差异，自动启动新增加的管道，停止已禁用的组件关联的管道，并更新全局参数（如日志级别），整个过程中已存在的活动连接不受影响。
 
-*   **sensord 报错 "Connection refused"**: 检查 `senders` 配置中的 IP 和端口是否正确，确保 Fusion 服务器防火墙允许 18888 端口（Receiver 端口）通过。
-*   **Fusion 报错 "Unauthorized"**: 检查 sensord 的 `api_key` 是否与 Fusion `receivers` 配置中的 Key 完全一致。
+*   **sensord 报错 "Connection refused"**: 检查 `senders` 配置中的 IP 和端口是否正确，确保 fustord 服务器防火墙允许 18888 端口（Receiver 端口）通过。
+*   **fustord 报错 "Unauthorized"**: 检查 sensord 的 `api_key` 是否与 fustord `receivers` 配置中的 Key 完全一致。
 *   **配置未生效**: 确保配置文件扩展名为 `.yaml`。对于非 `default.yaml` 的配置，如果在启动时未明确指定文件，需在修改后运行 `reload` 命令或手动重启。默认情况下，`start` 不带参数仅会激活 `default.yaml` 中的管道。
 
 ---
@@ -208,12 +208,12 @@ fustor-sensord reload
 | 参数路径 | 类型 | 默认值 | 说明 |
 | :--- | :--- | :--- | :--- |
 | `logging` | string/dict | `"INFO"` | 日志级别或详细配置 |
-| `host` | string | `"0.0.0.0"` | (Fusion) 管理 API 监听地址 |
-| `port` | int | `8101` | (Fusion) 管理 API 监听端口 |
-| `session_cleanup_interval` | float | `60.0` | (Fusion) 会话清理间隔(秒) |
+| `host` | string | `"0.0.0.0"` | (fustord) 管理 API 监听地址 |
+| `port` | int | `8101` | (fustord) 管理 API 监听端口 |
+| `session_cleanup_interval` | float | `60.0` | (fustord) 会话清理间隔(秒) |
 
 
-### 6.2 Fusion 配置参数
+### 6.2 fustord 配置参数
 
 **接收器 (`receivers` 节)**
 | 参数名 | 类型 | 默认值 | 说明 |
@@ -232,7 +232,7 @@ fustor-sensord reload
 | `driver_params` | dict | `{}` | 驱动特定参数 |
 | `api_keys` | list[str] | `[]` | **(v0.8.9+)** 专门用于查询该视图的 API Key 列表 |
 
-**Fusion 管道 (`pipes` 节)**
+**fustord 管道 (`pipes` 节)**
 | 参数名 | 类型 | 默认值 | 说明 |
 | :--- | :--- | :--- | :--- |
 | `receiver` | string | (必填) | 关联的 Receiver ID |
@@ -256,7 +256,7 @@ fustor-sensord reload
 **发送器 (`senders` 节)**
 | 参数名 | 类型 | 默认值 | 说明 |
 | :--- | :--- | :--- | :--- |
-| `driver` | string | (必填) | 驱动类型，如 `"fusion"` |
+| `driver` | string | (必填) | 驱动类型，如 `"fustord"` |
 | `uri` | string | (必填) | 目标地址 URI |
 | `batch_size` | int | `1000` | 批量发送的最大事件数 |
 | `max_retries` | int | `10` | 发送失败重试次数 |

@@ -30,7 +30,7 @@ class TestNewLeaderResumesDuties:
     def test_new_leader_performs_audit(
         self,
         docker_env,
-        fusion_client,
+        fustord_client,
         setup_sensords,
         clean_shared_dir,
         wait_for_audit,
@@ -58,7 +58,7 @@ class TestNewLeaderResumesDuties:
             ready = False
             while time.time() - start_wait < EXTREME_TIMEOUT:
                 try:
-                    fusion_client.get_stats()
+                    fustord_client.get_stats()
                     ready = True 
                     break
                 except Exception:
@@ -71,7 +71,7 @@ class TestNewLeaderResumesDuties:
             new_leader = None
             start_poll = time.time()
             while time.time() - start_poll < EXTREME_TIMEOUT:
-                sessions = fusion_client.get_sessions()
+                sessions = fustord_client.get_sessions()
                 for s in sessions:
                     if s.get("role") == "leader" and s.get("sensord_id", "").startswith("client-b"):
                         new_leader = s
@@ -103,10 +103,10 @@ class TestNewLeaderResumesDuties:
             
             docker_manager.create_file_in_container(CONTAINER_CLIENT_C, marker_file, content="marker")
             time.sleep(STRESS_DELAY)
-            assert fusion_client.wait_for_file_in_tree(marker_file_rel, timeout=LONG_TIMEOUT) is not None
+            assert fustord_client.wait_for_file_in_tree(marker_file_rel, timeout=LONG_TIMEOUT) is not None
             
             # File should be discovered by new leader's Audit
-            found = fusion_client.wait_for_file_in_tree(test_file_rel, timeout=MEDIUM_TIMEOUT)
+            found = fustord_client.wait_for_file_in_tree(test_file_rel, timeout=MEDIUM_TIMEOUT)
             
             assert found is not None, \
                 "New leader should discover blind-spot file via Audit"
@@ -115,7 +115,7 @@ class TestNewLeaderResumesDuties:
             start = time.time()
             flag_set = False
             while time.time() - start < LONG_TIMEOUT:
-                flags = fusion_client.check_file_flags(test_file_rel)
+                flags = fustord_client.check_file_flags(test_file_rel)
                 if flags["sensord_missing"] is True:
                     flag_set = True
                     break
@@ -136,7 +136,7 @@ class TestNewLeaderResumesDuties:
     def test_new_leader_performs_snapshot(
         self,
         docker_env,
-        fusion_client,
+        fustord_client,
         setup_sensords,
         clean_shared_dir,
         reset_leadership
@@ -176,7 +176,7 @@ class TestNewLeaderResumesDuties:
             ready = False
             while time.time() - start_wait < EXTREME_TIMEOUT:
                 try:
-                    fusion_client.get_stats()
+                    fustord_client.get_stats()
                     ready = True 
                     break
                 except Exception:
@@ -196,10 +196,10 @@ class TestNewLeaderResumesDuties:
             )
             
             # New leader B should sync this via realtime
-            found = fusion_client.wait_for_file_in_tree(new_file_rel, timeout=MEDIUM_TIMEOUT)
+            found = fustord_client.wait_for_file_in_tree(new_file_rel, timeout=MEDIUM_TIMEOUT)
             
             assert found is not None, \
-                f"New leader should sync files via realtime, got sessions: {fusion_client.get_sessions()}"
+                f"New leader should sync files via realtime, got sessions: {fustord_client.get_sessions()}"
             
         finally:
             docker_manager.start_container(CONTAINER_CLIENT_A)
@@ -214,7 +214,7 @@ class TestNewLeaderResumesDuties:
     def test_original_leader_becomes_follower_on_return(
         self,
         docker_env,
-        fusion_client,
+        fustord_client,
         setup_sensords,
         reset_leadership
     ):
@@ -239,7 +239,7 @@ class TestNewLeaderResumesDuties:
             time.sleep(MEDIUM_TIMEOUT)
             
             # Check roles
-            sessions = fusion_client.get_sessions()
+            sessions = fustord_client.get_sessions()
             logger.info(f"Checking roles for returning sensord A. Sessions: {sessions}")
             
             roles = {}

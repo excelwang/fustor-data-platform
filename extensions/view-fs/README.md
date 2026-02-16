@@ -1,6 +1,6 @@
 # Fustor FS View Driver
 
-文件系统视图驱动程序，为 Fustor Fusion 提供基于路径的树形结构索引和一致性判定逻辑。
+文件系统视图驱动程序，为 Fustor fustord 提供基于路径的树形结构索引和一致性判定逻辑。
 
 ## 核心特性
 - **增量同步 (Incremental Sync)**: 支持全量快照、实时 inotify 事件以及定时审计的智能合并。
@@ -11,7 +11,7 @@
 - **高性能查询**: 针对千万级节点优化的内存哈希索引，支持 $O(1)$ 路径寻址。
 
 ## API 端点
-当在 Fusion 中以此驱动作为 View 时，暴露的端点包括：
+当在 fustord 中以此驱动作为 View 时，暴露的端点包括：
 - `GET /tree`: 获取目录采样树
 - `GET /stats`: 获取文件统计
 - `GET /blind-spots`: 获取盲区摘要
@@ -19,7 +19,7 @@
 - `PUT /suspect-list`: 提交巡检结果 (Sentinel Sweep)
 
 ## 配置参数
-在 `fusion-config.yaml` 中使用该驱动时的可选配置：
+在 `fustord-config.yaml` 中使用该驱动时的可选配置：
 ```yaml
 views:
   my-fs:

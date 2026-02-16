@@ -1,5 +1,5 @@
 [project]
-name = "fustor-sensord-mgmt"
+name = "sensord-mgmt"
 version = "0.9.1"
 description = "Management (L3) extension for Fustor sensord - Remote commands and upgrades"
 readme = "README.md"
@@ -7,7 +7,7 @@ requires-python = ">=3.11"
 license = "MIT"
 dependencies = [
     "fustor-core",
-    "fustor-sensord-sdk",
+    "sensord-sdk",
     "pyyaml>=6.0"
 ]
 

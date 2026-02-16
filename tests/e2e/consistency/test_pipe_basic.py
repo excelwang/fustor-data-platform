@@ -23,11 +23,11 @@ class TestPipeBasicOperations:
         self, 
         docker_env, 
         setup_sensords, 
-        fusion_client, 
+        fustord_client, 
         wait_for_audit
     ):
         """
-        Test that file creation is detected and synced to Fusion.
+        Test that file creation is detected and synced to fustord.
         """
         logger.info("Running file create test")
         
@@ -48,9 +48,9 @@ class TestPipeBasicOperations:
         )
         logger.info(f"Created test file: {test_file}")
         
-        # Wait for Fusion to detect it
-        # Note: Paths in Fusion tree are absolute as seen by the sensord
-        success = fusion_client.wait_for_file_in_tree(test_file_rel, timeout=SHORT_TIMEOUT)
+        # Wait for fustord to detect it
+        # Note: Paths in fustord tree are absolute as seen by the sensord
+        success = fustord_client.wait_for_file_in_tree(test_file_rel, timeout=SHORT_TIMEOUT)
         assert success, f"File {file_name} not found in tree after sync at {test_file}"
         
         logger.info("File created and detected successfully")
@@ -59,7 +59,7 @@ class TestPipeBasicOperations:
         self, 
         docker_env, 
         setup_sensords, 
-        fusion_client, 
+        fustord_client, 
         wait_for_audit
     ):
         """
@@ -83,7 +83,7 @@ class TestPipeBasicOperations:
         )
         
         # Wait for initial sync
-        assert fusion_client.wait_for_file_in_tree(test_file_rel), f"Initial file {test_file} not detected"
+        assert fustord_client.wait_for_file_in_tree(test_file_rel), f"Initial file {test_file} not detected"
         
         # Modify file
         docker_env.exec_in_container(
@@ -95,7 +95,7 @@ class TestPipeBasicOperations:
         # Wait for sync and verify
         # Note: In V2, we check it's still there and potentially mtime
         time.sleep(INGESTION_DELAY)
-        found = fusion_client.wait_for_file_in_tree(file_path=test_file_rel, timeout=SHORT_TIMEOUT)
+        found = fustord_client.wait_for_file_in_tree(file_path=test_file_rel, timeout=SHORT_TIMEOUT)
         
         assert found, f"File {file_name} not found after modification at {test_file}"
         logger.info(f"✅ File modification detected")
@@ -104,7 +104,7 @@ class TestPipeBasicOperations:
         self, 
         docker_env, 
         setup_sensords, 
-        fusion_client, 
+        fustord_client, 
         wait_for_audit
     ):
         """
@@ -128,7 +128,7 @@ class TestPipeBasicOperations:
         )
         
         # Wait for initial sync
-        assert fusion_client.wait_for_file_in_tree(file_path=test_file_rel, timeout=SHORT_TIMEOUT)
+        assert fustord_client.wait_for_file_in_tree(file_path=test_file_rel, timeout=SHORT_TIMEOUT)
         
         # Delete file
         docker_env.exec_in_container(
@@ -141,7 +141,7 @@ class TestPipeBasicOperations:
         wait_for_audit()
         
         # Verify file is removed from tree
-        removed = fusion_client.wait_for_file_not_in_tree(
+        removed = fustord_client.wait_for_file_not_in_tree(
             file_path=test_file_rel,
             timeout=MEDIUM_TIMEOUT
         )

@@ -75,7 +75,7 @@ async def test_rule3_protection_old_mtime_injection(parser):
 async def test_audit_late_start_signal(parser):
     """
     Test scenario where an Audit event arrives slightly BEFORE the handle_audit_start signal.
-    Fusion should auto-detect audit start and handle_audit_start should preserve existing state.
+    fustord should auto-detect audit start and handle_audit_start should preserve existing state.
     """
     now = time.time()
     # 1. Audit event arrives out-of-order

@@ -51,7 +51,7 @@ class SenderConfigServiceInterface(BaseConfigService[SenderConfig]):
     """
     Interface for managing SenderConfig objects.
     
-    Senders are responsible for transmitting events from sensord to Fusion.
+    Senders are responsible for transmitting events from sensord to fustord.
     """
     async def cleanup_obsolete_configs(self) -> List[str]:
         ...
@@ -139,7 +139,7 @@ class SenderDriverServiceInterface(Protocol):
     """
     Interface for discovering and interacting with Sender driver classes.
     
-    Senders are responsible for transmitting events from sensord to Fusion.
+    Senders are responsible for transmitting events from sensord to fustord.
     """
     def list_available_drivers(self) -> List[str]:
         ...
@@ -185,7 +185,7 @@ class PipeInstanceServiceInterface(BaseInstanceServiceInterface):
 
 class CommandProcessorInterface(Protocol):
     """
-    Interface for processing commands from Fusion (L3 Management).
+    Interface for processing commands from fustord (L3 Management).
     """
     async def process_commands(self, pipe: Any, commands: List[Dict[str, Any]]) -> None:
         """Process a list of management commands for a specific pipe."""

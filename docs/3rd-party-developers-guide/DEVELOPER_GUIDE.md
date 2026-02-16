@@ -30,11 +30,11 @@
     ```bash
     uvicorn sensord.src.sensord.app:app --reload --port 8100
     ```
-    *   要启动其他服务（如 Fusion），请替换 `sensord.src.sensord.app:app` 为对应服务的入口点。
+    *   要启动其他服务（如 fustord），请替换 `sensord.src.sensord.app:app` 为对应服务的入口点。
 
 ## 2. 技术栈
 - **核心框架**: FastAPI, SQLAlchemy 2.0 (Async), Pydantic v2
-- **数据库**: PostgreSQL 15+ (Fusion), JSON File State (sensord)
+- **数据库**: PostgreSQL 15+ (fustord), JSON File State (sensord)
 - **包管理**: uv
 
 ## 3. 测试

@@ -6,7 +6,7 @@
 # - NFS Server: exports shared directory
 # - NFS Client A/B: with Fustor sensords (Leader/Follower)
 # - NFS Client C: no sensord (blind-spot simulation)
-# - Fusion: central service
+# - fustord: central service
 
 services:
   # ============ Infrastructure Services ============
@@ -27,13 +27,13 @@ services:
       timeout: 3s
       retries: 30
 
-  fusion:
-    image: fustor-integration-fusion
+  fustord:
+    image: fustor-integration-fustord
     build:
       context: ../../
       dockerfile: tests/e2e/containers/fustor-services/Dockerfile
-    container_name: fustor-fusion
-    command: [ "fustor-fusion", "start" ]
+    container_name: fustord
+    command: [ "fustord", "start" ]
     environment:
       FUSTOR_FUSION_HOST: "0.0.0.0"
       FUSTOR_FUSION_PORT: "8102"
@@ -47,11 +47,11 @@ services:
       AUDIT_INTERVAL: "10.0"
       SENTINEL_INTERVAL: "5.0"
     volumes:
-      - fusion-data:/data/fusion
-      - ./config/fusion-config:/config/fusion-config
-      - ../../fusion/src/fustor_fusion:/usr/local/lib/python3.11/site-packages/fustor_fusion
+      - fustord-data:/data/fustord
+      - ./config/fustord-config:/config/fustord-config
+      - ../../fustord/src/fustord:/usr/local/lib/python3.11/site-packages/fustord
       - ../../core/src/fustor_core:/usr/local/lib/python3.11/site-packages/fustor_core
-      - ../../fusion-sdk/src/fustor_fusion_sdk:/usr/local/lib/python3.11/site-packages/fustor_fusion_sdk
+      - ../../fustord-sdk/src/fustord_sdk:/usr/local/lib/python3.11/site-packages/fustord_sdk
       - ../../extensions/view-fs/src/fustor_view_fs:/usr/local/lib/python3.11/site-packages/fustor_view_fs
       - ../../extensions/receiver-http/src/fustor_receiver_http:/usr/local/lib/python3.11/site-packages/fustor_receiver_http
       - ../../extensions/view-fs-forest/src/fustor_view_fs_forest:/usr/local/lib/python3.11/site-packages/fustor_view_fs_forest
@@ -86,7 +86,7 @@ services:
       MOUNT_OPTIONS: "actimeo=1,nolock"
       AGENT_ENABLED: "false"
       AGENT_ID: "sensord-a"
-      FUSION_ENDPOINT: "http://fusion:18888" # Points to Fusion Receiver Port
+      FUSION_ENDPOINT: "http://fustord:18888" # Points to fustord Receiver Port
       API_KEY: "test-api-key-123"
       FUSTOR_LOG_LEVEL: "DEBUG"
       LD_PRELOAD: "/usr/lib/x86_64-linux-gnu/faketime/libfaketime.so.1"
@@ -100,7 +100,7 @@ services:
       - ../../extensions/sender-echo/src/fustor_sender_echo:/usr/local/lib/python3.11/site-packages/fustor_sender_echo
       - ../../core/src/fustor_core:/usr/local/lib/python3.11/site-packages/fustor_core
       - ../../sensord-sdk/src/sensord_sdk:/usr/local/lib/python3.11/site-packages/sensord_sdk
-      - ../../fusion-sdk/src/fustor_fusion_sdk:/usr/local/lib/python3.11/site-packages/fustor_fusion_sdk
+      - ../../fustord-sdk/src/fustord_sdk:/usr/local/lib/python3.11/site-packages/fustord_sdk
     ports:
       - "18100:8100"
     networks:
@@ -108,7 +108,7 @@ services:
     depends_on:
       nfs-server:
         condition: service_healthy
-      fusion:
+      fustord:
         condition: service_healthy
     healthcheck:
       test: [ "CMD", "test", "-d", "/mnt/shared" ]
@@ -132,7 +132,7 @@ services:
       MOUNT_OPTIONS: "actimeo=1,nolock"
       AGENT_ENABLED: "false"
       AGENT_ID: "sensord-b"
-      FUSION_ENDPOINT: "http://fusion:18888" # Points to Fusion Receiver Port
+      FUSION_ENDPOINT: "http://fustord:18888" # Points to fustord Receiver Port
       API_KEY: "test-api-key-123"
       FUSTOR_LOG_LEVEL: "DEBUG"
       LD_PRELOAD: "/usr/lib/x86_64-linux-gnu/faketime/libfaketime.so.1"
@@ -146,7 +146,7 @@ services:
       - ../../extensions/sender-echo/src/fustor_sender_echo:/usr/local/lib/python3.11/site-packages/fustor_sender_echo
       - ../../core/src/fustor_core:/usr/local/lib/python3.11/site-packages/fustor_core
       - ../../sensord-sdk/src/sensord_sdk:/usr/local/lib/python3.11/site-packages/sensord_sdk
-      - ../../fusion-sdk/src/fustor_fusion_sdk:/usr/local/lib/python3.11/site-packages/fustor_fusion_sdk
+      - ../../fustord-sdk/src/fustord_sdk:/usr/local/lib/python3.11/site-packages/fustord_sdk
     ports:
       - "18103:8100"
     networks:
@@ -154,7 +154,7 @@ services:
     depends_on:
       nfs-server:
         condition: service_healthy
-      fusion:
+      fustord:
         condition: service_healthy
     healthcheck:
       test: [ "CMD", "test", "-d", "/mnt/shared" ]
@@ -196,6 +196,6 @@ networks:
 
 volumes:
   nfs-data:
-  fusion-data:
+  fustord-data:
   sensord-a-data:
   sensord-b-data:

@@ -23,7 +23,7 @@ class TestOnCommandFallback:
     def test_fallback_mechanism_works(
         self,
         docker_env,
-        fusion_client,
+        fustord_client,
         setup_sensords,
         clean_shared_dir
     ):
@@ -37,13 +37,13 @@ class TestOnCommandFallback:
            - 调用 `on_command_fallback`。
            - `on_command_fallback` 使用修复后的 `scan` 命令调用 sensord。
         4. 验证 sensord 收到命令并执行扫描，文件最终出现在视图中。
-        5. 验证 Fusion 日志确认触发了 Fallback。
+        5. 验证 fustord 日志确认触发了 Fallback。
         """
         from ..utils import docker_manager
         
         # 1. 确保环境就绪
-        assert fusion_client.wait_for_view_ready(timeout=VIEW_READY_TIMEOUT), "View did not become ready"
-        assert fusion_client.wait_for_sensord_ready("client-a", timeout=SHORT_TIMEOUT), "sensord A not ready"
+        assert fustord_client.wait_for_view_ready(timeout=VIEW_READY_TIMEOUT), "View did not become ready"
+        assert fustord_client.wait_for_sensord_ready("client-a", timeout=SHORT_TIMEOUT), "sensord A not ready"
 
         # 2. 创建测试文件
         test_file_name = f"fallback_test_{int(time.time())}.txt"
@@ -58,9 +58,9 @@ class TestOnCommandFallback:
 
         # 3. 触发 Fallback (通过传递未知参数导致 Driver 报错)
         print(f"[Test] Triggering fallback via on_demand_scan param for {test_file_rel}...")
-        response = fusion_client.api_request(
+        response = fustord_client.api_request(
             "GET", 
-            f"views/{fusion_client.view_id}/tree", 
+            f"views/{fustord_client.view_id}/tree", 
             params={"path": test_file_rel, "on_demand_scan": "true"}
         )
         assert response.status_code == 200, f"API call failed: {response.text}"
@@ -70,16 +70,16 @@ class TestOnCommandFallback:
         # 注意: 实际 API 返回结构可能有所不同，取决于 on_command_fallback 的返回值
         print(f"[Test] Fallback API Response: {data}")
 
-        # 4. 验证 Fusion 日志中存在 Fallback 触发记录
-        print("[Test] Verifying Fusion logs for Fallback trigger...")
-        fusion_log = docker_manager.exec_in_container(CONTAINER_FUSION, ["cat", "/root/.fustor/logs/fusion.log"]).stdout
+        # 4. 验证 fustord 日志中存在 Fallback 触发记录
+        print("[Test] Verifying fustord logs for Fallback trigger...")
+        fustord_log = docker_manager.exec_in_container(CONTAINER_FUSION, ["cat", "/root/.fustor/logs/fustord.log"]).stdout
         
         # FallbackDriverWrapper logs warning: "primary query failed (Type Error...), triggering On-Command Fallback..."
-        assert "triggering On-Command Fallback" in fusion_log, "Fusion log should indicate Fallback trigger"
+        assert "triggering On-Command Fallback" in fustord_log, "fustord log should indicate Fallback trigger"
         
         # 5. 验证文件出现在树中
         print("[Test] Verifying file visibility...")
-        found = fusion_client.wait_for_file_in_tree(test_file_rel, timeout=MEDIUM_TIMEOUT)
+        found = fustord_client.wait_for_file_in_tree(test_file_rel, timeout=MEDIUM_TIMEOUT)
         assert found, "File should appear after fallback scan"
         
         # 6. 验证 sensord 日志确认收到正确的 'scan' 命令

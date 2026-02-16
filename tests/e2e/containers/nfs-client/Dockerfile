@@ -16,7 +16,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 COPY sensord /app/sensord
 COPY core /app/core
 COPY sensord-sdk /app/sensord-sdk
-COPY fusion-sdk /app/fusion-sdk
+COPY fustord-sdk /app/fustord-sdk
 COPY extensions /app/extensions
 
 # Set fake version for setuptools-scm (since .git is not copied)
@@ -27,7 +27,7 @@ RUN pip install --no-cache-dir \
     python-dotenv \
     /app/core \
     /app/sensord-sdk \
-    /app/fusion-sdk \
+    /app/fustord-sdk \
     /app/extensions/schema-fs \
     /app/extensions/source-fs \
     /app/extensions/sender-http \

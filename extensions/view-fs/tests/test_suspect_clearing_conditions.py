@@ -21,7 +21,7 @@ def driver():
     with patch('time.time', return_value=10000.0):
         d = FSViewDriver(id="test_view", view_id="1")
         d.hot_file_threshold = 30.0
-        # Feed 5 samples to establish skew = 0 (mtime == fusion_time)
+        # Feed 5 samples to establish skew = 0 (mtime == fustord_time)
         for _ in range(5):
             d._logical_clock.update(10000.0)
         return d

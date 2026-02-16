@@ -10,7 +10,7 @@ from fustor_core.pipe import FustorPipe, PipeState
 from fustor_core.pipe.handler import SourceHandler
 from fustor_core.pipe.sender import SenderHandler
 from fustor_core.models.states import PipeInstanceDTO
-from fustor_core.exceptions import SessionObsoletedError, FusionConnectionError
+from fustor_core.exceptions import SessionObsoletedError, fustordConnectionError
 from fustor_core.pipe.mapper import EventMapper
 from fustor_core.common.metrics import get_metrics
 
@@ -30,7 +30,7 @@ class sensordPipe(FustorPipe, PipeLifecycleMixin, PipeLeaderMixin):
     sensord-side Pipe implementation.
     
     Orchestrates the data flow from Source to Sender:
-    1. Session lifecycle management with Fusion
+    1. Session lifecycle management with fustord
     2. Snapshot sync phase
     3. Message sync phase (EventBus)
     4. Periodic audit and sentinel checks
@@ -59,7 +59,7 @@ class sensordPipe(FustorPipe, PipeLifecycleMixin, PipeLeaderMixin):
             pipe_id: Unique identifier for this pipe
             config: Pipe configuration
             source_handler: Handler for reading source data
-            sender_handler: Handler for sending data to Fusion
+            sender_handler: Handler for sending data to fustord
             event_bus: Optional event bus for inter-component messaging
             bus_service: Optional service for bus management
             context: Optional shared context
@@ -91,8 +91,8 @@ class sensordPipe(FustorPipe, PipeLifecycleMixin, PipeLeaderMixin):
         self._sentinel_task: Optional[asyncio.Task] = None
         self._data_supervisor_task: Optional[asyncio.Task] = None
         
-        # Configuration (Timeouts and Heartbeats are managed by Fusion and updated in on_session_created)
-        # Default to None: let Fusion server decide the timeout from its own config.
+        # Configuration (Timeouts and Heartbeats are managed by fustord and updated in on_session_created)
+        # Default to None: let fustord server decide the timeout from its own config.
         # sensord-side config can override if explicitly set.
         self.session_timeout_seconds = config.get("session_timeout_seconds") or None
         self.heartbeat_interval_sec = 3.0  # Default until session is established
@@ -526,7 +526,7 @@ class sensordPipe(FustorPipe, PipeLifecycleMixin, PipeLeaderMixin):
         logger.info(f"Pipe {self.id}: {msg}, role={self.current_role}")
         logger.debug(f"DEBUG: Pipe {self.id} on_session_created: session={session_id}, role={self.current_role}, kwargs={kwargs}")
         
-        # Proactively report config to Fusion so the Management UI has it ready
+        # Proactively report config to fustord so the Management UI has it ready
         try:
             self._handle_command_report_config({"filename": "default.yaml"})
         except Exception as e:

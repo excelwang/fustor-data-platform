@@ -1,8 +1,8 @@
 """
-Fustor HTTP Receiver - Transport layer for Fusion to receive events from sensords.
+Fustor HTTP Receiver - Transport layer for fustord to receive events from sensords.
 
 This package implements the HTTP transport protocol for receiving events
-on the Fusion side. Each HTTPReceiver starts its own independent HTTP server
+on the fustord side. Each HTTPReceiver starts its own independent HTTP server
 on its configured port.
 """
 import asyncio
@@ -20,9 +20,9 @@ from fustor_core.transport import Receiver
 from fustor_core.event import EventBase, EventType, MessageSource
 
 try:
-    from fustor_fusion.auth.dependencies import get_view_id_from_api_key
+    from fustord.auth.dependencies import get_view_id_from_api_key
 except ImportError:
-    # If not in fusion context, provide dummy dependency
+    # If not in fustord context, provide dummy dependency
     async def get_view_id_from_api_key(): return "unknown"
 
 logger = logging.getLogger(__name__)
@@ -90,7 +90,7 @@ class EventsLogFilter(logging.Filter):
 
 class HTTPReceiver(Receiver):
     """
-    HTTP-based Receiver implementation for Fustor Fusion.
+    HTTP-based Receiver implementation for Fustor fustord.
     
     This receiver creates FastAPI routers that handle:
     - Session creation and management

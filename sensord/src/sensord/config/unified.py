@@ -13,13 +13,13 @@ Example:
         driver: fs
         paths: [/data/research]
     senders:
-      fusion-main:
-        driver: fusion
-        uri: http://fusion:8102
+      fustord-main:
+        driver: fustord
+        uri: http://fustord:8102
     pipes:
       research-sync:
         source: research-fs
-        sender: fusion-main
+        sender: fustord-main
 """
 import yaml
 import logging

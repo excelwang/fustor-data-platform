@@ -25,7 +25,7 @@ class TestBlindSpotFileCreation:
     def test_blind_spot_file_discovered_by_audit(
         self,
         docker_env,
-        fusion_client,
+        fustord_client,
         setup_sensords,
         clean_shared_dir,
         wait_for_audit
@@ -88,7 +88,7 @@ class TestBlindSpotFileCreation:
         
         # Debug: check audit stats before waiting
         try:
-            stats = fusion_client.get_stats()
+            stats = fustord_client.get_stats()
             print(f"[DEBUG] Stats before audit wait: audit_cycle_count={stats.get('audit_cycle_count')}, is_auditing={stats.get('is_auditing')}")
         except Exception as e:
             print(f"[DEBUG] get_stats failed: {e}")
@@ -102,12 +102,12 @@ class TestBlindSpotFileCreation:
         wait_for_audit()
         
         # Now check if the original blind-spot file was discovered
-        found_after_audit = fusion_client.wait_for_file_in_tree(test_file_rel, timeout=SHORT_TIMEOUT)
+        found_after_audit = fustord_client.wait_for_file_in_tree(test_file_rel, timeout=SHORT_TIMEOUT)
         
         if not found_after_audit:
              # Debug: dump the tree
              try:
-                 tree_dump = fusion_client.get_tree(path="/", max_depth=2)
+                 tree_dump = fustord_client.get_tree(path="/", max_depth=2)
                  print(f"DEBUG TREE DUMP: {tree_dump}")
              except Exception as e:
                  print(f"DEBUG TREE DUMP FAILED: {e}")
@@ -116,13 +116,13 @@ class TestBlindSpotFileCreation:
             f"File {test_file_rel} should be discovered by the Audit scan"
         
         # Step 5: Verify sensord_missing flag is set
-        assert fusion_client.wait_for_flag(test_file_rel, "sensord_missing", True, timeout=SHORT_TIMEOUT), \
+        assert fustord_client.wait_for_flag(test_file_rel, "sensord_missing", True, timeout=SHORT_TIMEOUT), \
             f"Blind-spot file {test_file_rel} should be marked with sensord_missing: true. Tree node: {found_after_audit}"
 
     def test_blind_spot_file_added_to_blind_spot_list(
         self,
         docker_env,
-        fusion_client,
+        fustord_client,
         setup_sensords,
         clean_shared_dir,
         wait_for_audit
@@ -145,7 +145,7 @@ class TestBlindSpotFileCreation:
         found = False
         test_file_rel = "/" + os.path.relpath(test_file, MOUNT_POINT)
         while time.time() - start < MEDIUM_TIMEOUT:
-            blind_spot_list = fusion_client.get_blind_spot_list()
+            blind_spot_list = fustord_client.get_blind_spot_list()
             paths_in_list = [item.get("path") for item in blind_spot_list if item.get("type") == "file"]
             if test_file_rel in paths_in_list:
                 found = True

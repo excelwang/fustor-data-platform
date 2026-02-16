@@ -11,16 +11,16 @@ import os
 CONTAINER_CLIENT_A = "fustor-nfs-client-a"
 CONTAINER_CLIENT_B = "fustor-nfs-client-b"
 CONTAINER_CLIENT_C = "fustor-nfs-client-c"
-CONTAINER_FUSION = "fustor-fusion"
+CONTAINER_FUSION = "fustord"
 CONTAINER_NFS_SERVER = "fustor-nfs-server"
 
 # Shared mount point
 MOUNT_POINT = "/mnt/shared"
 
-# Fusion API connection
+# fustord API connection
 FUSION_PORT = 8102  # Main API port (Management)
 RECEIVER_PORT = 18888  # Receiver port (Data)
-FUSION_HOST = "fustor-fusion"
+FUSION_HOST = "fustord"
 FUSION_ENDPOINT = f"http://{FUSION_HOST}:{FUSION_PORT}"
 RECEIVER_ENDPOINT = f"http://{FUSION_HOST}:{RECEIVER_PORT}"
 TEST_VIEW_ID = "integration-test-ds"
@@ -67,7 +67,7 @@ EXTREME_TIMEOUT = 60.0
 
 # --- NFS/Ingestion Delays ---
 NFS_SYNC_DELAY = 3.2    # actimeo=1 + margin
-INGESTION_DELAY = 6.0    # sensord scan + network + Fusion process
+INGESTION_DELAY = 6.0    # sensord scan + network + fustord process
 STRESS_DELAY = 10.0      # Heavy operations (was 15s, reduced)
 
 # --- Polling ---

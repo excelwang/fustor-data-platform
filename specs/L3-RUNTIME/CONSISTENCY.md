@@ -15,7 +15,7 @@ version: 1.0.0
 
 ```
                     ┌─────────────────────────────┐
-                    │      Fusion Server          │
+                    │      fustord Server          │
                     │   (中央数据视图 + 一致性裁决)   │
                     └──────────────┬──────────────┘
                                    │
@@ -48,7 +48,7 @@ version: 1.0.0
 |------|------|
 | **实时性优先** | Realtime 消息具有最高优先级 |
 | **盲区可发现** | 通过定时审计发现盲区变更，并明确标记 |
-| **视图即真相** | Fusion 内存树是经过仲裁后的最终状态 |
+| **视图即真相** | fustord 内存树是经过仲裁后的最终状态 |
 | **IO 可控** | 只有 Leader sensord 执行 Snapshot/Audit |
 
 ### 1.4 Path Normalization Contract (路径归一化契约)
@@ -73,14 +73,14 @@ version: 1.0.0
 ### 2.2 Leader 选举
 
 - **先到先得**：第一个建立 Session 的 sensordPipe 成为 Leader
-- **故障转移**：仅当 Leader 心跳超时或断开后，Fusion 才释放 Leader 锁
+- **故障转移**：仅当 Leader 心跳超时或断开后，fustord 才释放 Leader 锁
 - **实现**：通过 `ViewStateManager` 管理 Leader 锁，`SessionManager` 管理会话生命周期
 
 ---
 
 ## 3. 消息类型
 
-sensord 向 Fusion 发送的消息分为三类，通过 `message_source` 字段区分：
+sensord 向 fustord 发送的消息分为三类，通过 `message_source` 字段区分：
 
 | 类型 | 来源 | 说明 |
 |------|------|------|
@@ -148,7 +148,7 @@ Audit 消息复用标准 Event 结构，包含以下额外信息：
 
 ## 4. 状态管理
 
-Fusion 通过 `FSState` 类维护以下状态：
+fustord 通过 `FSState` 类维护以下状态：
 
 ### 4.1 内存树 (Memory Tree)
 
@@ -159,7 +159,7 @@ Fusion 通过 `FSState` 类维护以下状态：
 | `path` | `str` | 文件绝对路径 |
 | `modified_time` | `float` | 最后修改时间（来自存储系统的 mtime） |
 | `size` | `int` | 文件大小（字节） |
-| `last_updated_at` | `float` | Fusion 本地物理时间戳，记录最后确认时刻 |
+| `last_updated_at` | `float` | fustord 本地物理时间戳，记录最后确认时刻 |
 | `integrity_suspect` | `bool` | 是否为可疑热文件 (由原子写标记或时效判定) |
 | `known_by_sensord` | `bool` | 监控质量证明（Monitoring Quality Attestation）。仅由 Realtime 事件确认为 True，表示该节点当前状态已知由 sensord 实时监控。 |
 | `audit_skipped` | `bool` | (仅目录) 是否在审计中因静默被跳过 |
@@ -222,7 +222,7 @@ Blind-spot 是**信息型记录**，用于标记"仅通过补偿源（Audit/Snap
   - Audit 再次看到文件时从 `blind_spot_deletions` 移除
   - **Session 生命周期控制**：`on_session_start` 时清空列表以重新发现盲区
 
-> **重要限制**：on_demand 扫描（由 Fusion 向 sensord 发起的目录遍历命令）**无法产生 Realtime 级别的确认**。
+> **重要限制**：on_demand 扫描（由 fustord 向 sensord 发起的目录遍历命令）**无法产生 Realtime 级别的确认**。
 > on_demand 本质上是 sensord 对指定路径执行一次目录遍历，其数据与 Audit/Snapshot 同源（补偿型），
 > 因此无法用于清除 blind-spot 标记。Blind-spot 只能通过以下途径清除：
 > 1. 自然产生的 Realtime inotify/watchdog 事件
@@ -241,7 +241,7 @@ Blind-spot 是**信息型记录**，用于标记"仅通过补偿源（Audit/Snap
 | `REALTIME` | Tier 1 因果性 | 内核 inotify/watchdog | 文件操作直接触发 | ✅ | ✅ |
 | `SNAPSHOT` | Tier 2 基线型 | `os.stat()` 全量遍历 | Leader 当选后一次性 | ❌ | ❌ |
 | `AUDIT` | Tier 3 补偿型 | `os.stat()` 全量遍历 | 定期调度 | ❌ | ❌ |
-| `ON_DEMAND_JOB` | Tier 3 补偿型 | `os.stat()` 目录遍历 | Fusion 请求 sensord 扫描 | ❌ | ❌ |
+| `ON_DEMAND_JOB` | Tier 3 补偿型 | `os.stat()` 目录遍历 | fustord 请求 sensord 扫描 | ❌ | ❌ |
 
 #### 行为权限矩阵
 
@@ -351,7 +351,7 @@ if event.message_source == MessageSource.SNAPSHOT:
 > **设计决策 - 墓碑转世判定**：使用 `mtime > tombstone_ts` 单条件：
 > 1. **同域比较**：`tombstone_ts`（删除时的 watermark）和 `mtime` 均在 NFS 时间域，比较语义明确
 > 2. **保守性原则**：只有当文件 mtime 明确新于墓碑时间时才允许复活
-> 3. **禁止跨域比较**：不得将 NFS 域时间戳与 Fusion 物理时间（`time.time()`）直接比较
+> 3. **禁止跨域比较**：不得将 NFS 域时间戳与 fustord 物理时间（`time.time()`）直接比较
 >
 > **Suspect Age 计算**：`age = watermark - mtime`，两者均在 NFS 时间域内。
 > 冷启动时 skew 未校准，watermark 退化为 `time.time()`，这是已知限制（参见 [LOGICAL_CLOCK.md §5.1](./LOGICAL_CLOCK.md)）。
@@ -446,13 +446,13 @@ for path in audit_seen_paths:
 使用 `cp -p`、`rsync -a` 或 `tar -x` 等操作时，新文件会继承源文件的旧 `mtime`。
 
 **问题背景**：
-- **$T_1$ (Audit 开始)**：Fusion 记录 `last_audit_start`
+- **$T_1$ (Audit 开始)**：fustord 记录 `last_audit_start`
 - **$T_2$ (实时创建)**：sensord 发现 `cp -p` 创建的新文件，mtime 为一年前
-- **$T_2$ (Fusion 同步)**：Fusion 接受文件，记录 `last_updated_at = T_2`
+- **$T_2$ (fustord 同步)**：fustord 接受文件，记录 `last_updated_at = T_2`
 - **$T_3$ (Audit 判定)**：审计扫描列表（物理扫描在 $T_2$ 前完成）中没有该文件
 
 **裁决逻辑保护**：
-若只对比 mtime，文件会被误判为"审计前本应存在但实际缺失"而被删除。通过检查 `last_updated_at > last_audit_start`，Fusion 识别出审计报告是**陈旧证据**，放弃删除操作。
+若只对比 mtime，文件会被误判为"审计前本应存在但实际缺失"而被删除。通过检查 `last_updated_at > last_audit_start`，fustord 识别出审计报告是**陈旧证据**，放弃删除操作。
 
 ---
 
@@ -464,7 +464,7 @@ for path in audit_seen_paths:
 
 | 轨道 | 定义 | 来源 | 核心用途 |
 | :--- | :--- | :--- | :--- |
-| **Physical Time** | 全局物理流逝参考 | Fusion/sensord 本地时钟 | 1. 事件索引 (index)<br>2. LRU 归一化<br>3. 陈旧证据保护<br>4. Tombstone TTL 清理 |
+| **Physical Time** | 全局物理流逝参考 | fustord/sensord 本地时钟 | 1. 事件索引 (index)<br>2. LRU 归一化<br>3. 陈旧证据保护<br>4. Tombstone TTL 清理 |
 | **Logical Clock (Watermark)** | NFS 数据域逻辑时间 | 统计校准合成 | 1. Data Age 计算<br>2. Suspect 状态判定<br>3. 墓碑逻辑时间戳 |
 
 ### 6.2 应用场景裁决表
@@ -486,15 +486,15 @@ for path in audit_seen_paths:
 - **Reference Selection**: 选取 P99 分位的 mtime 作为 `latest_mtime_stable` (排除未来时间或极端异常值)。
 - **Drift Calculation**: `drift = latest_mtime_stable - time.time()`。这里假设最活跃的目录 mtime 极其接近 NFS Server 当前时间。
 - **Correction**: 生成事件时，物理时间戳 `index` = `(time.time() + drift) * 1000`。
-- **目的**: 确保 Fusion 收到的事件 `index` 大致对齐到 NFS 的时间轴，防止因 sensordPipe 时钟大幅落后导致事件被误判为"陈旧"而被丢弃。
+- **目的**: 确保 fustord 收到的事件 `index` 大致对齐到 NFS 的时间轴，防止因 sensordPipe 时钟大幅落后导致事件被误判为"陈旧"而被丢弃。
 
 ---
 
 ## 7. 审计生命周期
 
-sensordPipe 通过 API 发送生命周期信号，触发 Fusion 的一致性处理：
+sensordPipe 通过 API 发送生命周期信号，触发 fustord 的一致性处理：
 
-| API | 时机 | Fusion 动作 |
+| API | 时机 | fustord 动作 |
 |-----|------|-------------|
 | `POST /consistency/audit/start` | 审计开始 | 调用 `handle_audit_start()`，记录 `last_audit_start = time.time()` |
 | `POST /consistency/audit/end` | 审计结束 | 等待队列排空后调用 `handle_audit_end()`，执行 Missing 判定和 Tombstone 清理 |
@@ -525,7 +525,7 @@ POST /api/v1/ingest/consistency/sentinel/feedback
      Body: {"type": "suspect_update", "updates": [{"path": "...", "mtime": 123.0, "status": "exists"}, ...]}
 ```
 
-Fusion 收到反馈后通过 `driver.update_suspect()` 执行稳定性判定。若反馈证明文件稳定，则立即清除可疑标记（加速收敛）。
+fustord 收到反馈后通过 `driver.update_suspect()` 执行稳定性判定。若反馈证明文件稳定，则立即清除可疑标记（加速收敛）。
 
 ---
 
@@ -546,11 +546,11 @@ GET /api/v1/views/{view_id}/tree?path=/data/logs&force-real-time=true
 ```
 
 **处理流程**：
-1. Fusion 接收请求，挂起 HTTP 响应
+1. fustord 接收请求，挂起 HTTP 响应
 2.通过 Heartbeat Response 向 Leader sensordPipe 下发 `scan` 命令
 3. sensordPipe 执行 `scan_path("/data/logs")` 并推送事件
-4. Fusion 接收事件更新视图
-5. (可选) Fusion 返回更新后的结果或超时
+4. fustord 接收事件更新视图
+5. (可选) fustord 返回更新后的结果或超时
 ```
 
 ### 9.2 Standard Response Format (标准响应格式)
@@ -593,7 +593,7 @@ GET /api/v1/views/{view_id}/tree?path=/data/logs&force-real-time=true
 
 ### 11.1 陈旧证据保护 (Stale Evidence Protection)
 
-每个节点维护 `last_updated_at` 物理时间戳（`time.time()`），记录最后一次被 Fusion 确认更新的时刻。
+每个节点维护 `last_updated_at` 物理时间戳（`time.time()`），记录最后一次被 fustord 确认更新的时刻。
 
 **关键行为**：
 - **Realtime 事件**：更新 `last_updated_at = time.time()`

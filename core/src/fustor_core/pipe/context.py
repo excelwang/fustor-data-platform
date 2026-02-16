@@ -17,7 +17,7 @@ class PipeContext:
     
     Use cases:
     - sensord: Coordinate multiple Source->Sender pipes
-    - Fusion: Coordinate multiple Receiver->View pipes
+    - fustord: Coordinate multiple Receiver->View pipes
     """
     
     def __init__(self, config: Optional[Dict[str, Any]] = None):

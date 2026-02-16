@@ -12,7 +12,7 @@ from ..utils import docker_manager
 logger = logging.getLogger("fustor_test")
 
 class TestDebugTree:
-    def test_dump_tree(self, docker_env, fusion_client, setup_sensords):
+    def test_dump_tree(self, docker_env, fustord_client, setup_sensords):
         """Dump the full file tree to debug path issues."""
         
         # Create a file via Realtime (sensord A)
@@ -27,20 +27,20 @@ class TestDebugTree:
         # Dump Tree
         logger.info("Dumping full tree...")
         try:
-            tree = fusion_client.get_tree(path="/", max_depth=-1)
+            tree = fustord_client.get_tree(path="/", max_depth=-1)
             print("\n=== FULL TREE DUMP ===")
             print(json.dumps(tree, indent=2))
             print("======================\n")
             
             # Check for Realtime File
             # Check Absolute
-            abs_found = fusion_client._find_in_tree(tree, realtime_file)
+            abs_found = fustord_client._find_in_tree(tree, realtime_file)
             print(f"Searching Absolute '{realtime_file}': {'FOUND' if abs_found else 'NOT FOUND'}")
             
             # Check Relative
             import os
             rel_path = os.path.relpath(realtime_file, MOUNT_POINT)
-            rel_found = fusion_client._find_in_tree(tree, rel_path)
+            rel_found = fustord_client._find_in_tree(tree, rel_path)
             print(f"Searching Relative '{rel_path}': {'FOUND' if rel_found else 'NOT FOUND'}")
             
         except Exception as e:

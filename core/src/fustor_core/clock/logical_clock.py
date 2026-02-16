@@ -2,7 +2,7 @@
 Logical Clock implementation for Fustor hybrid time synchronization.
 
 This module provides a thread-safe logical clock that advances based on
-observed file modification times (mtime). It uses Fusion Local Time as the 
+observed file modification times (mtime). It uses fustord Local Time as the 
 authority to eliminate clock drift issues across distributed sensords.
 """
 import threading
@@ -13,10 +13,10 @@ from collections import deque, Counter
 class LogicalClock:
     """
     A robust logical clock that advances based on a UNIFIED statistical analysis 
-    of Fusion Local Time vs Observed Mtime skew.
+    of fustord Local Time vs Observed Mtime skew.
     
     It implements a simplified time system:
-    - Watermark = Fusion_Physical_Time - Mode_Skew
+    - Watermark = fustord_Physical_Time - Mode_Skew
     - Skew is calculated as the mode of (reference_time - mtime) samples
     - Completely immune to mtime manipulation (touch -d future)
     """
@@ -29,7 +29,7 @@ class LogicalClock:
             initial_time: Unused, kept for backward compatibility.
         """
         # Note: threading.RLock is used because this class serves both
-        # sensord-side (multi-threaded scanning) and Fusion-side (asyncio) contexts.
+        # sensord-side (multi-threaded scanning) and fustord-side (asyncio) contexts.
         self._lock = threading.RLock()
 
         
@@ -55,10 +55,10 @@ class LogicalClock:
             The current watermark value after the update
         
         Note:
-            Watermark is now purely `Fusion_Physical_Time - Mode_Skew`.
+            Watermark is now purely `fustord_Physical_Time - Mode_Skew`.
             The old Trust Window / Fast Path logic has been removed for simplicity and immunity.
         """
-        # Unified physical reference: Always use Fusion Local Time (Spec §4.1.A)
+        # Unified physical reference: Always use fustord Local Time (Spec §4.1.A)
         # This makes the system immune to sensord local clock errors (Faketime/NTP drift).
         reference_time = time.time()
         
@@ -121,7 +121,7 @@ class LogicalClock:
         """
         Get the current watermark value.
         
-        Formula: Fusion_Physical_Time - Mode_Skew
+        Formula: fustord_Physical_Time - Mode_Skew
         
         When skew is not yet calibrated (cold start), falls back to physical time.
         """

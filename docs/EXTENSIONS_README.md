@@ -14,8 +14,8 @@
 每个包通常都有自己的子目录，其中可能包含一个 `docs/` 目录来存放该包特有的文档。
 
 *   `source-*/`: 各种数据源驱动，例如 `source-mysql`, `source-fs`, `source-elasticsearch` 等。
-*   `sender-*/`: 各种数据推送驱动，例如 `sender-fusion`, `sender-echo`, `sender-openapi` 等。
-*   `receiver-*/`: 数据接收驱动，例如 `receiver-http` (Fusion 的 HTTP 入口)。
+*   `sender-*/`: 各种数据推送驱动，例如 `sender-fustord`, `sender-echo`, `sender-openapi` 等。
+*   `receiver-*/`: 数据接收驱动，例如 `receiver-http` (fustord 的 HTTP 入口)。
 *   `view-*/`: 数据存储视图驱动，例如 `view-fs` (文件系统后端)。
 *   `schema-*/`: 数据模式定义，例如 `schema-fs`。
 

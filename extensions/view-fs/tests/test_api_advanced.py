@@ -47,7 +47,7 @@ def test_api_tree_not_found_but_pending(client, mock_driver):
     mock_driver.get_directory_tree.return_value = None
     mock_driver.trigger_on_demand_scan = AsyncMock(return_value=(True, "job_2"))
     
-    with patch("fustor_fusion.core.session_manager.session_manager.has_pending_job", new_callable=AsyncMock) as mock_pending:
+    with patch("fustord.core.session_manager.session_manager.has_pending_job", new_callable=AsyncMock) as mock_pending:
         mock_pending.return_value = True
         
         response = client.get("/fs/tree?on_demand_scan=true&path=/pending&view_id=v123")
@@ -70,8 +70,8 @@ def test_api_update_suspect_list(client, mock_driver):
 
 def test_api_reset_fallback(client, mock_driver):
     """测试重置 API 的回退逻辑"""
-    # 模拟 fustor_fusion 不存在导致的 ImportError
-    with patch("fustor_fusion.view_manager.manager.reset_views", side_effect=ImportError):
+    # 模拟 fustord 不存在导致的 ImportError
+    with patch("fustord.view_manager.manager.reset_views", side_effect=ImportError):
         response = client.delete("/fs/reset")
         assert response.status_code == 204
         mock_driver.reset.assert_called_once()

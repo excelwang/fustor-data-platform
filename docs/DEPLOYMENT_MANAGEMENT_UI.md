@@ -5,7 +5,7 @@
 ## 1. 部署架构说明
 
 本示例展示一个典型的生产级高可用与聚合配置：
-*   **节点组成**：1 个 Fusion 核心节点，4 个 sensord 边缘节点（sensord-1~4）。
+*   **节点组成**：1 个 fustord 核心节点，4 个 sensord 边缘节点（sensord-1~4）。
 *   **逻辑拓扑**：
     *   `view-fs-1` (FS 视图)：负责监听并聚合 **sensord-1** 和 **sensord-2** 的数据。
     *   `view-fs-2` (FS 视图)：负责监听并聚合 **sensord-3** 和 **sensord-4** 的数据。
@@ -15,30 +15,30 @@
 
 ## 2. 基础服务启动
 
-### 2.1 启动 Fusion 管理中心
-在 Fusion 节点安装并启动服务。管理界面默认随服务开启：
+### 2.1 启动 fustord 管理中心
+在 fustord 节点安装并启动服务。管理界面默认随服务开启：
 ```bash
-pip install fustor-fusion
-# 启动 Fusion 并开启管理 API (默认端口 8102)
-fustor-fusion start -D
+pip install fustord
+# 启动 fustord 并开启管理 API (默认端口 8102)
+fustord start -D
 ```
-**访问地址**：`http://<fusion-ip>:8102/management`
+**访问地址**：`http://<fustord-ip>:8102/management`
 
 ### 2.2 启动 sensord 骨架
 在所有 sensord 节点，只需安装基础包并确保定义了唯一的 `sensord_id`：
 ```bash
-pip install fustor-sensord
+pip install sensord
 # 修改 ~/.fustor/default.yaml，仅保留 sensord_id 即可：
 # sensord_id: sensord-1
-fustor-sensord start -D
+sensord start -D
 ```
-*提示：此时 sensord 已连接 Fusion，但处于“空跑”状态，不执行任何同步。*
+*提示：此时 sensord 已连接 fustord，但处于“空跑”状态，不执行任何同步。*
 
 ---
 
 ## 3. 集中化远程配置 (UI 操作)
 
-打开 Fusion 管理界面，进入 **"Connected sensords"** 面板。此时你应该能看到已上线的 4 个 sensord。
+打开 fustord 管理界面，进入 **"Connected sensords"** 面板。此时你应该能看到已上线的 4 个 sensord。
 
 ### 3.1 批量注入 sensord 配置
 无需逐台登录 sensord 节点，在 UI 上点击 **"Config"** 按钮即可完成下发：
@@ -52,14 +52,14 @@ fustor-sensord start -D
         driver: fs
         uri: "file:///data/research"
     senders:
-      fusion-main:
+      fustord-main:
         driver: http
-        uri: "http://<fusion-ip>:8102"
+        uri: "http://<fustord-ip>:8102"
         credential: {key: "your-api-key"}
     pipes:
       pipe-fs-1:  # sensord-1 和 sensord-2 必须使用相同的 pipe_id
         source: src-1
-        sender: fusion-main
+        sender: fustord-main
     ```
 
 2.  **配置 sensord-3 和 sensord-4**：
@@ -67,22 +67,22 @@ fustor-sensord start -D
 
 ---
 
-## 4. 视图聚合配置 (Fusion 侧)
+## 4. 视图聚合配置 (fustord 侧)
 
-在 Fusion 节点的 `~/.fustor/views-config/` 目录下创建以下配置，定义数据的呈现方式：
+在 fustord 节点的 `~/.fustor/views-config/` 目录下创建以下配置，定义数据的呈现方式：
 
 ### 4.1 创建基础 FS 视图
 *   **view-fs-1.yaml** (对应 sensord 1&2):
     ```yaml
     id: view-fs-1
     driver: fs
-    driver_params: { root_path: "/mnt/fusion/view1" }
+    driver_params: { root_path: "/mnt/fustord/view1" }
     ```
 *   **view-fs-2.yaml** (对应 sensord 3&4):
     ```yaml
     id: view-fs-2
     driver: fs
-    driver_params: { root_path: "/mnt/fusion/view2" }
+    driver_params: { root_path: "/mnt/fustord/view2" }
     ```
 
 ### 4.2 创建 Multi-FS 聚合视图
@@ -94,7 +94,7 @@ fustor-sensord start -D
       members: ["view-fs-1", "view-fs-2"]
     ```
 
-**生效操作**：在管理界面点击右上角的 **"Reload Fusion"**。此时，用户访问 `multi-view-all` 即可同时看到 4 个 sensord 的数据。
+**生效操作**：在管理界面点击右上角的 **"Reload fustord"**。此时，用户访问 `multi-view-all` 即可同时看到 4 个 sensord 的数据。
 
 ---
 
@@ -126,7 +126,7 @@ fustor-sensord start -D
     GET /api/v1/views/view-fs-1/tree?path=/important/data&force_scan=true
     ```
 *   **功能逻辑**：
-    1.  Fusion 接收到请求后，通过心跳通道向该视图关联的所有 sensord 发送 `scan` 命令。
+    1.  fustord 接收到请求后，通过心跳通道向该视图关联的所有 sensord 发送 `scan` 命令。
     2.  sensord 收到命令，立即对物理路径 `/important/data` 进行全量索引比对。
     3.  任何遗漏或不一致的数据将通过高优先级批次立即补推。
 *   **适用场景**：手动拷贝了大量文件未触发 FS 事件、存储系统 Inotify 丢失事件、重要科研数据的一致性最终校验。

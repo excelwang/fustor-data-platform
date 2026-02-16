@@ -33,7 +33,7 @@ version: 1.0.0
 
 ### 1.3 来源识别
 
-在多 sensord 汇聚到同一 View (N:1) 的场景下，Fusion 必须能够区分每个文件/事件的具体来源 sensord。
+在多 sensord 汇聚到同一 View (N:1) 的场景下，fustord 必须能够区分每个文件/事件的具体来源 sensord。
 
 - **标识机制**: 每个 sensord 必须拥有全局唯一的 `sensord_id`。
 - **自动检测**: sensord 默认会根据出站流量自动检测本地 IP 作为 `sensord_id`。
@@ -47,30 +47,30 @@ version: 1.0.0
 
 采用 **Forest View** 架构 (`view-fs-forest`)，对外表现为单一 View，对内管理多棵 FS Tree。
 
-- **Symmetry**: 保持 Source ↔ View 的逻辑对等性，Forest View 内部为每组 Source (即每个 FusionPipe) 维护一个独立的子树。
-- **Routing**: Forest View 接收所有 FusionPipe 的数据，根据 `fusion_pipe_id` 将事件路由到内部对应的子树。
+- **Symmetry**: 保持 Source ↔ View 的逻辑对等性，Forest View 内部为每组 Source (即每个 fustordPipe) 维护一个独立的子树。
+- **Routing**: Forest View 接收所有 fustordPipe 的数据，根据 `fustord_pipe_id` 将事件路由到内部对应的子树。
 - **Reuse**: 内部子树直接复用 `FSViewDriver` 的逻辑（Arbitration, Audit, Consistency）。
 
 ```
-sensordPipe-A ─(fusion_pipe_id=A)─┐                    ┌─ Tree A (FSViewDriver)
+sensordPipe-A ─(fustord_pipe_id=A)─┐                    ┌─ Tree A (FSViewDriver)
                                │                    │
-sensordPipe-B ─(fusion_pipe_id=B)─┼─► ForestView ────► ├─ Tree B (FSViewDriver)
+sensordPipe-B ─(fustord_pipe_id=B)─┼─► ForestView ────► ├─ Tree B (FSViewDriver)
                                │   (Router)         │
-sensordPipe-C ─(fusion_pipe_id=C)─┘                    └─ Tree C (FSViewDriver)
+sensordPipe-C ─(fustord_pipe_id=C)─┘                    └─ Tree C (FSViewDriver)
 ```
 
 ### 2.2 为什么不用其他方案
 
 | 方案 | 否决原因 |
 |:---|:---|
-| 多 View + 独立聚合 API | 配置繁琐（N+1个View），破坏 sensordPipe-FusionPipe 对称性 |
+| 多 View + 独立聚合 API | 配置繁琐（N+1个View），破坏 sensordPipe-fustordPipe 对称性 |
 | 独立 View Driver 组合 | 旧方案 (`view-multi-fs`)，导致无法直接 ingest 数据，不仅破坏对称性还导致架构耦合 |
 
 ---
 
 ## 3. 配置设计
 
-### 3.1 Fusion 配置
+### 3.1 fustord 配置
 
 ```yaml
 receivers:
@@ -80,11 +80,11 @@ receivers:
     port: 18881
     api_keys:
       - key: "sensord-nfs-a-key"
-        fusion_pipe_id: "pipe-nfs-a"
+        fustord_pipe_id: "pipe-nfs-a"
       - key: "sensord-nfs-b-key"
-        fusion_pipe_id: "pipe-nfs-b"
+        fustord_pipe_id: "pipe-nfs-b"
       - key: "sensord-nfs-c-key"
-        fusion_pipe_id: "pipe-nfs-c"
+        fustord_pipe_id: "pipe-nfs-c"
 
 views:
   # 唯一的森林视图
@@ -121,16 +121,16 @@ sources:
     uri: "/mnt/shared-storage"
 
 senders:
-  fusion-1:
-    driver: fusion
-    uri: "http://fusion-host:18881"
+  fustord-1:
+    driver: fustord
+    uri: "http://fustord-host:18881"
     credential:
       key: "sensord-nfs-a-key"
 
 pipes:
   pipe-nfs-a:
     source: nfs-a-src
-    sender: fusion-1
+    sender: fustord-1
 ```
 
 ---
@@ -139,7 +139,7 @@ pipes:
 
 `view-fs-forest` 通过 `fustor.view_api` entry point 注册以下端点（前缀由 view 名称决定，如 `/shared-storage/`）。
 
-**主要变化**: 原 `members` 列表中的 `view_id` 变为 `fusion_pipe_id`。
+**主要变化**: 原 `members` 列表中的 `view_id` 变为 `fustord_pipe_id`。
 
 ### 4.1 `GET /{view_name}/stats`
 
@@ -157,7 +157,7 @@ pipes:
   "path": "/data/experiment-42",
   "members": [
     {
-      "fusion_pipe_id": "pipe-nfs-a",  // <--- FusionPipe ID
+      "fustord_pipe_id": "pipe-nfs-a",  // <--- fustordPipe ID
       "status": "ok",
       "file_count": 5234,
       "dir_count": 120,
@@ -165,7 +165,7 @@ pipes:
       "latest_mtime": 1706000500
     },
     {
-      "fusion_pipe_id": "pipe-nfs-b",  // <--- FusionPipe ID
+      "fustord_pipe_id": "pipe-nfs-b",  // <--- fustordPipe ID
       "status": "ok",
       "file_count": 5100,
       "dir_count": 118,
@@ -174,7 +174,7 @@ pipes:
     }
   ],
   "best": {
-    "fusion_pipe_id": "pipe-nfs-a",
+    "fustord_pipe_id": "pipe-nfs-a",
     "reason": "file_count",
     "value": 5234
   }
@@ -219,22 +219,22 @@ pipes:
 
 ### 5.1 `view-fs-forest` Driver 行为
 
-- **Event Routing**: `process_event(event)` 读取 `event.metadata["fusion_pipe_id"]`，将事件路由给对应的内部 `FSViewDriver`。
-- **Dynamic Tree**: 遇到未知的 `fusion_pipe_id` 自动创建新子树。
+- **Event Routing**: `process_event(event)` 读取 `event.metadata["fustord_pipe_id"]`，将事件路由给对应的内部 `FSViewDriver`。
+- **Dynamic Tree**: 遇到未知的 `fustord_pipe_id` 自动创建新子树。
 - **Query Aggregation**: 所有查询方法（stats, tree）遍历所有内部子树并聚合结果。
 ### 5.2 Session Lifecycle & Leader Election
 
 Forest View 实际上是一个 View 容器，因此 Session 管理权必须下放：
 
-- **Delegation**: `FusionPipe` -> `PipeSessionBridge` -> `ViewHandler.resolve_session_role()` -> `ViewDriver.resolve_session_role()`
-- **Scoped Election**: `ForestFSViewDriver` 实现 `resolve_session_role`，从 `**kwargs` 中提取 `fusion_pipe_id`，构建 scoped election key (`{view_id}:{fusion_pipe_id}`)，确保每棵子树有独立的 Leader。
-- **Lifecycle 通知**: `on_session_start(**kwargs)` / `on_session_close(**kwargs)` 由 `FusionPipe` 广播，ForestView 从 kwargs 中提取 `session_id` 和 `fusion_pipe_id` 进行内部路由，标准 View 忽略这些额外参数。
-- **Snapshot 完成**: `on_snapshot_complete(session_id, **kwargs)` 由 `FusionPipe` 在 snapshot 结束时通知所有 handler。ForestView 在此回调中标记 scoped key（`{view_id}:{fusion_pipe_id}`），标准 View 无需实现此方法。
+- **Delegation**: `fustordPipe` -> `PipeSessionBridge` -> `ViewHandler.resolve_session_role()` -> `ViewDriver.resolve_session_role()`
+- **Scoped Election**: `ForestFSViewDriver` 实现 `resolve_session_role`，从 `**kwargs` 中提取 `fustord_pipe_id`，构建 scoped election key (`{view_id}:{fustord_pipe_id}`)，确保每棵子树有独立的 Leader。
+- **Lifecycle 通知**: `on_session_start(**kwargs)` / `on_session_close(**kwargs)` 由 `fustordPipe` 广播，ForestView 从 kwargs 中提取 `session_id` 和 `fustord_pipe_id` 进行内部路由，标准 View 忽略这些额外参数。
+- **Snapshot 完成**: `on_snapshot_complete(session_id, **kwargs)` 由 `fustordPipe` 在 snapshot 结束时通知所有 handler。ForestView 在此回调中标记 scoped key（`{view_id}:{fustord_pipe_id}`），标准 View 无需实现此方法。
 - **Cleanup**: `PipeSessionBridge` 负责根据 cache 清理所有相关的 election keys，无需感知具体策略。
 
 ### 5.3 标准层解耦契约 (`**kwargs` 穿透模式)
 
-Forest View 的路由需求（`session_id`, `fusion_pipe_id`）不得侵入标准层。标准层只传递上下文，不解读它。
+Forest View 的路由需求（`session_id`, `fustord_pipe_id`）不得侵入标准层。标准层只传递上下文，不解读它。
 
 #### 5.3.1 核心接口签名
 
@@ -261,14 +261,14 @@ class ViewDriver:
 async def resolve_session_role(self, session_id: str, **kwargs):
     return await self._driver.resolve_session_role(session_id, **kwargs)
 
-# ❌ 错误: 拆解为 positional 参数，会导致接收端 kwargs.get("fusion_pipe_id") 取不到值
-async def resolve_session_role(self, session_id: str, fusion_pipe_id=None):
-    return await self._driver.resolve_session_role(session_id, fusion_pipe_id)
+# ❌ 错误: 拆解为 positional 参数，会导致接收端 kwargs.get("fustord_pipe_id") 取不到值
+async def resolve_session_role(self, session_id: str, fustord_pipe_id=None):
+    return await self._driver.resolve_session_role(session_id, fustord_pipe_id)
 ```
 
 #### 5.3.3 Handler 查找规则
 
-`FusionPipe` 提供 `find_handler_for_view(view_id)` 方法，按 view_id 语义查找 handler，**不依赖 handler_id 命名规则**（如 `view-manager-{view_id}` 前缀）：
+`fustordPipe` 提供 `find_handler_for_view(view_id)` 方法，按 view_id 语义查找 handler，**不依赖 handler_id 命名规则**（如 `view-manager-{view_id}` 前缀）：
 
 ```python
 # ✅ 正确: 按语义查找
@@ -282,8 +282,8 @@ handler = self._pipe.get_view_handler(f"view-manager-{view_id}")
 
 | 禁止 | 原因 | 正确做法 |
 |:---|:---|:---|
-| 在 `FusionPipe` 中写 scoped snapshot key | 将 Forest 细节泄漏到标准层 | 通知 `handler.on_snapshot_complete()`，由 Forest 自行处理 |
-| 在 `FusionPipe._dispatch_to_handlers` 中注入 `pipe_id` 到 event metadata | sensord 端已在 metadata 中设置 pipe_id | 不需要 Fusion 端重复注入 |
+| 在 `fustordPipe` 中写 scoped snapshot key | 将 Forest 细节泄漏到标准层 | 通知 `handler.on_snapshot_complete()`，由 Forest 自行处理 |
+| 在 `fustordPipe._dispatch_to_handlers` 中注入 `pipe_id` 到 event metadata | sensord 端已在 metadata 中设置 pipe_id | 不需要 fustord 端重复注入 |
 | 在 `SessionBridge` 中猜测 handler_id 前缀 | 将 Adapter 内部命名规则泄漏到 Bridge | 使用 `find_handler_for_view()` |
 
 ### 5.4 `get_subtree_stats(path)` 方法
@@ -322,7 +322,7 @@ extensions/
 
 ### 6.1 不变的部分
 
-- 3 层对称模型 (Source/sensordPipe/Sender ↔ Receiver/FusionPipe/View)
+- 3 层对称模型 (Source/sensordPipe/Sender ↔ Receiver/fustordPipe/View)
 - 6 层分层架构
 - 一致性模型 (Tombstone/Suspect/Blind-spot)
 - 每个基础 View 的独立性
@@ -335,9 +335,9 @@ extensions/
 
 ### 6.3 术语更新
 
-| sensord 概念 | Fusion 对应 | 示例 |
+| sensord 概念 | fustord 对应 | 示例 |
 |:---|:---|:---|
 | Source (fs) | View (fs) | 单 NFS 视图 |
 | Source (oss) | View (oss) | 对象存储视图 |
 | — | View (forest-fs) | 多 NFS 聚合视图 |
-| sensordPipe | FusionPipe | 数据管道链路 |
+| sensordPipe | fustordPipe | 数据管道链路 |

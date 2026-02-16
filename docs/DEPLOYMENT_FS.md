@@ -1,6 +1,6 @@
 # Fustor 文件同步场景部署指南 (FS Scenario)
 
-本文档指导管理员如何部署 Fustor 平台以实现多源文件系统同步（Source-FS -> View-FS/Fusion）。
+本文档指导管理员如何部署 Fustor 平台以实现多源文件系统同步（Source-FS -> View-FS/fustord）。
 
 ## ⚠️ 1. 环境准备 (Linux)
 
@@ -14,7 +14,7 @@ sudo sysctl -p
 
 ### 1.2 创建配置目录
 ```bash
-mkdir -p ~/.fustor/fusion-config ~/.fustor/sensord-config ~/.fustor/logs
+mkdir -p ~/.fustor/fustord-config ~/.fustor/sensord-config ~/.fustor/logs
 ```
 
 ---
@@ -30,30 +30,30 @@ mkdir -p ~/.fustor/fusion-config ~/.fustor/sensord-config ~/.fustor/logs
 curl -LsSf https://astral.sh/uv/install.sh | sh
 ```
 
-### 服务端 (Fusion Node)
+### 服务端 (fustord Node)
 ```bash
 # 推荐使用 uv
-uv pip install fustor-fusion fustor-view-fs fustor-receiver-http
+uv pip install fustord fustor-view-fs fustor-receiver-http
 
 # 或使用 pip
-pip install fustor-fusion fustor-view-fs fustor-receiver-http
+pip install fustord fustor-view-fs fustor-receiver-http
 ```
 
 ### 采集端 (Source Node)
 ```bash
 # 推荐使用 uv
-uv pip install fustor-sensord fustor-source-fs fustor-sender-http
+uv pip install sensord fustor-source-fs fustor-sender-http
 
 # 或使用 pip
-pip install fustor-sensord fustor-source-fs fustor-sender-http
+pip install sensord fustor-source-fs fustor-sender-http
 ```
 
 ---
 
 ## 3. 架构配置示例
 
-### 3.1 服务端 (Fusion)
-配置文件: `~/.fustor/fusion-config/default.yaml`
+### 3.1 服务端 (fustord)
+配置文件: `~/.fustor/fustord-config/default.yaml`
 
 ```yaml
 receivers:
@@ -94,12 +94,12 @@ sources:
     driver: fs
     uri: "/mnt/data/share"
 senders:
-  fusion-main:
-    driver: fusion
+  fustord-main:
+    driver: fustord
     uri: "http://<FUSION_IP>:18888"
     credential: { key: "sensord-1-push-key" }
 pipes:
-  sync-job: { source: nfs-source, sender: fusion-main }
+  sync-job: { source: nfs-source, sender: fustord-main }
 ```
 
 ---
@@ -109,22 +109,22 @@ pipes:
 
 安装完成后，请使用 `start` 命令启动服务。默认情况下，服务在前台运行，建议在测试完成后使用 `-D` 参数转入后台。
 
-### 3.1 启动 Fusion
+### 3.1 启动 fustord
 ```bash
 # 前台启动（查看实时日志）
-fustor-fusion start
+fustord start
 
 # 后台启动
-fustor-fusion start -D
+fustord start -D
 ```
 
 ### 3.2 启动 sensord
 ```bash
 # 前台启动
-fustor-sensord start
+sensord start
 
 # 后台启动
-fustor-sensord start -D
+sensord start -D
 ```
 
 ---
@@ -135,7 +135,7 @@ fustor-sensord start -D
 
 ### 4.1 Fustor sensord Service
 
-创建 `/etc/systemd/system/fustor-sensord.service`：
+创建 `/etc/systemd/system/sensord.service`：
 
 ```ini
 [Unit]
@@ -146,8 +146,8 @@ After=network.target
 Type=simple
 User=<USER>
 Group=<USER>
-# 确保 path 指向正确的 fustor-sensord 可执行文件 (如 uv venv)
-ExecStart=/path/to/venv/bin/fustor-sensord start
+# 确保 path 指向正确的 sensord 可执行文件 (如 uv venv)
+ExecStart=/path/to/venv/bin/sensord start
 WorkingDirectory=/home/<USER>
 
 # 关键: 自动重启策略
@@ -164,20 +164,20 @@ Environment=PYTHONUNBUFFERED=1
 WantedBy=multi-user.target
 ```
 
-### 4.2 Fustor Fusion Service
+### 4.2 Fustor fustord Service
 
-创建 `/etc/systemd/system/fustor-fusion.service`：
+创建 `/etc/systemd/system/fustord.service`：
 
 ```ini
 [Unit]
-Description=Fustor Fusion Service
+Description=Fustor fustord Service
 After=network.target
 
 [Service]
 Type=simple
 User=<USER>
 Group=<USER>
-ExecStart=/path/to/venv/bin/fustor-fusion start
+ExecStart=/path/to/venv/bin/fustord start
 WorkingDirectory=/home/<USER>
 
 # 关键: 自动重启策略
@@ -198,11 +198,11 @@ WantedBy=multi-user.target
 sudo systemctl daemon-reload
 
 # 启用开机自启并立即启动
-sudo systemctl enable --now fustor-fusion
-sudo systemctl enable --now fustor-sensord
+sudo systemctl enable --now fustord
+sudo systemctl enable --now sensord
 
 # 查看状态
-sudo systemctl status fustor-sensord
+sudo systemctl status sensord
 ```
 
 ---

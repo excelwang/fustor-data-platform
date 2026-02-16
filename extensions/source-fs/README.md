@@ -11,7 +11,7 @@ This package provides a `SourceDriver` implementation for the Fustor sensord ser
 
 ## 数据完整性约束 (Data Integrity Constraints)
 
-为了确保 Fusion 视图的绝对可靠性，Source FS 驱动遵循以下策略：
+为了确保 fustord 视图的绝对可靠性，Source FS 驱动遵循以下策略：
 
 ### 1. 活跃感知过滤 (Local Active Perception)
 *   **原理**：利用消息流先于快照流启动的特性，在内存中维护 **活跃写入集合 (Active Writers Set)**。
@@ -24,14 +24,14 @@ This package provides a `SourceDriver` implementation for the Fustor sensord ser
 *   **次轮校验**：在全量冷数据推送完毕后，驱动回过头来对队列中的热文件进行循环 `stat` 校验：
     *   若文件已稳定（`mtime` 停留在 10 分钟前），则执行补推。
     *   若文件依然在变热（`mtime` 持续更新），则继续保留在队列中，等待下一轮检查。
-*   **优势**：该机制保证了 Fusion 树的结构完整性，同时避免了单个热文件阻塞整个快照进程。
+*   **优势**：该机制保证了 fustord 树的结构完整性，同时避免了单个热文件阻塞整个快照进程。
 
 ### 3. 审计同步 (Audit Sync)
 **解决场景**：多客户端 NFS 环境下，其他服务器的文件变更无法通过 inotify 感知。
 
 *   **快速算法**：利用目录 mtime 跳过无变化的子树，仅扫描变化的目录
 *   **消息格式**：打上 `message_source='audit'` 标签，携带 `parent_mtime` 字段
-*   **生命周期**：发送 `Audit-Start` 和 `Audit-End` 信号，用于 Fusion 清理 Tombstone
+*   **生命周期**：发送 `Audit-Start` 和 `Audit-End` 信号，用于 fustord 清理 Tombstone
 
 详见 `docs/CONSISTENCY_DESIGN.md` 第 3 节。
 
@@ -44,4 +44,4 @@ This package provides a `SourceDriver` implementation for the Fustor sensord ser
 *   **消息格式**：打上 `message_source='snapshot'` 标签
 
 ## 责任界定
-Source FS 承诺：推送到 Fusion 的每一个字节都必须是"逻辑完备"的。Leader sensord 对数据视图的完整性负有实时存续责任。
+Source FS 承诺：推送到 fustord 的每一个字节都必须是"逻辑完备"的。Leader sensord 对数据视图的完整性负有实时存续责任。

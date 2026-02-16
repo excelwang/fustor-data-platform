@@ -340,7 +340,7 @@ class FSScanner:
                                 logger.debug(f"[audit] Found file during scan: {entry.path}, mtime={st.st_mtime}")
                                 meta = get_file_metadata(entry.path, root_path=self.root, stat_info=st)
                                 if meta:
-                                    # Use relative path for parent_path to match Fusion's tree
+                                    # Use relative path for parent_path to match fustord's tree
                                     meta['parent_path'] = _get_relative_path(root, self.root)
                                     meta['parent_mtime'] = current_dir_mtime
                                     local_batch.append(meta)

@@ -14,7 +14,7 @@
         .summary { display: flex; justify-content: space-between; margin: 0 -10px 20px -10px; }
         .stat-card { background: #fff; padding: 20px; border-radius: 10px; flex: 1; margin: 0 10px; text-align: center; border: 1px solid #eee; border-top: 5px solid #3498db; transition: transform 0.2s; }
         .stat-card:hover { transform: translateY(-5px); }
-        .stat-card.fusion { border-top-color: #2ecc71; }
+        .stat-card.fustord { border-top-color: #2ecc71; }
         .stat-card.integrity { border-top-color: #e74c3c; }
         .stat-card.gain { border-top-color: #f1c40f; }
         .stat-value { font-size: 28px; font-weight: bold; margin: 10px 0; color: #2c3e50; }
@@ -51,7 +51,7 @@
             <div class="summary">
                 <div class="stat-card"><div class="stat-label">OS Baseline</div><div class="stat-value">{{os_avg}} ms</div></div>
                 <div class="stat-card integrity"><div class="stat-label">OS Integrity <span class="optimistic-flag">(Best Case)</span></div><div class="stat-value">{{os_integrity_avg}} ms</div></div>
-                <div class="stat-card fusion"><div class="stat-label">Fusion API</div><div class="stat-value">{{fusion_avg}} ms</div></div>
+                <div class="stat-card fustord"><div class="stat-label">fustord API</div><div class="stat-value">{{fustord_avg}} ms</div></div>
                 <div class="stat-card gain"><div class="stat-label">Latency Speedup</div><div class="stat-value" style="color: #2ecc71">{{gain_latency}}</div></div>
             </div>
         </div>
@@ -61,7 +61,7 @@
             <div class="summary">
                 <div class="stat-card"><div class="stat-label">OS Baseline</div><div class="stat-value">{{os_qps}}</div></div>
                 <div class="stat-card integrity"><div class="stat-label">OS Integrity <span class="optimistic-flag">(Best Case)</span></div><div class="stat-value">{{os_integrity_qps}}</div></div>
-                <div class="stat-card fusion"><div class="stat-label">Fusion API</div><div class="stat-value">{{fusion_qps}}</div></div>
+                <div class="stat-card fustord"><div class="stat-label">fustord API</div><div class="stat-value">{{fustord_qps}}</div></div>
                 <div class="stat-card gain"><div class="stat-label">QPS Gain</div><div class="stat-value" style="color: #2ecc71">{{gain_qps}}</div></div>
             </div>
         </div>
@@ -85,9 +85,9 @@
             <strong>⚠️ 实验严谨性说明 (Scientific Scrutiny):</strong><br>
             本次测试测得的 <strong>OS Integrity (Double Sampling)</strong> 延迟与吞吐率均为该方案的 <strong><span class="optimistic-flag">理论最优/最乐观情况 (Best-case Scenario)</span></strong>：
             <ul>
-                <li>由于基准测试的目标文件夹是由 Fusion API 预先发现的，这意味着这些目标在测试开始前就已经是稳定、完整的。</li>
+                <li>由于基准测试的目标文件夹是由 fustord API 预先发现的，这意味着这些目标在测试开始前就已经是稳定、完整的。</li>
                 <li>在真实生产环境中，如果文件正处于活跃写入状态，OS Integrity 方案在经历 60s 等待后，通常会因检测到元数据变化而被迫进入 <strong>“重试循环”</strong>。</li>
-                <li><strong>结论</strong>：真实环境下的 OS Integrity 延迟将呈 60s 的倍数级增长，吞吐率将进一步折半。而 Fusion API 无论文件是否正在写入，其性能表现始终保持恒定。</li>
+                <li><strong>结论</strong>：真实环境下的 OS Integrity 延迟将呈 60s 的倍数级增长，吞吐率将进一步折半。而 fustord API 无论文件是否正在写入，其性能表现始终保持恒定。</li>
             </ul>
         </div>
 
@@ -98,9 +98,9 @@
                     <th style="width: 20%">Metric</th>
                     <th>OS Baseline</th>
                     <th>OS Integrity <span class="optimistic-flag">*</span></th>
-                    <th>Fusion Dry-Net</th>
-                    <th>Fusion Dry-Run</th>
-                    <th>Fusion API</th>
+                    <th>fustord Dry-Net</th>
+                    <th>fustord Dry-Run</th>
+                    <th>fustord API</th>
                 </tr>
             </thead>
             <tbody></tbody>
@@ -113,7 +113,7 @@
                 <ul>
                     <li><span class="task-name">OS Baseline (Pure find Scan)</span>: 执行原生 <code>find</code> 扫描。该方案无法识别正在写入的文件，在 NFS 环境下极易产生“脏读”，数据一致性等级为“低”。</li>
                     <li><span class="task-name">OS Integrity (Double Sampling)</span>: 模拟 NFS 环境下确保文件完整的真实方案。包含首次采样 -> 强制 <strong>{{integrity_interval}}s</strong> 物理等待 -> 二次校验。<strong>当前测量值为无重试的最优性能。</strong></li>
-                    <li><span class="task-name">Fusion API (Perception Mode)</span>: 基于 sensord 实时感知的元数据检索。无需任何物理静默等待即可返回可靠数据。</li>
+                    <li><span class="task-name">fustord API (Perception Mode)</span>: 基于 sensord 实时感知的元数据检索。无需任何物理静默等待即可返回可靠数据。</li>
                 </ul>
             </section>
         </div>
@@ -132,7 +132,7 @@
             { label: 'Min', key: 'min' },
             { label: 'Max', key: 'max' }
         ];
-        const groups = ['os', 'os_integrity', 'fusion_dry_net', 'fusion_dry', 'fusion'];
+        const groups = ['os', 'os_integrity', 'fustord_dry_net', 'fustord_dry', 'fustord'];
         metrics.forEach(m => {
             const row = document.createElement('tr');
             row.innerHTML = `<td><strong>${m.label}</strong></td>` + 
@@ -140,8 +140,8 @@
             tableBody.appendChild(row);
         });
 
-        const commonLabels = ['OS Baseline', 'OS Integrity*', 'Fusion API'];
-        const getVal = (key) => [rawData.os[key], rawData.os_integrity[key], rawData.fusion[key]];
+        const commonLabels = ['OS Baseline', 'OS Integrity*', 'fustord API'];
+        const getVal = (key) => [rawData.os[key], rawData.os_integrity[key], rawData.fustord[key]];
 
         // 1. QPS Chart
         new Chart(document.getElementById('qpsChart'), {
@@ -191,7 +191,7 @@
                 datasets: [
                     { label: 'OS Baseline', data: getS('os'), borderColor: '#3498db', fill: false, tension: 0.1 },
                     { label: 'OS Integrity*', data: getS('os_integrity'), borderColor: '#e74c3c', fill: false, tension: 0.1 },
-                    { label: 'Fusion API', data: getS('fusion'), borderColor: '#2ecc71', fill: false, tension: 0.1 }
+                    { label: 'fustord API', data: getS('fustord'), borderColor: '#2ecc71', fill: false, tension: 0.1 }
                 ]
             },
             options: { 

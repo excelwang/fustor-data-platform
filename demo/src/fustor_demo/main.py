@@ -47,7 +47,7 @@ async def lifespan(app: FastAPI):
     await generator.stop()
 
 app = FastAPI(
-    title="Fustor Bio-Fusion Demo API",
+    title="Fustor Bio-fustord Demo API",
     description="Demonstrates unified directory service from 5 heterogeneous data sources.",
     version="0.1.0",
     lifespan=lifespan
@@ -77,7 +77,7 @@ async def serve_cluster_ui():
 
 @app.get("/api/real_cluster_state")
 async def get_real_cluster_state():
-    """Fetch real session and view data from the dockerized Fusion service."""
+    """Fetch real session and view data from the dockerized fustord service."""
     async with httpx.AsyncClient() as client:
         headers = {"X-API-Key": REAL_API_KEY}
         try:

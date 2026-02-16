@@ -38,12 +38,12 @@ mkdir -p ~/.fustor/sensord-pipes-config
 
 ### 3. 角色操作手册
 
-#### 👨‍🔧 Fusion Admin (融合服务管理员)
-**职责**: 配置接收端 (Receiver)、视图 (View) 和管道 (Pipe)，启动 Fusion 服务。
+#### 👨‍🔧 fustord Admin (融合服务管理员)
+**职责**: 配置接收端 (Receiver)、视图 (View) 和管道 (Pipe)，启动 fustord 服务。
 
-1.  **安装 Fusion**:
+1.  **安装 fustord**:
     ```bash
-    pip install fustor-fusion
+    pip install fustord
     ```
 
 2.  **配置 Receiver**:
@@ -66,25 +66,25 @@ mkdir -p ~/.fustor/sensord-pipes-config
     driver: fs
     enabled: true
     driver_params:
-      root_path: "/mnt/fusion-view"
+      root_path: "/mnt/fustord-view"
     ```
 
 4.  **配置 Pipe**:
-    在 `~/.fustor/fusion-pipes-config/pipe-1.yaml` 中绑定 Receiver 与 View。
+    在 `~/.fustor/fustord-pipes-config/pipe-1.yaml` 中绑定 Receiver 与 View。
 
-5.  **启动 Fusion 服务**:
+5.  **启动 fustord 服务**:
     ```bash
-    fustor-fusion start -D
+    fustord start -D
     ```
 
 ---
 
 #### 👷 Source Admin (数据源管理员)
-**职责**: 配置数据源和发送器 (Sender)，将数据推送给 Fusion。
+**职责**: 配置数据源和发送器 (Sender)，将数据推送给 fustord。
 
 1.  **安装 sensord**:
     ```bash
-    pip install fustor-sensord fustor-source-fs
+    pip install sensord fustor-source-fs
     ```
 
 2.  **配置 Pipe 任务**:
@@ -92,22 +92,22 @@ mkdir -p ~/.fustor/sensord-pipes-config
 
 3.  **启动 sensord**:
     ```bash
-    fustor-sensord start -D
+    sensord start -D
     ```
 
 ---
 
-#### 🕵️ Fusion User (数据用户)
+#### 🕵️ fustord User (数据用户)
 **职责**: 访问和检索数据。
 
 1.  **浏览文件目录**:
-    *   Fusion 提供了文件系统风格的 API。
+    *   fustord 提供了文件系统风格的 API。
     *   **获取根目录**: `GET /api/v1/views/my-view/tree?path=/`
     *   *(注：需在请求 Header 中带上 `X-API-Key`)*
 
 ## 📦 模块详情
 
-*   **Fusion**: 数据摄取、处理与视图提供。详见 `fusion/README.md`。
+*   **fustord**: 数据摄取、处理与视图提供。详见 `fustord/README.md`。
 *   **sensord**: 数据采集与推送。详见 `sensord/README.md`。
 *   **Common**: 通用工具与基础库。
 

@@ -86,9 +86,9 @@ class TransientSourceBufferFullError(Exception):
     pass
 
 
-class FusionConnectionError(FustorException):
-    """Raised when there is a connection error with the Fusion service."""
+class fustordConnectionError(FustorException):
+    """Raised when there is a connection error with the fustord service."""
     status_code = 503
     
-    def __init__(self, detail: str = "Failed to connect to Fusion", context: Optional[Dict[str, Any]] = None):
+    def __init__(self, detail: str = "Failed to connect to fustord", context: Optional[Dict[str, Any]] = None):
         super().__init__(detail=detail, context=context)

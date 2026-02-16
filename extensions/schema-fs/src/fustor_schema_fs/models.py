@@ -28,7 +28,7 @@ class FSRow(BaseModel):
     A file system row representing a file or directory.
     
     This is the standard data format for FS events exchanged between
-    sensord source drivers and Fusion view handlers.
+    sensord source drivers and fustord view handlers.
     """
     
     # Required fields

@@ -14,13 +14,13 @@ from fixtures.constants import (
 logger = logging.getLogger("fustor_test")
 
 @pytest.mark.asyncio
-async def test_i8_hot_reload_add_source(reset_fusion_state, setup_sensords, fusion_client):
+async def test_i8_hot_reload_add_source(reset_fustord_state, setup_sensords, fustord_client):
     """
     Test the Dynamic Scaling / Hot Reload workflow:
-    1. Start with standard sensord A (Source 1) -> Fusion (View 1).
+    1. Start with standard sensord A (Source 1) -> fustord (View 1).
     2. Hot-add a Multi-FS view aggregating [View 1].
     3. Hot-add a new Source 2 on sensord A.
-    4. Hot-add View 2 (for Source 2) on Fusion and add to Multi-FS view.
+    4. Hot-add View 2 (for Source 2) on fustord and add to Multi-FS view.
     5. Verify Source 2 data appears in Multi-FS view.
     """
     env = setup_sensords
@@ -61,15 +61,15 @@ async def test_i8_hot_reload_add_source(reset_fusion_state, setup_sensords, fusi
             logger.warning(f"Failed to restore {path} from {bak_path}")
 
     # CONFIG PATHS
-    # For Fusion, we MUST modify the SOURCE config mounted at /config/fusion-config/default.yaml
+    # For fustord, we MUST modify the SOURCE config mounted at /config/fustord-config/default.yaml
     # because the entrypoint overwrites /root/.fustor/... on restart.
-    FUSION_CONFIG_PATH = "/config/fusion-config/default.yaml"
+    FUSION_CONFIG_PATH = "/config/fustord-config/default.yaml"
     
     try:
-        logger.info("=== Step 1: Modifying Fusion Config (Source) ===")
+        logger.info("=== Step 1: Modifying fustord Config (Source) ===")
         backup_file(CONTAINER_FUSION, FUSION_CONFIG_PATH)
         
-        def update_fusion(data):
+        def update_fustord(data):
             # 1. Define new View for the new source
             data.setdefault("views", {})
             data["views"]["view-extra"] = {
@@ -122,16 +122,16 @@ async def test_i8_hot_reload_add_source(reset_fusion_state, setup_sensords, fusi
                      })
                  receivers["http-main"]["api_keys"] = keys
         
-        update_yaml_in_container(CONTAINER_FUSION, FUSION_CONFIG_PATH, update_fusion)
+        update_yaml_in_container(CONTAINER_FUSION, FUSION_CONFIG_PATH, update_fustord)
         
-        logger.info("=== Step 2: Reloading Fusion (Restarting Container) ===")
-        # Restart Fusion container to ensure new config is picked up (pkill -HUP was unreliable)
+        logger.info("=== Step 2: Reloading fustord (Restarting Container) ===")
+        # Restart fustord container to ensure new config is picked up (pkill -HUP was unreliable)
         # This simulates a "deployment update" rather than hot reload, but verifies dynamic scaling
         docker_manager.restart_container(CONTAINER_FUSION)
         
-        # Wait for Fusion to be healthy
+        # Wait for fustord to be healthy
         if not docker_manager.wait_for_health(CONTAINER_FUSION):
-            raise RuntimeError("Fusion failed to become healthy after restart")
+            raise RuntimeError("fustord failed to become healthy after restart")
         
         time.sleep(5) # Extra buffer for startup
         
@@ -153,8 +153,8 @@ async def test_i8_hot_reload_add_source(reset_fusion_state, setup_sensords, fusi
             # 2. New Sender
             data.setdefault("senders", {})
             data["senders"]["sender-extra"] = {
-                "driver": "fusion",
-                "uri": data["senders"]["fusion-main"]["uri"],
+                "driver": "fustord",
+                "uri": data["senders"]["fustord-main"]["uri"],
                 "credential": {
                     "key": "extra-api-key"
                 }
@@ -172,11 +172,11 @@ async def test_i8_hot_reload_add_source(reset_fusion_state, setup_sensords, fusi
         
         logger.info("=== Step 4: Reloading sensord (SIGHUP) ===")
         # Attempt SIGHUP reload using CLI
-        res = docker_manager.exec_in_container(CONTAINER_CLIENT_A, ["fustor-sensord", "reload"])
+        res = docker_manager.exec_in_container(CONTAINER_CLIENT_A, ["sensord", "reload"])
         logger.info(f"Reload Output: {res.stdout.strip()}")
         if res.returncode != 0:
              logger.warning(f"Reload CLI failed: {res.stderr.strip()}. Tying pkill...")
-             docker_manager.exec_in_container(CONTAINER_CLIENT_A, ["pkill", "-HUP", "-f", "fustor-sensord"])
+             docker_manager.exec_in_container(CONTAINER_CLIENT_A, ["pkill", "-HUP", "-f", "sensord"])
 
         time.sleep(2) # Wait for reload processing
         
@@ -186,12 +186,12 @@ async def test_i8_hot_reload_add_source(reset_fusion_state, setup_sensords, fusi
         logger.info("=== Step 5: Verification ===")
         
         # We need to query `global-multi-fs`. 
-        # Since existing fusion_client is bound to TEST_VIEW_ID, let's instantiate a temporary one or hack it.
+        # Since existing fustord_client is bound to TEST_VIEW_ID, let's instantiate a temporary one or hack it.
         # But wait, api_keys for multi-fs is "query-multi-key".
         # The generic client might fail auth if we don't supply that key.
         
-        from utils import FusionClient
-        multi_client = FusionClient(base_url="http://localhost:18102", view_id="global-multi-fs")
+        from utils import fustordClient
+        multi_client = fustordClient(base_url="http://localhost:18102", view_id="global-multi-fs")
         multi_client.set_api_key("test-query-key-456")
 
         # Retry verification loop
@@ -223,7 +223,7 @@ async def test_i8_hot_reload_add_source(reset_fusion_state, setup_sensords, fusi
         assert found, "Failed to find 'new_file.txt' in dynamically added source via Multi-FS view"
         
     finally:
-        logger.info("=== Cleanup: Restoring Fusion Config ===")
+        logger.info("=== Cleanup: Restoring fustord Config ===")
         restore_file(CONTAINER_FUSION, FUSION_CONFIG_PATH)
-        # Optional: Restart Fusion again to ensure clean state for next tests?
+        # Optional: Restart fustord again to ensure clean state for next tests?
         # Assuming next tests setup will handle it or current config is fine (reverted on disk, next start picks it up)

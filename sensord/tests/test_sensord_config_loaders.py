@@ -31,7 +31,7 @@ class TestsensordConfigLoader:
             },
             "senders": {
                 "d1": {
-                    "driver": "fusion", 
+                    "driver": "fustord", 
                     "uri": "http://localhost:8102",
                     "credential": {"key": "k"}
                 }
@@ -45,7 +45,7 @@ class TestsensordConfigLoader:
         loader.load_all()
         
         assert loader.get_source("s1").driver == "fs"
-        assert loader.get_sender("d1").driver == "fusion"
+        assert loader.get_sender("d1").driver == "fustord"
         assert loader.get_pipe("p1").source == "s1"
     
     def test_cross_file_references(self, config_dir):
@@ -67,7 +67,7 @@ class TestsensordConfigLoader:
             },
             "senders": {
                 "d1": {
-                    "driver": "fusion", 
+                    "driver": "fustord", 
                     "uri": "http://localhost:8102",
                     "credential": {"key": "k"}
                 }

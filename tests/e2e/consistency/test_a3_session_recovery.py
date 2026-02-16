@@ -19,31 +19,31 @@ class TestSessionRecovery:
     def test_sensord_recovers_after_session_terminated(
         self,
         setup_sensords,
-        fusion_client
+        fustord_client
     ):
         """
         Scenario:
           1. sensord A is running as leader with an active session.
-          2. Fusion manually terminates sensord A's session.
+          2. fustord manually terminates sensord A's session.
           3. sensord A's next heartbeat or ingestion should fail with 419.
           4. sensord A should automatically re-create session and continue.
         """
         logger.info("Starting session recovery test")
         
         # 1. Get current leader session
-        sessions = fusion_client.get_sessions()
+        sessions = fustord_client.get_sessions()
         leader = next((s for s in sessions if "client-a" in s.get("sensord_id", "")), None)
         assert leader is not None, "sensord A must be leader initially"
         
         old_session_id = leader["session_id"]
         logger.info(f"Initial session ID: {old_session_id}")
         
-        # 2. Terminate the session in Fusion
+        # 2. Terminate the session in fustord
         logger.info(f"Force terminating session {old_session_id}...")
-        fusion_client.terminate_session(old_session_id)
+        fustord_client.terminate_session(old_session_id)
         
-        # 3. Verify session is gone in Fusion
-        sessions_after = fusion_client.get_sessions()
+        # 3. Verify session is gone in fustord
+        sessions_after = fustord_client.get_sessions()
         assert old_session_id not in [s["session_id"] for s in sessions_after]
         
         # 4. Wait for sensord A to detect error and recover
@@ -54,7 +54,7 @@ class TestSessionRecovery:
         new_session_id = None
         
         while time.time() - start_wait < MEDIUM_TIMEOUT:
-            sessions = fusion_client.get_sessions()
+            sessions = fustord_client.get_sessions()
             sensord_a_sessions = [s for s in sessions if "client-a" in s.get("sensord_id", "")]
             if sensord_a_sessions:
                 # The sensord might briefly have the old session ID if it hasn't heartbeat yet
@@ -69,7 +69,7 @@ class TestSessionRecovery:
         assert new_session_id != old_session_id, "sensord A should have a DIFFERENT session ID"
         
         # 5. Verify it has a valid role and system availability (Proposal B.2)
-        all_sessions = fusion_client.get_sessions()
+        all_sessions = fustord_client.get_sessions()
         recovered_a = next((s for s in all_sessions if s["session_id"] == new_session_id), None)
         assert recovered_a is not None
         role = recovered_a.get("role")

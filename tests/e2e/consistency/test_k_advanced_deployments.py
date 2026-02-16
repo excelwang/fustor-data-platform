@@ -21,22 +21,22 @@ from ..fixtures.constants import (
 logger = logging.getLogger("fustor_test")
 
 # Paths inside containers (processed config, NOT templates)
-FUSION_PROCESSED_CONFIG_DIR = "/root/.fustor/fusion-config"
+FUSION_PROCESSED_CONFIG_DIR = "/root/.fustor/fustord-config"
 AGENT_PROCESSED_CONFIG_DIR = "/root/.fustor/sensord-config"
 
 
 @pytest.fixture
-def extra_fusion_config():
-    """Create extra YAML config files in Fusion's processed config directory.
+def extra_fustord_config():
+    """Create extra YAML config files in fustord's processed config directory.
     
-    Creates files directly in /root/.fustor/fusion-config/ (the processed directory),
+    Creates files directly in /root/.fustor/fustord-config/ (the processed directory),
     bypassing envsubst. Values must be already resolved (no ${...} vars).
     Cleans up created files on teardown.
     """
     created_files = []  # list of container config paths
     
     def _create(filename, content):
-        """Create a YAML config file directly in Fusion container.
+        """Create a YAML config file directly in fustord container.
         
         Args:
             filename: Config filename (e.g., "extra_fanout.yaml")
@@ -53,7 +53,7 @@ def extra_fusion_config():
             "docker", "exec", CONTAINER_FUSION,
             "sh", "-c", f"cat > {container_path} << 'YAML_EOF'\n{yaml_str}\nYAML_EOF"
         ])
-        logger.info(f"Created Fusion extra config: {container_path}")
+        logger.info(f"Created fustord extra config: {container_path}")
         created_files.append(container_path)
     
     yield _create
@@ -62,7 +62,7 @@ def extra_fusion_config():
     for path in created_files:
         try:
             subprocess.call(["docker", "exec", CONTAINER_FUSION, "rm", "-f", path])
-            logger.info(f"Removed Fusion extra config: {path}")
+            logger.info(f"Removed fustord extra config: {path}")
         except Exception as e:
             logger.warning(f"Could not remove {path}: {e}")
 
@@ -71,7 +71,7 @@ def extra_fusion_config():
 def extra_sensord_config():
     """Create extra YAML config files in sensord's processed config directory.
     
-    Similar to extra_fusion_config but targets sensord containers.
+    Similar to extra_fustord_config but targets sensord containers.
     Cleans up on teardown.
     """
     created_files = []  # list of (container, container_path) tuples
@@ -109,7 +109,7 @@ def extra_sensord_config():
 class TestAdvancedDeployments:
 
     def test_fan_out_deployment(
-        self, docker_env, setup_sensords, fusion_client, extra_fusion_config
+        self, docker_env, setup_sensords, fustord_client, extra_fustord_config
     ):
         """
         Test Scenario: Fan-Out (One sensord -> Multiple Views)
@@ -122,9 +122,9 @@ class TestAdvancedDeployments:
         
         # The default config already has 'archive-fanout' view defined.
         # We just need to update the pipe to fan-out to both views.
-        # Since FusionConfigLoader overwrites pipes with same ID,
+        # Since fustordConfigLoader overwrites pipes with same ID,
         # we create an extra config that redefines the pipe with all required fields.
-        extra_fusion_config("extra_fanout.yaml", {
+        extra_fustord_config("extra_fanout.yaml", {
             "pipes": {
                 view_id: {
                     "receiver": "http-main",
@@ -136,12 +136,12 @@ class TestAdvancedDeployments:
             }
         })
         
-        # Restart Fusion to pick up the extra config
+        # Restart fustord to pick up the extra config
         subprocess.check_call(["docker", "restart", CONTAINER_FUSION])
         
-        logger.info("Waiting for Fusion to reload with fan-out config...")
-        assert fusion_client.wait_for_view_ready(timeout=EXTREME_TIMEOUT), \
-            "Fusion did not become ready after restart with fan-out config"
+        logger.info("Waiting for fustord to reload with fan-out config...")
+        assert fustord_client.wait_for_view_ready(timeout=EXTREME_TIMEOUT), \
+            "fustord did not become ready after restart with fan-out config"
         
         # Write data via leader
         containers = setup_sensords["containers"]
@@ -152,22 +152,22 @@ class TestAdvancedDeployments:
 
         # Verify file appears in primary view
         logger.info(f"Checking file in primary view: {view_id}")
-        assert fusion_client.wait_for_file_in_tree(f"/{filename}", timeout=EXTREME_TIMEOUT), \
+        assert fustord_client.wait_for_file_in_tree(f"/{filename}", timeout=EXTREME_TIMEOUT), \
             f"File not found in primary view {view_id}"
         
         # Verify file also appears in fan-out view
         logger.info(f"Checking file in fan-out view: {extra_view_id}")
-        original_view = fusion_client.view_id
-        fusion_client.view_id = extra_view_id
+        original_view = fustord_client.view_id
+        fustord_client.view_id = extra_view_id
         try:
-            assert fusion_client.wait_for_file_in_tree(f"/{filename}", timeout=EXTREME_TIMEOUT), \
+            assert fustord_client.wait_for_file_in_tree(f"/{filename}", timeout=EXTREME_TIMEOUT), \
                 f"File not found in fan-out view {extra_view_id}"
         finally:
-            fusion_client.view_id = original_view
+            fustord_client.view_id = original_view
 
     def test_aggregation_deployment(
-        self, docker_env, setup_sensords, fusion_client, 
-        extra_fusion_config, extra_sensord_config
+        self, docker_env, setup_sensords, fustord_client, 
+        extra_fustord_config, extra_sensord_config
     ):
         """
         Test Scenario: Aggregation (Multiple Pipes -> Single View)
@@ -179,8 +179,8 @@ class TestAdvancedDeployments:
         agg_pipe_id = "pipe-agg"
         agg_source_id = "source-agg"
         
-        # 1. Add new pipe to Fusion
-        extra_fusion_config("extra_agg.yaml", {
+        # 1. Add new pipe to fustord
+        extra_fustord_config("extra_agg.yaml", {
             "pipes": {
                 agg_pipe_id: {
                     "receiver": "http-main",
@@ -206,7 +206,7 @@ class TestAdvancedDeployments:
             "pipes": {
                 agg_pipe_id: {
                     "source": agg_source_id,
-                    "sender": "fusion-main"
+                    "sender": "fustord-main"
                 }
             }
         })
@@ -214,14 +214,14 @@ class TestAdvancedDeployments:
         # 3. Create the aggregated directory
         docker_env.exec_in_container(leader, ["mkdir", "-p", "/mnt/shared/aggregated"])
         
-        # 4. Restart Fusion and reload sensord
+        # 4. Restart fustord and reload sensord
         subprocess.check_call(["docker", "restart", CONTAINER_FUSION])
-        logger.info("Waiting for Fusion to reload with aggregation config...")
-        assert fusion_client.wait_for_view_ready(timeout=EXTREME_TIMEOUT), \
-            "Fusion did not become ready after restart with aggregation config"
+        logger.info("Waiting for fustord to reload with aggregation config...")
+        assert fustord_client.wait_for_view_ready(timeout=EXTREME_TIMEOUT), \
+            "fustord did not become ready after restart with aggregation config"
         
         # Reload sensord config via SIGHUP
-        docker_env.exec_in_container(leader, ["pkill", "-HUP", "-f", "fustor-sensord"])
+        docker_env.exec_in_container(leader, ["pkill", "-HUP", "-f", "sensord"])
         logger.info("Sent SIGHUP to sensord for config reload. Waiting...")
         time.sleep(10)  # Give sensord time to reload config and reconnect
         
@@ -234,32 +234,32 @@ class TestAdvancedDeployments:
 
         # 6. Verify in view (the aggregated pipe feeds into the same view)
         logger.info(f"Checking aggregated file in view: {view_id}")
-        assert fusion_client.wait_for_file_in_tree(f"/{filename}", timeout=EXTREME_TIMEOUT), \
+        assert fustord_client.wait_for_file_in_tree(f"/{filename}", timeout=EXTREME_TIMEOUT), \
             f"Aggregated file not found in view {view_id}"
 
     def test_ha_dynamic_adjustment(
-        self, docker_env, setup_sensords, fusion_client, extra_fusion_config
+        self, docker_env, setup_sensords, fustord_client, extra_fustord_config
     ):
         """
         Test Scenario: HA Cluster Configuration Reload
         
-        Verify that global fusion config can be changed dynamically via extra config.
+        Verify that global fustord config can be changed dynamically via extra config.
         Creates an extra config with session_cleanup_interval change,
-        restarts Fusion, verifies it comes back healthy.
+        restarts fustord, verifies it comes back healthy.
         """
         # Create extra config with modified global setting
-        extra_fusion_config("extra_ha.yaml", {
-            "fusion": {
+        extra_fustord_config("extra_ha.yaml", {
+            "fustord": {
                 "session_cleanup_interval": 11.0
             }
         })
         
         subprocess.check_call(["docker", "restart", CONTAINER_FUSION])
-        logger.info("Waiting for Fusion to reload with HA config...")
-        assert fusion_client.wait_for_view_ready(timeout=LONG_TIMEOUT), \
-            "Fusion did not become ready after HA config reload"
+        logger.info("Waiting for fustord to reload with HA config...")
+        assert fustord_client.wait_for_view_ready(timeout=LONG_TIMEOUT), \
+            "fustord did not become ready after HA config reload"
         
-        # Verify Fusion is operational by checking we can get stats
-        stats = fusion_client.get_stats()
+        # Verify fustord is operational by checking we can get stats
+        stats = fustord_client.get_stats()
         assert stats is not None, "Could not get stats after HA config reload"
         logger.info(f"HA config reload successful. Stats: {stats}")

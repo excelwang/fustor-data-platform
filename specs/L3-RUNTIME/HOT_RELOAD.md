@@ -14,7 +14,7 @@ version: 1.0.0
 
 ## 1. 概述
 
-Fustor 的 sensord 和 Fusion 均支持 **基于 SIGHUP 信号的配置热重载**，允许在不停止服务的情况下动态增减管道（Pipe）。
+Fustor 的 sensord 和 fustord 均支持 **基于 SIGHUP 信号的配置热重载**，允许在不停止服务的情况下动态增减管道（Pipe）。
 
 > [!IMPORTANT]
 > **设计硬约束**：热重载**禁止修改**任何已运行组件（不局限于 Pipe）的配置。只能**增加或删除**组件。
@@ -28,14 +28,14 @@ Fustor 的 sensord 和 Fusion 均支持 **基于 SIGHUP 信号的配置热重载
 
 ```bash
 # 修改 YAML 配置后，执行：
-fustor-sensord reload
+sensord reload
 ```
 
-### 2.2 Fusion
+### 2.2 fustord
 
 ```bash
 # 修改 YAML 配置后，执行：
-fustor-fusion reload
+fustord reload
 ```
 
 两个命令都是通过读取 PID 文件找到守护进程，然后发送 `SIGHUP` 信号。
@@ -49,12 +49,12 @@ fustor-fusion reload
 ```mermaid
 sequenceDiagram
     participant User
-    participant CLI as fustor-sensord reload
+    participant CLI as sensord reload
     participant Daemon as sensord Daemon
     participant App as App.reload_config()
     participant Config as sensordConfigLoader
 
-    User->>CLI: fustor-sensord reload
+    User->>CLI: sensord reload
     CLI->>Daemon: os.kill(pid, SIGHUP)
     Daemon->>App: handle_reload → create_task(reload_config())
     App->>Config: sensord_config.reload()
@@ -70,20 +70,20 @@ sequenceDiagram
 - 信号处理: `runner.py` → `handle_reload()` → `app.reload_config()`
 - Diff 逻辑: `app.py` → `reload_config()` → `sensord_config.get_diff()`
 
-### 3.2 Fusion 热重载
+### 3.2 fustord 热重载
 
 ```mermaid
 sequenceDiagram
     participant User
-    participant CLI as fustor-fusion reload
-    participant Daemon as Fusion Daemon
+    participant CLI as fustord reload
+    participant Daemon as fustord Daemon
     participant PM as PipeManager.reload()
-    participant Config as FusionConfigLoader
+    participant Config as fustordConfigLoader
 
-    User->>CLI: fustor-fusion reload
+    User->>CLI: fustord reload
     CLI->>Daemon: os.kill(pid, SIGHUP)
     Daemon->>PM: handle_reload → create_task(pm.reload())
-    PM->>Config: fusion_config.reload()
+    PM->>Config: fustord_config.reload()
     Config-->>PM: 重新读取所有 YAML 文件
     PM->>PM: get_diff(current_pipe_ids)
     PM->>PM: 停止 removed pipes + bridges + receivers
@@ -91,7 +91,7 @@ sequenceDiagram
     PM-->>Daemon: 完成
 ```
 
-Fusion 额外处理了 **Receiver 清理**：如果某个端口上的所有 Pipe 都被移除，对应的 HTTP Receiver 也会被停止。
+fustord 额外处理了 **Receiver 清理**：如果某个端口上的所有 Pipe 都被移除，对应的 HTTP Receiver 也会被停止。
 
 ---
 
@@ -126,24 +126,24 @@ def get_diff(current_running_ids: Set[str]) -> Dict:
 pipes:
   my-pipe:
     source: shared-fs
-    sender: fusion-main
+    sender: fustord-main
 
 # 修改后 — 改 ID 让 Diff 检测到
 pipes:
   my-pipe-v2:       # ← 新 ID
     source: shared-fs
-    sender: fusion-main
+    sender: fustord-main
     fields_mapping:  # ← 新增配置
       - to: "path"
         source: ["path:string"]
 ```
 
-然后执行 `fustor-sensord reload`。Diff 会检测到 `removed={my-pipe}, added={my-pipe-v2}`。
+然后执行 `sensord reload`。Diff 会检测到 `removed={my-pipe}, added={my-pipe-v2}`。
 
 ### 方式二：重启
 
 ```bash
-fustor-sensord stop && fustor-sensord start -D
+sensord stop && sensord start -D
 ```
 
 ---

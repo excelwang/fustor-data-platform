@@ -57,7 +57,7 @@ def ensure_sensord_running(container_name, api_key, view_id, mount_point=MOUNT_P
     except Exception as e:
         logger.debug(f"Container {container_name} already running or could not be started: {e}")
 
-    fusion_endpoint = RECEIVER_ENDPOINT
+    fustord_endpoint = RECEIVER_ENDPOINT
     
     # Generate unique sensord ID
     sensord_id = f"{container_name.replace('fustor-nfs-', '')}-{os.urandom(2).hex()}"
@@ -91,7 +91,7 @@ def ensure_sensord_running(container_name, api_key, view_id, mount_point=MOUNT_P
     # We pass all necessary variables to the container's environment for envsubst to pick up
     cmd = (
         f"export MOUNT_POINT='{mount_point}' "
-        f"FUSION_ENDPOINT='{fusion_endpoint}' "
+        f"FUSION_ENDPOINT='{fustord_endpoint}' "
         f"API_KEY='{api_key}' "
         f"THROTTLE_INTERVAL_SEC='{THROTTLE_INTERVAL_SEC}' "
         f"AUDIT_INTERVAL='{AUDIT_INTERVAL}' "
@@ -115,7 +115,7 @@ def ensure_sensord_running(container_name, api_key, view_id, mount_point=MOUNT_P
     # Use -D for daemon mode as requested by user
     docker_manager.exec_in_container(
         container_name, 
-        ["sh", "-c", f"{cmd_prefix}fustor-sensord start -D -V"],
+        ["sh", "-c", f"{cmd_prefix}sensord start -D -V"],
         detached=False # -D returns immediately anyway
     )
     
@@ -129,7 +129,7 @@ def ensure_sensord_running(container_name, api_key, view_id, mount_point=MOUNT_P
 
 
 @pytest.fixture(scope="function")
-def setup_sensords(docker_env, fusion_client, test_api_key, test_view):
+def setup_sensords(docker_env, fustord_client, test_api_key, test_view):
     """
     Ensure sensords are running and healthy.
     """
@@ -142,7 +142,7 @@ def setup_sensords(docker_env, fusion_client, test_api_key, test_view):
     
     # Wait for A to become Leader and Ready
     logger.info("Waiting for sensord A to be ready (Leader + Realtime Ready)...")
-    if not fusion_client.wait_for_sensord_ready("client-a", timeout=AGENT_READY_TIMEOUT):
+    if not fustord_client.wait_for_sensord_ready("client-a", timeout=AGENT_READY_TIMEOUT):
         # Dump logs for sensord A (Errors only, last 100 lines)
         logs_res = docker_manager.exec_in_container(
             CONTAINER_CLIENT_A, 
@@ -157,7 +157,7 @@ def setup_sensords(docker_env, fusion_client, test_api_key, test_view):
     start_time = time.time()
     leader = None
     while time.time() - start_time < timeout:
-        sessions = fusion_client.get_sessions()
+        sessions = fustord_client.get_sessions()
         leader = next((s for s in sessions if "client-a" in s.get("sensord_id", "")), None)
         if leader and leader.get("role") == "leader":
             break
@@ -166,7 +166,7 @@ def setup_sensords(docker_env, fusion_client, test_api_key, test_view):
     if not leader or leader.get("role") != "leader":
         role = leader.get("role") if leader else "not found"
         # If still follower, dump sessions to help debug
-        all_sessions = fusion_client.get_sessions()
+        all_sessions = fustord_client.get_sessions()
         logger.error(f"sensord A found as {role}. Active sessions: {all_sessions}")
         raise RuntimeError(f"sensord A registered but did not become leader within {timeout}s (current role: {role})")
     
@@ -174,7 +174,7 @@ def setup_sensords(docker_env, fusion_client, test_api_key, test_view):
 
     # Wait for View to be READY (Snapshot complete)
     logger.info("Waiting for View to be ready (initial snapshot completion)...")
-    if not fusion_client.wait_for_view_ready(timeout=VIEW_READY_TIMEOUT):
+    if not fustord_client.wait_for_view_ready(timeout=VIEW_READY_TIMEOUT):
         logger.warning("View readiness check timed out. Proceeding anyway.")
     else:
         logger.info("View is READY.")
@@ -190,8 +190,8 @@ def setup_sensords(docker_env, fusion_client, test_api_key, test_view):
     # create_file_in_container uses echo|base64 which might have different timestamp behavior
     docker_manager.exec_in_container(CONTAINER_CLIENT_A, ["touch", warmup_file])
     
-    # Wait for Fusion to ingest it (implicitly calibrates skew)
-    if not fusion_client.wait_for_file_in_tree(warmup_view_path, timeout=SHORT_TIMEOUT):
+    # Wait for fustord to ingest it (implicitly calibrates skew)
+    if not fustord_client.wait_for_file_in_tree(warmup_view_path, timeout=SHORT_TIMEOUT):
         logger.warning("Skew calibration file not seen in tree. Clock might be uncalibrated.")
     else:
         logger.info("Skew calibration successful.")
@@ -203,7 +203,7 @@ def setup_sensords(docker_env, fusion_client, test_api_key, test_view):
     
     # Wait for sensord B to be Ready
     logger.info("Waiting for sensord B to be ready (Follower + Realtime Ready)...")
-    if not fusion_client.wait_for_sensord_ready("client-b", timeout=AGENT_B_READY_TIMEOUT):
+    if not fustord_client.wait_for_sensord_ready("client-b", timeout=AGENT_B_READY_TIMEOUT):
         # Filter for errors before tailing as suggested by user
         logs_res = docker_manager.exec_in_container(
             CONTAINER_CLIENT_B, 
@@ -225,7 +225,7 @@ def setup_sensords(docker_env, fusion_client, test_api_key, test_view):
     }
 
 @pytest.fixture(scope="function")
-def setup_unskewed_sensords(docker_env, fusion_client, test_api_key, test_view):
+def setup_unskewed_sensords(docker_env, fustord_client, test_api_key, test_view):
     """
     Setup environment with Unskewed sensord A only.
     Disable LD_PRELOAD to remove skew from sensord A.
@@ -248,7 +248,7 @@ def setup_unskewed_sensords(docker_env, fusion_client, test_api_key, test_view):
     
     # Wait for A to be Ready
     logger.info("Waiting for Unskewed sensord A to be ready...")
-    if not fusion_client.wait_for_sensord_ready("client-a", timeout=AGENT_READY_TIMEOUT):
+    if not fustord_client.wait_for_sensord_ready("client-a", timeout=AGENT_READY_TIMEOUT):
          raise RuntimeError("Unskewed sensord A failed to become ready")
          
     # Wait for Leader
@@ -257,7 +257,7 @@ def setup_unskewed_sensords(docker_env, fusion_client, test_api_key, test_view):
     start_time = time.time()
     leader = None
     while time.time() - start_time < timeout:
-        sessions = fusion_client.get_sessions()
+        sessions = fustord_client.get_sessions()
         leader = next((s for s in sessions if "client-a" in s.get("sensord_id", "")), None)
         if leader and leader.get("role") == "leader":
             break
@@ -269,13 +269,13 @@ def setup_unskewed_sensords(docker_env, fusion_client, test_api_key, test_view):
     logger.info("Unskewed sensord A is Leader.")
     
     # Wait for View Ready
-    if not fusion_client.wait_for_view_ready(timeout=VIEW_READY_TIMEOUT):
+    if not fustord_client.wait_for_view_ready(timeout=VIEW_READY_TIMEOUT):
          logger.warning("View failed to become ready.")
 
     # Skew Calibration (Should be close to 0 now)
     warmup_file = f"{MOUNT_POINT}/unskewed_calibration_{int(time.time()*1000)}.txt"
     docker_manager.exec_in_container(CONTAINER_CLIENT_A, ["touch", warmup_file])
-    fusion_client.wait_for_file_in_tree("/" + os.path.basename(warmup_file), timeout=SHORT_TIMEOUT)
+    fustord_client.wait_for_file_in_tree("/" + os.path.basename(warmup_file), timeout=SHORT_TIMEOUT)
     logger.info("Unskewed calibration completed.")
 
     return {

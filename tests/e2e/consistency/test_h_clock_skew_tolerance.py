@@ -5,7 +5,7 @@ Test H: Clock Skew Tolerance.
 - 节点通过 libfaketime 模拟不同的物理时间
 - sensord A (Leader): +2 小时 (领先)
 - sensord B (Follower): -1 小时 (落后)
-- Fusion/NFS/Client C: 默认时间 (基准)
+- fustord/NFS/Client C: 默认时间 (基准)
 - Logical Clock 机制应确保发现和同步正常，不受 mtime 偏移影响
 """
 import pytest
@@ -36,7 +36,7 @@ class TestClockSkewTolerance:
     def test_clock_skew_environment_setup(
         self,
         docker_env,
-        fusion_client,
+        fustord_client,
         setup_sensords
     ):
         """
@@ -45,24 +45,24 @@ class TestClockSkewTolerance:
         预期：
         - sensord A 时间领先约 2 小时
         - sensord B 时间落后约 1 小时
-        - Fusion 时间为物理主机时间
+        - fustord 时间为物理主机时间
         """
         # Get timestamps from each container
         def get_container_timestamp(container):
             result = docker_manager.exec_in_container(container, ["date", "-u", "+%s"])
             return int(result.stdout.strip())
         
-        fusion_time = get_container_timestamp(CONTAINER_FUSION)
+        fustord_time = get_container_timestamp(CONTAINER_FUSION)
         client_a_time = get_container_timestamp(CONTAINER_CLIENT_A)
         client_b_time = get_container_timestamp(CONTAINER_CLIENT_B)
         
         # Log times for debugging
-        logger.info(f"Fusion UTC:   {fusion_time}")
+        logger.info(f"fustord UTC:   {fustord_time}")
         logger.info(f"Client A UTC: {client_a_time}")
         logger.info(f"Client B UTC: {client_b_time}")
         
-        a_skew = client_a_time - fusion_time
-        b_skew = client_b_time - fusion_time
+        a_skew = client_a_time - fustord_time
+        b_skew = client_b_time - fustord_time
         
         logger.info(f"sensord A skew: {a_skew}s ({a_skew/3600:.2f}h)")
         logger.info(f"sensord B skew: {b_skew}s ({b_skew/3600:.2f}h)")
@@ -74,7 +74,7 @@ class TestClockSkewTolerance:
     def test_audit_discovery_of_new_file_is_flagged_suspect(
         self,
         docker_env,
-        fusion_client,
+        fustord_client,
         setup_sensords,
         clean_shared_dir,
         wait_for_audit
@@ -84,7 +84,7 @@ class TestClockSkewTolerance:
         
         预期：
           - 由 Client C (无监控 sensord) 创建一个文件。mtime 为 T。
-          - Fusion 的水位线此时可能由 sensord A (+2h) 的心跳或之前活动保持。
+          - fustord 的水位线此时可能由 sensord A (+2h) 的心跳或之前活动保持。
           - sensord A 通过审计发现该文件。
           - 由于该文件是新出现的且 mtime 与当前水位线接近（Age < threshold），应标记为 suspect。
         """
@@ -112,17 +112,17 @@ class TestClockSkewTolerance:
         wait_for_audit()
         
         # 3. Wait for discovery via Audit/Scan from sensord A (Leader)
-        assert fusion_client.wait_for_file_in_tree(file_rel, timeout=EXTREME_TIMEOUT) is not None
+        assert fustord_client.wait_for_file_in_tree(file_rel, timeout=EXTREME_TIMEOUT) is not None
         
         # 3. Verify suspect flag
-        flags = fusion_client.check_file_flags(file_rel)
+        flags = fustord_client.check_file_flags(file_rel)
         logger.info(f"Audit discovered file flags: {flags}")
         assert flags["integrity_suspect"] is True, "New file discovered via Audit should be suspect"
 
     def test_realtime_sync_phase_from_past_sensord(
         self,
         docker_env,
-        fusion_client,
+        fustord_client,
         setup_sensords,
         clean_shared_dir
     ):
@@ -138,18 +138,18 @@ class TestClockSkewTolerance:
         docker_manager.create_file_in_container(CONTAINER_CLIENT_C, file_path, "orig")
         
         # 2. Wait for it to be suspect (if discovered via audit by A) or just wait for it to appear
-        assert fusion_client.wait_for_file_in_tree(file_rel) is not None
+        assert fustord_client.wait_for_file_in_tree(file_rel) is not None
         
         # 3. sensord B (落后 1h) 修改文件。实时事件会清除 suspect。
         docker_manager.exec_in_container(CONTAINER_CLIENT_B, ["sh", "-c", f"echo 'mod' >> {file_path}"])
         
         # 4. Verify suspect is cleared
         time.sleep(INGESTION_DELAY)
-        flags = fusion_client.check_file_flags(file_rel)
+        flags = fustord_client.check_file_flags(file_rel)
         assert flags["integrity_suspect"] is False, "Realtime update should clear suspect status"
 
         # 5. Explicit Regression Test for Split-Brain Timer (Proposal A.1)
-        # Verify that a brand new file from the skewed sensord correctly reaches Fusion.
+        # Verify that a brand new file from the skewed sensord correctly reaches fustord.
         probe_file = f"lag_probe_{int(time.time())}.txt"
         probe_path = f"{MOUNT_POINT}/{probe_file}"
         probe_rel = "/" + probe_file
@@ -158,14 +158,14 @@ class TestClockSkewTolerance:
         docker_manager.create_file_in_container(CONTAINER_CLIENT_B, probe_path, "probe")
         
         # This will fail if sensord B drops the event due to Index Regression (Part A.1)
-        assert fusion_client.wait_for_file_in_tree(probe_rel, timeout=MEDIUM_TIMEOUT) is not None, \
+        assert fustord_client.wait_for_file_in_tree(probe_rel, timeout=MEDIUM_TIMEOUT) is not None, \
             "Realtime event from lagging sensord B was dropped (possible Split-Brain Timer regression)"
         logger.info("Verified: Realtime events from lagging sensord survive skew.")
 
     def test_logical_clock_remains_stable_despite_skew(
         self,
         docker_env,
-        fusion_client,
+        fustord_client,
         setup_sensords,
         clean_shared_dir,
         wait_for_audit
@@ -188,7 +188,7 @@ class TestClockSkewTolerance:
         """
         
         # 0. Generate realtime events from sensord B (-1h) to establish Mode
-        # sensord B's files have mtime = T-3600, so diff = T_fusion - (T-3600) = 3600
+        # sensord B's files have mtime = T-3600, so diff = T_fustord - (T-3600) = 3600
         logger.info("Step 0: Establishing Mode with sensord B (-1h) realtime events...")
         for i in range(5):
             warmup_file_b = f"warmup_b_{int(time.time())}_{i}.txt"
@@ -197,7 +197,7 @@ class TestClockSkewTolerance:
         
         # Wait for sensord B's realtime events to be ingested
         warmup_rel = to_view_path(f"{MOUNT_POINT}/{warmup_file_b}")
-        assert fusion_client.wait_for_file_in_tree(warmup_rel, timeout=LONG_TIMEOUT) is not None, \
+        assert fustord_client.wait_for_file_in_tree(warmup_rel, timeout=LONG_TIMEOUT) is not None, \
             "sensord B warmup files should be ingested via realtime"
         
         # 1. sensord A (+2h) creates a file (1 event with diff ≈ -7200)
@@ -208,15 +208,15 @@ class TestClockSkewTolerance:
         docker_manager.exec_in_container(CONTAINER_CLIENT_A, ["touch", file_path_a])
         
         # Wait for discovery
-        assert fusion_client.wait_for_file_in_tree(file_path_a_rel, timeout=LONG_TIMEOUT) is not None
+        assert fustord_client.wait_for_file_in_tree(file_path_a_rel, timeout=LONG_TIMEOUT) is not None
         
-        stats = fusion_client.get_stats()
+        stats = fustord_client.get_stats()
         logical_now = stats.get("logical_now", 0)
         host_now = time.time()
         logger.info(f"Watermark: {logical_now}, Host Physical: {host_now}, Diff: {logical_now - host_now:.1f}s")
         
         # Mode should be ~3600 (from sensord B's 5 events) not -7200 (from sensord A's 1-2 events).
-        # Watermark = T_fusion - mode_skew ≈ T - 3600 (i.e., 1 hour behind host time).
+        # Watermark = T_fustord - mode_skew ≈ T - 3600 (i.e., 1 hour behind host time).
         # So logical_now - host_now ≈ -3600. Allow generous tolerance.
         diff = logical_now - host_now
         logger.info(f"Logical Clock drift from host: {diff:.1f}s (expected ≈ -3600)")
@@ -238,13 +238,13 @@ class TestClockSkewTolerance:
         # 3. Wait for Audit to discover it
         wait_for_audit()
         
-        assert fusion_client.wait_for_file_in_tree(file_path_normal_rel, timeout=EXTREME_TIMEOUT) is not None
+        assert fustord_client.wait_for_file_in_tree(file_path_normal_rel, timeout=EXTREME_TIMEOUT) is not None
         
         # 4. Verify the normal file's suspect status
         # Watermark ≈ T-3600. File mtime ≈ T.
         # Age = watermark - mtime ≈ (T-3600) - T = -3600 (negative age!)
         # When age < 0 or age < hot_file_threshold, the file should be suspect.
-        flags = fusion_client.check_file_flags(file_path_normal_rel)
+        flags = fustord_client.check_file_flags(file_path_normal_rel)
         logger.info(f"Normal file flags: {flags}")
         
         assert flags["integrity_suspect"] is True, \

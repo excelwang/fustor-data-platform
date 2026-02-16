@@ -2,7 +2,7 @@
 Test F1: On-Demand Scan (Compensatory Tier 3).
 
 验证 "按需扫描" 功能。当怀疑某路径不一致时，
-可以通过 Fusion API 手动触发特定路径的扫描。
+可以通过 fustord API 手动触发特定路径的扫描。
 注意: On-demand 扫描为补偿型 (Tier 3)，不能清除 suspect 或 blind-spot。
 参考: CONSISTENCY_DESIGN.md §4.5
 """
@@ -23,7 +23,7 @@ class TestOnDemandScan:
     def test_on_demand_scan_discovers_file(
         self,
         docker_env,
-        fusion_client,
+        fustord_client,
         setup_sensords,
         clean_shared_dir
     ):
@@ -38,8 +38,8 @@ class TestOnDemandScan:
         from ..utils import docker_manager
         
         # 1. 确保环境就绪
-        assert fusion_client.wait_for_view_ready(timeout=VIEW_READY_TIMEOUT), "View did not become ready"
-        assert fusion_client.wait_for_sensord_ready("client-a", timeout=SHORT_TIMEOUT), "sensord A not ready"
+        assert fustord_client.wait_for_view_ready(timeout=VIEW_READY_TIMEOUT), "View did not become ready"
+        assert fustord_client.wait_for_sensord_ready("client-a", timeout=SHORT_TIMEOUT), "sensord A not ready"
 
         # 2. 创建测试文件 (在 NFS Server 侧直接创建，绕过 sensord 的 inotify)
         test_file_name = f"on_demand_{int(time.time())}.txt"
@@ -55,9 +55,9 @@ class TestOnDemandScan:
 
         # 4. 触发 On-Demand Scan
         print(f"[Test] Triggering on-demand scan for {test_file_rel}...")
-        response = fusion_client.api_request(
+        response = fustord_client.api_request(
             "GET", 
-            f"views/{fusion_client.view_id}/tree", 
+            f"views/{fustord_client.view_id}/tree", 
             params={"path": test_file_rel, "on_demand_scan": "true"}
         )
         assert response.status_code == 200, f"API call failed: {response.text}"
@@ -66,7 +66,7 @@ class TestOnDemandScan:
 
         # 4. 验证文件最终出现在视图中
         print("[Test] Waiting for file to appear...")
-        found = fusion_client.wait_for_file_in_tree(test_file_rel, timeout=MEDIUM_TIMEOUT)
+        found = fustord_client.wait_for_file_in_tree(test_file_rel, timeout=MEDIUM_TIMEOUT)
         assert found, "File should appear after on-demand scan"
         
         # 5. 验证 sensord_missing 标志 (Tier 3: known_by_sensord=False → sensord_missing=True)

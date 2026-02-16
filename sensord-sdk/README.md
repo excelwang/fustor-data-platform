@@ -11,7 +11,7 @@ graph LR
     Source[Source Driver] -- Events --> Bus[Event Bus]
     Bus -- Polled Events --> Pipe[sensord Pipe]
     Pipe -- Batched Events --> Sender[Sender Handler]
-    Sender -- HTTP/gRPC --> Fusion[Fustor Fusion]
+    Sender -- HTTP/gRPC --> fustord[Fustor fustord]
 ```
 
 ## Features
@@ -24,7 +24,7 @@ graph LR
 ## Installation
 
 ```bash
-uv sync --package fustor-sensord-sdk
+uv sync --package sensord-sdk
 ```
 
 ## Usage
@@ -53,7 +53,7 @@ from fustor_core.models.config import PipeConfig
 async def register_pipe(service: PipeConfigServiceInterface):
     config = PipeConfig(
         source_uri="custom://my-stream",
-        sender_id="fusion-main",
+        sender_id="fustord-main",
         enabled=True
     )
     await service.add_config(id="stream-1", config=config)

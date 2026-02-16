@@ -13,7 +13,7 @@ import pytest
 import asyncio
 from unittest.mock import AsyncMock
 from fustor_core.pipe import PipeState
-from fustor_core.exceptions import FusionConnectionError
+from fustor_core.exceptions import fustordConnectionError
 from sensord.runtime.sensord_pipe import sensordPipe
 from .mocks import MockSourceHandler, MockSenderHandler
 
@@ -74,7 +74,7 @@ class TestPipeErrorThreshold:
         pipe.max_consecutive_errors = 3
         
         snd.create_session = AsyncMock(
-            side_effect=FusionConnectionError("Connection refused")
+            side_effect=fustordConnectionError("Connection refused")
         )
 
         await pipe.start()
@@ -127,7 +127,7 @@ class TestPipeErrorThreshold:
             nonlocal call_count
             call_count += 1
             if call_count <= 2:
-                raise FusionConnectionError("Connection refused")
+                raise fustordConnectionError("Connection refused")
             return ("recovered-session", {"role": "leader"})
 
         snd.create_session = AsyncMock(side_effect=flaky_create_session)

@@ -2,7 +2,7 @@
 """
 Test HB1: Heartbeat Timeout - sensord recovers after session expires naturally.
 
-验证 sensord 在长时间由于网络或其他原因无法发送心跳，导致会话在 Fusion 端超时后，
+验证 sensord 在长时间由于网络或其他原因无法发送心跳，导致会话在 fustord 端超时后，
 能够检测到会话过期并自动重新创建会话。
 """
 import time
@@ -26,7 +26,7 @@ class TestHeartbeatTimeout:
     def test_sensord_recovers_after_timeout(
         self,
         setup_sensords,
-        fusion_client
+        fustord_client
     ):
         """
         Scenario:
@@ -39,7 +39,7 @@ class TestHeartbeatTimeout:
         logger.info("Starting heartbeat timeout recovery test")
         
         # 1. Get current sensord A session
-        sessions = fusion_client.get_sessions()
+        sessions = fustord_client.get_sessions()
         sensord_a = next((s for s in sessions if "client-a" in s.get("sensord_id", "")), None)
         assert sensord_a is not None, "sensord A must have a session initially"
         
@@ -50,14 +50,14 @@ class TestHeartbeatTimeout:
         logger.info(f"Pausing container {CONTAINER_CLIENT_A}...")
         docker_manager.exec_in_container(CONTAINER_CLIENT_A, ["sh", "-c", "kill -STOP $(cat /root/.fustor/sensord.pid)"])
         
-        # 3. Wait for session timeout in Fusion
-        # Fusion timeout is SESSION_TIMEOUT. Replace hard sleep with polling.
-        logger.info(f"Polling for session {old_session_id} to expire in Fusion...")
+        # 3. Wait for session timeout in fustord
+        # fustord timeout is SESSION_TIMEOUT. Replace hard sleep with polling.
+        logger.info(f"Polling for session {old_session_id} to expire in fustord...")
         
         from ..utils.wait_helpers import wait_for_condition
         
         def is_session_expired():
-            sessions = fusion_client.get_sessions()
+            sessions = fustord_client.get_sessions()
             return old_session_id not in [s["session_id"] for s in sessions]
             
         wait_for_condition(
@@ -91,11 +91,11 @@ class TestHeartbeatTimeout:
             
             # Check if process is still alive
             ps_res = docker_manager.exec_in_container(CONTAINER_CLIENT_A, ["ps", "aux"])
-            if "fustor-sensord" not in ps_res.stdout and "python" not in ps_res.stdout:
+            if "sensord" not in ps_res.stdout and "python" not in ps_res.stdout:
                 logger.error(f"sensord A process DIED during recovery. Logs:\n{logs}")
                 pytest.fail("sensord A process died during recovery")
 
-            sessions = fusion_client.get_sessions()
+            sessions = fustord_client.get_sessions()
             sensord_a_sessions = [s for s in sessions if "client-a" in s.get("sensord_id", "")]
             if sensord_a_sessions:
                 new_session_id = sensord_a_sessions[0]["session_id"]
@@ -108,7 +108,7 @@ class TestHeartbeatTimeout:
         assert new_session_id != old_session_id, "sensord A should have a DIFFERENT session ID"
         
         # 6. Verify Cluster Health (Proposal B.1)
-        recovered_sessions = fusion_client.get_sessions()
+        recovered_sessions = fustord_client.get_sessions()
         recovered_a = next((s for s in recovered_sessions if s["session_id"] == new_session_id), None)
         assert recovered_a is not None
         assert recovered_a.get("role") in ["leader", "follower"], f"Recovered session should have a valid role, got {recovered_a.get('role')}"

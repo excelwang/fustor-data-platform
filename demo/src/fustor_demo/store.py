@@ -5,7 +5,7 @@ import copy
 class DemoStore:
     """
     A simple in-memory store for the demo.
-    Aggregates events into a unified directory structure, mimicking Fusion's role.
+    Aggregates events into a unified directory structure, mimicking fustord's role.
     """
     def __init__(self):
         # Stores projects, indexed by project_id

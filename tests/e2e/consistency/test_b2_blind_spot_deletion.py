@@ -25,21 +25,21 @@ class TestBlindSpotFileDeletion:
     def test_blind_spot_deletion_detected_by_audit(
         self,
         docker_env,
-        fusion_client,
+        fustord_client,
         setup_sensords,
         clean_shared_dir,
         wait_for_audit
     ):
         """
         场景:
-          1. sensord A 创建文件（正常路径，实时同步到 Fusion）
+          1. sensord A 创建文件（正常路径，实时同步到 fustord）
           2. 无 sensord 的客户端 C 删除该文件
           3. 因为 C 没有 sensord，删除事件不会实时同步
           4. Audit 发现文件缺失，从内存树移除
         预期:
-          - 删除前文件存在于 Fusion
-          - 删除后（Audit 前）文件仍存在于 Fusion
-          - Audit 后文件从 Fusion 移除
+          - 删除前文件存在于 fustord
+          - 删除后（Audit 前）文件仍存在于 fustord
+          - Audit 后文件从 fustord 移除
         """
         test_file = f"{MOUNT_POINT}/blind_delete_test_{int(time.time()*1000)}.txt"
         
@@ -53,7 +53,7 @@ class TestBlindSpotFileDeletion:
         # Wait for realtime sync
         # Wait for realtime sync
         test_file_rel = "/" + os.path.relpath(test_file, MOUNT_POINT)
-        found = fusion_client.wait_for_file_in_tree(test_file_rel, timeout=MEDIUM_TIMEOUT)
+        found = fustord_client.wait_for_file_in_tree(test_file_rel, timeout=MEDIUM_TIMEOUT)
         assert found is not None, "File should appear via realtime event"
         
         # Step 2: Delete file from blind-spot client
@@ -68,13 +68,13 @@ class TestBlindSpotFileDeletion:
         wait_for_audit()
         wait_for_audit()
         
-        assert fusion_client.wait_for_file_not_in_tree(test_file_rel, timeout=SHORT_TIMEOUT), \
+        assert fustord_client.wait_for_file_not_in_tree(test_file_rel, timeout=SHORT_TIMEOUT), \
             "File should be removed after Audit detects blind-spot deletion"
 
     def test_blind_spot_deletion_added_to_blind_spot_list(
         self,
         docker_env,
-        fusion_client,
+        fustord_client,
         setup_sensords,
         clean_shared_dir,
         wait_for_audit
@@ -91,7 +91,7 @@ class TestBlindSpotFileDeletion:
             content="for blind delete list test"
         )
         test_file_rel = "/" + os.path.relpath(test_file, MOUNT_POINT)
-        fusion_client.wait_for_file_in_tree(test_file_rel, timeout=SHORT_TIMEOUT)
+        fustord_client.wait_for_file_in_tree(test_file_rel, timeout=SHORT_TIMEOUT)
         
         docker_manager.delete_file_in_container(CONTAINER_CLIENT_C, test_file)
         
@@ -107,7 +107,7 @@ class TestBlindSpotFileDeletion:
         start = time.time()
         found = False
         while time.time() - start < MEDIUM_TIMEOUT:
-            blind_spot_list = fusion_client.get_blind_spot_list()
+            blind_spot_list = fustord_client.get_blind_spot_list()
             deletion_entries = [
                 item for item in blind_spot_list
                 if item.get("path") == test_file_rel and item.get("type") == "deletion"

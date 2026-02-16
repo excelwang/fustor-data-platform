@@ -104,9 +104,9 @@ def get_audit_iterator(self, **kwargs) -> Iterator[EventBase]:
 4.  **本地测试**:
     ```bash
     uv venv .venv
-    pip install fustor-sensord
+    pip install sensord
     pip install -e .
-    fustor-sensord start
+    sensord start
     ```
 
 5.  **发布 (可选)**: 您可以将您的包构建并发布到 PyPI。

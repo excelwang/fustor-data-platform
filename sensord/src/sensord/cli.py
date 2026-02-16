@@ -3,10 +3,10 @@
 Fustor sensord CLI - Simplified WireGuard-style interface.
 
 Commands:
-  fustor-sensord start [configs...]  # Start pipe(s), default.yaml if no args
-  fustor-sensord stop [configs...]   # Stop pipe(s)
-  fustor-sensord list                # List running pipes
-  fustor-sensord status [pipe]       # Show status
+  sensord start [configs...]  # Start pipe(s), default.yaml if no args
+  sensord stop [configs...]   # Stop pipe(s)
+  sensord list                # List running pipes
+  sensord status [pipe]       # Show status
 """
 import click
 import asyncio
@@ -63,10 +63,10 @@ def start(configs, daemon, verbose, no_console_log):
     If no configs specified, starts all pipes listed in default.yaml.
     
     Examples:
-        fustor-sensord start                    # Start all from default.yaml
-        fustor-sensord start research-sync      # Start single pipe
-        fustor-sensord start pipe-a pipe-b      # Start multiple pipes
-        fustor-sensord start custom.yaml        # Start from managed file
+        sensord start                    # Start all from default.yaml
+        sensord start research-sync      # Start single pipe
+        sensord start pipe-a pipe-b      # Start multiple pipes
+        sensord start custom.yaml        # Start from managed file
     """
     # Pre-flight Validation
     click.echo("Running pre-flight validation...")
@@ -197,8 +197,8 @@ def stop(configs):
     If no configs specified, stops all pipes and the daemon.
     
     Examples:
-        fustor-sensord stop                     # Stop everything
-        fustor-sensord stop research-sync       # Stop single pipe (hot)
+        sensord stop                     # Stop everything
+        sensord stop research-sync       # Stop single pipe (hot)
     """
     pid = _is_running()
     

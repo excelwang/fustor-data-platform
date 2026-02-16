@@ -4,8 +4,8 @@ sources:
     uri: "/home/huajin/fustor-1/docs"
 
 senders:
-  fusion-2:
-    driver: fusion
+  fustord-2:
+    driver: fustord
     uri: "http://localhost:18881"
     credential:
       key: "key-1"
@@ -13,4 +13,4 @@ senders:
 pipes:
   pipe-2:
     source: src-2
-    sender: fusion-2
+    sender: fustord-2

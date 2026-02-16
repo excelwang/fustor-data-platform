@@ -53,7 +53,7 @@ class sensordState(BaseModel):
 @dataclass
 class SessionInfo:
     """
-    Information about an active session between sensord and Fusion.
+    Information about an active session between sensord and fustord.
     
     Using dataclass for monorepo-wide backward compatibility with positional arguments.
     """

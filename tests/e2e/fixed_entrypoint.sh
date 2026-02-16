@@ -36,8 +36,8 @@ sources:
       audit_interval: 300
 
 senders:
-  fusion:
-    driver: "fusion"
+  fustord:
+    driver: "fustord"
     config:
       endpoint: "${FUSION_ENDPOINT}"
       credential:
@@ -46,7 +46,7 @@ senders:
 EOF
 
     # Start sensord in background
-    fustor-sensord start --config /data/sensord/config.yaml &
+    sensord start --config /data/sensord/config.yaml &
     AGENT_PID=$!
     echo "sensord started with PID ${AGENT_PID}"
 fi

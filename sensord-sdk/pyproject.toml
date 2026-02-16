@@ -1,5 +1,5 @@
 [project]
-name = "fustor-sensord-sdk"
+name = "sensord-sdk"
 version = "0.9.1"
 description = "SDK for Fustor sensord service"
 license = "MIT"

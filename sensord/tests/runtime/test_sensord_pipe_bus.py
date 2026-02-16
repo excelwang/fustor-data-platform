@@ -47,7 +47,7 @@ class TestsensordPipeBus:
         # Assertions
         # 1. Should have called get_events_for
         assert mock_bus.internal_bus.get_events_for.called
-        # 2. Should have sent to Fusion
+        # 2. Should have sent to fustord
         mock_sender.send_batch.assert_called_with(
             "test-session", [mock_event], {"phase": "realtime"}
         )

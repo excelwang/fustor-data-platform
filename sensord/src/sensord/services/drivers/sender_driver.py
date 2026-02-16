@@ -20,7 +20,7 @@ class SenderDriverService(SenderDriverServiceInterface):
     """
     A service for discovering and interacting with Sender driver classes.
     
-    Senders are responsible for transmitting events from sensord to Fusion.
+    Senders are responsible for transmitting events from sensord to fustord.
     Sender driver service.
     """
     

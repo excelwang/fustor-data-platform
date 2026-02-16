@@ -12,7 +12,7 @@ logger = logging.getLogger("sensord.mgmt")
 class CommandProcessor(CommandProcessorInterface):
     """
     Management (L3) processor for sensordPipe.
-    Handles commands from Fusion (e.g., on-demand scans, reload, stop).
+    Handles commands from fustord (e.g., on-demand scans, reload, stop).
     """
 
     async def initialize(self, pipe: PipeInterface) -> None:
@@ -20,7 +20,7 @@ class CommandProcessor(CommandProcessorInterface):
         logger.debug(f"CommandProcessor initialized for Pipe {pipe.id}")
 
     async def process_commands(self, pipe: PipeInterface, commands: List[Dict[str, Any]]) -> None:
-        """Process commands received from Fusion."""
+        """Process commands received from fustord."""
         for cmd in commands:
             try:
                 cmd_type = cmd.get("type")
@@ -83,7 +83,7 @@ class CommandProcessor(CommandProcessorInterface):
                 await pipe.sender_handler.send_batch(pipe.session_id, mapped_batch, {"phase": "on_demand_job"})
                 count += len(batch)
             
-            # Notify Fusion that On-Demand scan is complete
+            # Notify fustord that On-Demand scan is complete
             metadata: Dict[str, Any] = {"scan_path": path}
             if job_id:
                 metadata["job_id"] = job_id
@@ -210,7 +210,7 @@ class CommandProcessor(CommandProcessorInterface):
         
         import sys
         try:
-            cmd_args = [sys.executable, "-m", "pip", "install", f"fustor-sensord=={version}"]
+            cmd_args = [sys.executable, "-m", "pip", "install", f"sensord=={version}"]
             process = await asyncio.create_subprocess_exec(
                 *cmd_args,
                 stdout=asyncio.subprocess.PIPE,

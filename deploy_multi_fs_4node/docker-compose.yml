@@ -1,5 +1,5 @@
 services:
-  fusion:
+  fustord:
     build:
       context: ..
       dockerfile: deploy_multi_fs_4node/Dockerfile
@@ -7,8 +7,8 @@ services:
       - "8101"
       - "18888"
     volumes:
-      - ./fusion/config/default.yaml:/root/.fustor/fusion-config/default.yaml
-    command: ["fustor-fusion", "start"]
+      - ./fustord/config/default.yaml:/root/.fustor/fustord-config/default.yaml
+    command: ["fustord", "start"]
     networks:
       - fustor-net
 
@@ -19,9 +19,9 @@ services:
     volumes:
       - ./sensord1/config/default.yaml:/root/.fustor/sensord-config/default.yaml
       - ./sensord1/data:/data
-    command: ["fustor-sensord", "start"]
+    command: ["sensord", "start"]
     depends_on:
-      - fusion
+      - fustord
     networks:
       - fustor-net
 
@@ -32,9 +32,9 @@ services:
     volumes:
       - ./sensord2/config/default.yaml:/root/.fustor/sensord-config/default.yaml
       - ./sensord2/data:/data
-    command: ["fustor-sensord", "start"]
+    command: ["sensord", "start"]
     depends_on:
-      - fusion
+      - fustord
     networks:
       - fustor-net
 
@@ -45,9 +45,9 @@ services:
     volumes:
       - ./sensord3/config/default.yaml:/root/.fustor/sensord-config/default.yaml
       - ./sensord3/data:/data
-    command: ["fustor-sensord", "start"]
+    command: ["sensord", "start"]
     depends_on:
-      - fusion
+      - fustord
     networks:
       - fustor-net
 
@@ -58,9 +58,9 @@ services:
     volumes:
       - ./sensord4/config/default.yaml:/root/.fustor/sensord-config/default.yaml
       - ./sensord4/data:/data
-    command: ["fustor-sensord", "start"]
+    command: ["sensord", "start"]
     depends_on:
-      - fusion
+      - fustord
     networks:
       - fustor-net
 

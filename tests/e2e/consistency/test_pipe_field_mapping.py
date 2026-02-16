@@ -16,11 +16,11 @@ class TestPipeFieldMapping:
         self, 
         docker_env, 
         setup_sensords, 
-        fusion_client
+        fustord_client
     ):
         """
         Test that field mapping correctly transforms data.
-        We will map 'size' to 'remapped_size' so that Fusion sees default size (0).
+        We will map 'size' to 'remapped_size' so that fustord sees default size (0).
         """
         logger.info("Running field mapping test")
         
@@ -35,7 +35,7 @@ class TestPipeFieldMapping:
 pipes:
   integration-test-ds:
     source: shared-fs
-    sender: fusion-main
+    sender: fustord-main
     fields_mapping:
       - to: "path"
         source: ["path:string"]
@@ -46,7 +46,7 @@ pipes:
       - to: "created_time"
         source: ["created_time:number"]
       # Test mapping: Map standard 'size' to a custom field 'remapped_size'
-      # This verifies that the 'size' field in Fusion becomes 0 (default) because its source was redirected.
+      # This verifies that the 'size' field in fustord becomes 0 (default) because its source was redirected.
       - to: "remapped_size"
         source: ["size:integer"]
 """
@@ -59,8 +59,8 @@ pipes:
         # 2. Restart sensord to apply config
         logger.info(f"Restarting sensord in {leader} to apply fields_mapping")
         
-        # Reset Fusion state to ensure a clean start for the new mapping
-        fusion_client.reset()
+        # Reset fustord state to ensure a clean start for the new mapping
+        fustord_client.reset()
         
         # Use the standard ensure_sensord_running function to restart
         # This handles PID cleanup and environment variable injection correctly
@@ -70,7 +70,7 @@ pipes:
         logger.info("Waiting for sensord A to become leader...")
         start_wait = time.time()
         while time.time() - start_wait < MEDIUM_TIMEOUT:
-            sessions = fusion_client.get_sessions()
+            sessions = fustord_client.get_sessions()
             # Ensure it's the leader and it's client-a
             leader_session = next((s for s in sessions if s.get("role") == "leader" and "client-a" in s.get("sensord_id", "")), None)
             if leader_session:
@@ -78,7 +78,7 @@ pipes:
                 break
             time.sleep(POLL_INTERVAL)
         else:
-             pytest.fail(f"sensord A failed to become leader. Current sessions: {fusion_client.get_sessions()}")
+             pytest.fail(f"sensord A failed to become leader. Current sessions: {fustord_client.get_sessions()}")
         
         # 3. Create a file with specific size
         import os.path
@@ -96,21 +96,21 @@ pipes:
         )
         logger.info(f"Created test file with size {expected_size}: {test_file}")
         
-        # 4. Wait for Fusion to detect it
+        # 4. Wait for fustord to detect it
         # FSDriver should use absolute paths by default (matching schema 'Absolute file path')
         expected_path_in_tree = test_file_rel
-        success = fusion_client.wait_for_file_in_tree(expected_path_in_tree, timeout=MEDIUM_TIMEOUT)
-        assert success, f"File {expected_path_in_tree} not found in tree. Tree: {fusion_client.get_tree()}"
+        success = fustord_client.wait_for_file_in_tree(expected_path_in_tree, timeout=MEDIUM_TIMEOUT)
+        assert success, f"File {expected_path_in_tree} not found in tree. Tree: {fustord_client.get_tree()}"
         
-        # 5. Verify size in Fusion
-        # Because we mapped 'size' to 'remapped_size', and Fusion expects 'size',
-        # Fusion should see the default value (0) instead of 1234.
-        node = fusion_client.get_node(expected_path_in_tree)
+        # 5. Verify size in fustord
+        # Because we mapped 'size' to 'remapped_size', and fustord expects 'size',
+        # fustord should see the default value (0) instead of 1234.
+        node = fustord_client.get_node(expected_path_in_tree)
         assert node is not None, f"Node {expected_path_in_tree} should exist but get_node returned None."
         
-        logger.info(f"Fusion node data: {node}")
+        logger.info(f"fustord node data: {node}")
         
         actual_size = node.get('size')
         
         assert actual_size in (0, None), f"Expected size 0 or None (due to mapping), but got {actual_size}"
-        logger.info("✅ Field mapping confirmed: 'size' was correctly redirected to 'remapped_size', causing Fusion to see 0.")
+        logger.info("✅ Field mapping confirmed: 'size' was correctly redirected to 'remapped_size', causing fustord to see 0.")

@@ -16,7 +16,7 @@ class GlobalLoggingConfig(BaseModel):
             return {'level': data}
         return data
 
-class FusionGlobalConfig(BaseModel):
+class fustordGlobalConfig(BaseModel):
     host: str = Field(default="0.0.0.0", description="管理 API 监听地址")
     port: int = Field(default=8101, description="管理 API 监听端口")
     session_cleanup_interval: float = Field(default=5.0, description="会话清理间隔(秒)")
@@ -94,7 +94,7 @@ class SenderConfig(BaseModel):
     """
     Configuration for a Sender.
     
-    Senders are responsible for sending events to downstream systems (e.g., Fusion).
+    Senders are responsible for sending events to downstream systems (e.g., fustord).
     """
     driver: str
     uri: str = Field(..., description="目标端点URL")
@@ -146,7 +146,7 @@ class AppConfig(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
 
     logging: GlobalLoggingConfig = Field(default_factory=GlobalLoggingConfig)
-    fusion: FusionGlobalConfig = Field(default_factory=FusionGlobalConfig)
+    fustord: fustordGlobalConfig = Field(default_factory=fustordGlobalConfig)
 
 
     sources: SourceConfigDict = Field(default_factory=SourceConfigDict)
@@ -242,7 +242,7 @@ class AppConfig(BaseModel):
         由于 Pipe 是被动调起的，其活动状态取决于关联的组件：
         1. Source 必须处于非禁用状态 (sensord 端标准)
         2. Sender 必须处于非禁用状态
-        3. (在 Fusion 端) 如果存在关联 Views，则至少一个 View 必须启用 (此逻辑通常由驱动/管理器在运行时判断)
+        3. (在 fustord 端) 如果存在关联 Views，则至少一个 View 必须启用 (此逻辑通常由驱动/管理器在运行时判断)
         """
         config = self.get_pipe(id)
         if not config:

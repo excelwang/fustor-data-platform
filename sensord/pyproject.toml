@@ -1,10 +1,10 @@
 [project]
-name = "fustor-sensord"
+name = "sensord"
 version = "0.9.1"
 description = "realtime data sync sensord for various data sources"
 readme = "README.md"
 requires-python = ">=3.11"
-dependencies = ["click>=8.1.7", "pydantic>=2.11.7", "python-dotenv", "fustor-core", "fustor-sensord-sdk"]
+dependencies = ["click>=8.1.7", "pydantic>=2.11.7", "python-dotenv", "fustor-core", "sensord-sdk"]
 [[project.authors]]
 name = "Huajin Wang"
 email = "wanghuajin999@163.com"
@@ -27,9 +27,9 @@ elasticsearch = ["fustor-source-elasticsearch"]
 http = ["fustor-sender-http"]
 echo = ["fustor-sender-echo"]
 openapi = ["fustor-sender-openapi"]
-mgmt = ["fustor-sensord-mgmt"]
+mgmt = ["sensord-mgmt"]
 # Default recommended installation
-default = ["fustor-source-fs", "fustor-sender-http", "fustor-schema-fs", "fustor-sensord-mgmt"]
+default = ["fustor-source-fs", "fustor-sender-http", "fustor-schema-fs", "sensord-mgmt"]
 # Full install
 all = [
     "fustor-source-fs",
@@ -40,7 +40,7 @@ all = [
     "fustor-sender-echo",
     "fustor-sender-openapi",
     "fustor-schema-fs",
-    "fustor-sensord-mgmt"
+    "sensord-mgmt"
 ]
 dev = [ "pytest>=8.0.0", "ruff>=0.1.0", "mypy>=1.0.0", "pytest-asyncio>=0.23.0", "pytest-mock>=3.0.0"]
 

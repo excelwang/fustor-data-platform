@@ -27,7 +27,7 @@ class TestBlindSpotListPersistence:
     def test_blind_spot_list_persists_and_updates(
         self,
         docker_env,
-        fusion_client,
+        fustord_client,
         setup_sensords,
         clean_shared_dir,
         wait_for_audit
@@ -54,10 +54,10 @@ class TestBlindSpotListPersistence:
         docker_manager.create_file_in_container(CONTAINER_CLIENT_C, marker_1, content="marker")
         time.sleep(STRESS_DELAY)
         marker_1_rel = "/" + os.path.relpath(marker_1, MOUNT_POINT)
-        assert fusion_client.wait_for_file_in_tree(marker_1_rel, timeout=LONG_TIMEOUT)
+        assert fustord_client.wait_for_file_in_tree(marker_1_rel, timeout=LONG_TIMEOUT)
         
         # Verify A and C are in blind-spot list
-        blind_list = fusion_client.get_blind_spot_list()
+        blind_list = fustord_client.get_blind_spot_list()
         paths = [item.get("path") for item in blind_list if item.get("type") == "file"]
         test_file_a_rel = "/" + os.path.relpath(test_file_a, MOUNT_POINT)
         test_file_c_rel = "/" + os.path.relpath(test_file_c, MOUNT_POINT)
@@ -81,7 +81,7 @@ class TestBlindSpotListPersistence:
              
         time.sleep(SESSION_VANISH_TIMEOUT) # Increased NFS cache wait
         marker_2_rel = "/" + os.path.relpath(marker_2, MOUNT_POINT)
-        assert fusion_client.wait_for_file_in_tree(marker_2_rel, timeout=AUDIT_WAIT_TIMEOUT)
+        assert fustord_client.wait_for_file_in_tree(marker_2_rel, timeout=AUDIT_WAIT_TIMEOUT)
         
         # Step 4: Verify List State
         # - A should be GONE (Deleted) - Wait for async blind-spot deletion
@@ -95,7 +95,7 @@ class TestBlindSpotListPersistence:
         test_file_b_rel = "/" + os.path.relpath(test_file_b, MOUNT_POINT)
         
         while time.time() - start_wait < LONG_TIMEOUT:
-            blind_list_2 = fusion_client.get_blind_spot_list()
+            blind_list_2 = fustord_client.get_blind_spot_list()
             paths_2 = [item.get("path") for item in blind_list_2 if item.get("type") == "file"]
             
             if test_file_a_rel not in paths_2:
@@ -110,7 +110,7 @@ class TestBlindSpotListPersistence:
     def test_sensord_missing_flag_cleared_after_realtime_update(
         self,
         docker_env,
-        fusion_client,
+        fustord_client,
         setup_sensords,
         clean_shared_dir,
         wait_for_audit
@@ -134,11 +134,11 @@ class TestBlindSpotListPersistence:
         docker_manager.create_file_in_container(CONTAINER_CLIENT_C, marker_file, content="marker")
         time.sleep(STRESS_DELAY) # NFS cache delay
         marker_file_rel = "/" + os.path.relpath(marker_file, MOUNT_POINT)
-        assert fusion_client.wait_for_file_in_tree(marker_file_rel, timeout=LONG_TIMEOUT) is not None
+        assert fustord_client.wait_for_file_in_tree(marker_file_rel, timeout=LONG_TIMEOUT) is not None
         
         # Verify sensord_missing is set
         test_file_rel = "/" + os.path.relpath(test_file, MOUNT_POINT)
-        assert fusion_client.wait_for_flag(test_file_rel, "sensord_missing", True, timeout=SHORT_TIMEOUT), \
+        assert fustord_client.wait_for_flag(test_file_rel, "sensord_missing", True, timeout=SHORT_TIMEOUT), \
             "File should eventually be marked sensord_missing"
         
         # Touch file from sensord client (triggers realtime update)
@@ -151,14 +151,14 @@ class TestBlindSpotListPersistence:
         # Wait for realtime update (poll for flag cleared)
         # Increase timeout and add retry/reinforcement
         try:
-             assert fusion_client.wait_for_flag(test_file_rel, "sensord_missing", False, timeout=MEDIUM_TIMEOUT)
+             assert fustord_client.wait_for_flag(test_file_rel, "sensord_missing", False, timeout=MEDIUM_TIMEOUT)
         except AssertionError:
              # Retry with manual event injection if environment is flaky (inotify issues)
              print("Environment Inotify failure suspected. Injecting manual Realtime event...")
              
              # Construct minimal payload for Event
              # We need a valid session ID. Use Leader's session.
-             session = fusion_client.get_leader_session()
+             session = fustord_client.get_leader_session()
              if not session:
                  print("No leader session found for injection.")
                  raise
@@ -187,13 +187,13 @@ class TestBlindSpotListPersistence:
                  "is_end": False
              }
              
-             url = f"{fusion_client.base_url}/api/v1/pipe/{session_id}/events"
+             url = f"{fustord_client.base_url}/api/v1/pipe/{session_id}/events"
              print(f"Injecting event to {url}")
              
-             resp = fusion_client.session.post(url, json=batch_payload)
+             resp = fustord_client.session.post(url, json=batch_payload)
              if resp.status_code != 200:
                  print(f"Manual injection failed: {resp.status_code} {resp.text}")
              
              # Wait again
-             assert fusion_client.wait_for_flag(test_file_rel, "sensord_missing", False, timeout=SHORT_TIMEOUT), \
+             assert fustord_client.wait_for_flag(test_file_rel, "sensord_missing", False, timeout=SHORT_TIMEOUT), \
                 "sensord_missing flag should be cleared after manual realtime event injection"

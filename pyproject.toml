@@ -1,11 +1,11 @@
 [tool.uv.workspace]
 members = [
     "sensord",
-    "fusion",
+    "fustord",
     "benchmark",
     "core",
     "sensord-sdk",
-    "fusion-sdk",
+    "fustord-sdk",
     "extensions/sender-echo",
     "extensions/sender-openapi",
     "extensions/sender-http",
@@ -19,15 +19,15 @@ members = [
     "extensions/view-fs",
     "extensions/view-fs-forest",
     "sensord-mgmt",
-    "fusion-mgmt"
+    "fustord-mgmt"
 ]
 
 [tool.uv.sources]
-fustor-sensord = { workspace = true }
-fustor-fusion = { workspace = true }
+sensord = { workspace = true }
+fustord = { workspace = true }
 fustor-core = { workspace = true }
-fustor-sensord-sdk = { workspace = true }
-fustor-fusion-sdk = { workspace = true }
+sensord-sdk = { workspace = true }
+fustord-sdk = { workspace = true }
 fustor-sender-echo = { workspace = true }
 fustor-sender-openapi = { workspace = true }
 fustor-sender-http = { workspace = true }
@@ -40,14 +40,14 @@ fustor-source-oss = { workspace = true }
 fustor-demo = { workspace = true }
 fustor-view-fs = { workspace = true }
 fustor-view-fs-forest = { workspace = true }
-fustor-sensord-mgmt = { workspace = true }
-fustor-fusion-mgmt = { workspace = true }
+sensord-mgmt = { workspace = true }
+fustord-mgmt = { workspace = true }
 
 
 [tool.pytest.ini_options]
 pythonpath = [
     "sensord/src",
-    "fusion/src",
+    "fustord/src",
     "core/src",
     "extensions/sender-echo/src",
     "extensions/sender-openapi/src",
@@ -62,13 +62,13 @@ pythonpath = [
     "extensions/view-fs/src",
     "extensions/view-fs-forest/src",
     "sensord-mgmt/src",
-    "fusion-mgmt/src"
+    "fustord-mgmt/src"
 ]
 markers = [
     "timeout: mark test to timeout after X seconds"]
 testpaths = [
     "sensord/tests",
-    "fusion/tests",
+    "fustord/tests",
     "core/tests",
     "extensions/*/tests"]
 addopts = "-v --tb=short"

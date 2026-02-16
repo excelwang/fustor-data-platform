@@ -9,7 +9,7 @@ from .driver import ForestFSViewDriver
 def create_view_router(get_driver_func, check_snapshot_func, get_view_id_dep, check_metadata_limit_func=None) -> APIRouter:
     """
     Factory for Forest View API Router.
-    Matches the signature expected by fustor-fusion.
+    Matches the signature expected by fustord.
     """
     router = APIRouter()
 

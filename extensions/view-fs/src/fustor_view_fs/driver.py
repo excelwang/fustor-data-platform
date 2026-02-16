@@ -62,7 +62,7 @@ class FSViewDriver(FSViewBase):
         """
         Determine session role with standard (global) leader election.
         """
-        from fustor_fusion.view_state_manager import view_state_manager
+        from fustord.view_state_manager import view_state_manager
         
         # Standard View behavior: Use the global view_id for election
         is_leader = await view_state_manager.try_become_leader(self.view_id, session_id)
@@ -231,7 +231,7 @@ class FSViewDriver(FSViewBase):
         Events produced are MessageSource.ON_DEMAND_JOB (Tier 3 compensatory, see §4.5).
         Returns: (success, job_id)
         """
-        from fustor_fusion.core.session_manager import session_manager
+        from fustord.core.session_manager import session_manager
         
         async with self._global_read_lock():
             # 1. Get ALL active sessions for this view

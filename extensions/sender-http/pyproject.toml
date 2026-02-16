@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "fustor-sender-http"
 version = "0.9.1"
-description = "Fustor HTTP Sender - Transport layer for sensord to Fusion communication"
+description = "Fustor HTTP Sender - Transport layer for sensord to fustord communication"
 readme = "README.md"
 requires-python = ">=3.11"
 license = "MIT"
@@ -14,7 +14,7 @@ classifiers = [
     "Operating System :: OS Independent"]
 dependencies = [
     "fustor-core",
-    "fustor-fusion-sdk"]
+    "fustord-sdk"]
 
 [[project.authors]]
 name = "Huajin Wang"
@@ -26,7 +26,7 @@ Homepage = "https://github.com/excelwang/fustor/tree/master/extensions/sender-ht
 
 # New entry point for V2 architecture
 [project.entry-points."sensord.drivers.senders"]
-fusion = "fustor_sender_http:HTTPSender"
+fustord = "fustor_sender_http:HTTPSender"
 
 
 

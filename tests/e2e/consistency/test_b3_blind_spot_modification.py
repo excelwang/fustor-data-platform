@@ -27,7 +27,7 @@ class TestBlindSpotFileModification:
     def test_blind_spot_modification_updates_mtime(
         self,
         docker_env,
-        fusion_client,
+        fustord_client,
         setup_sensords,
         clean_shared_dir,
         wait_for_audit
@@ -45,10 +45,10 @@ class TestBlindSpotFileModification:
         # Wait for realtime sync and get mtime
         # Wait for realtime sync and get mtime
         test_file_rel = "/" + os.path.relpath(test_file, MOUNT_POINT)
-        node = fusion_client.wait_for_file_in_tree(test_file_rel, timeout=SHORT_TIMEOUT)
+        node = fustord_client.wait_for_file_in_tree(test_file_rel, timeout=SHORT_TIMEOUT)
         assert node is not None, "File should appear via realtime event"
         
-        # Record original mtime from Fusion
+        # Record original mtime from fustord
         original_mtime = node.get("modified_time")
         
         # Step 2: Wait a bit, then modify file from blind-spot client
@@ -69,14 +69,14 @@ class TestBlindSpotFileModification:
         new_fs_mtime = docker_manager.get_file_mtime(CONTAINER_CLIENT_C, test_file)
         assert new_fs_mtime > original_mtime, "Filesystem mtime should increase after modification"
         
-        # Step 3: Before Audit, Fusion mtime should be unchanged
+        # Step 3: Before Audit, fustord mtime should be unchanged
         # NOTE: This assertion is flaky because an asynchronous Audit cycle might run 
         # immediately after the modification. We log the state instead of asserting.
-        tree = fusion_client.get_tree(path=test_file_rel, max_depth=0)
+        tree = fustord_client.get_tree(path=test_file_rel, max_depth=0)
         mtime_before_audit = tree.get("modified_time")
         if mtime_before_audit != original_mtime:
             import logging
-            logging.getLogger(__name__).debug(f"Fusion mtime updated early! Original: {original_mtime}, Now: {mtime_before_audit}")
+            logging.getLogger(__name__).debug(f"fustord mtime updated early! Original: {original_mtime}, Now: {mtime_before_audit}")
         
         # Step 4: Wait for Audit cycle to detect the modification
         # We wait for ACTIMEO + AUDIT_INTERVAL to ensure NFS cache is clear and audit runs
@@ -84,13 +84,13 @@ class TestBlindSpotFileModification:
         wait_for_audit()
         wait_for_audit()
         
-        # Step 5: After Audit, Fusion mtime should be updated
+        # Step 5: After Audit, fustord mtime should be updated
         # Poll briefly for the change to be reflected in the tree
         start = time.time()
         success = False
         mtime_after_audit = 0
         while time.time() - start < 10:
-            tree_after = fusion_client.get_tree(path=test_file_rel, max_depth=0)
+            tree_after = fustord_client.get_tree(path=test_file_rel, max_depth=0)
             mtime_after_audit = tree_after.get("modified_time")
             if abs(mtime_after_audit - new_fs_mtime) < 0.001:
                 success = True
@@ -98,12 +98,12 @@ class TestBlindSpotFileModification:
             time.sleep(POLL_INTERVAL)
         
         assert success, \
-            f"Fusion mtime should match filesystem mtime {new_fs_mtime} after Audit. Got {mtime_after_audit}"
+            f"fustord mtime should match filesystem mtime {new_fs_mtime} after Audit. Got {mtime_after_audit}"
 
     def test_blind_spot_modification_marks_sensord_missing(
         self,
         docker_env,
-        fusion_client,
+        fustord_client,
         setup_sensords,
         clean_shared_dir,
         wait_for_audit
@@ -121,14 +121,14 @@ class TestBlindSpotFileModification:
             content="original"
         )
         test_file_rel = "/" + os.path.relpath(test_file, MOUNT_POINT)
-        fusion_client.wait_for_file_in_tree(test_file_rel, timeout=MEDIUM_TIMEOUT)
+        fustord_client.wait_for_file_in_tree(test_file_rel, timeout=MEDIUM_TIMEOUT)
         
         # Initial file check
-        flags_initial = fusion_client.check_file_flags(test_file_rel)
+        flags_initial = fustord_client.check_file_flags(test_file_rel)
         if flags_initial["sensord_missing"]:
             logger.warning("Filesystem creation missed by sensord A (flaky inotify). Injecting manual event to establish baseline.")
             # Inject manual creation event to clear sensord_missing
-            session = fusion_client.get_leader_session()
+            session = fustord_client.get_leader_session()
             if session:
                 session_id = session['session_id']
                 row_data = {
@@ -151,14 +151,14 @@ class TestBlindSpotFileModification:
                     "source_type": "message",
                     "is_end": False
                 }
-                url = f"{fusion_client.base_url}/api/v1/pipe/{session_id}/events"
-                fusion_client.session.post(url, json=batch_payload)
+                url = f"{fustord_client.base_url}/api/v1/pipe/{session_id}/events"
+                fustord_client.session.post(url, json=batch_payload)
                 
                 # Wait for flag to clear
-                assert fusion_client.wait_for_flag(test_file_rel, "sensord_missing", False, timeout=SHORT_TIMEOUT), \
+                assert fustord_client.wait_for_flag(test_file_rel, "sensord_missing", False, timeout=SHORT_TIMEOUT), \
                     "Failed to establish baseline: sensord_missing could not be cleared."
         
-        flags_initial = fusion_client.check_file_flags(test_file_rel)
+        flags_initial = fustord_client.check_file_flags(test_file_rel)
         assert flags_initial["sensord_missing"] is False, "Baseline failed: sensord should know the file."
         
         # Modify from blind-spot
@@ -178,5 +178,5 @@ class TestBlindSpotFileModification:
         wait_for_audit()
         
         # Check sensord_missing flag after modification
-        assert fusion_client.wait_for_flag(test_file_rel, "sensord_missing", True, timeout=SHORT_TIMEOUT), \
+        assert fustord_client.wait_for_flag(test_file_rel, "sensord_missing", True, timeout=SHORT_TIMEOUT), \
             "sensord_missing flag should be set after blind modification"

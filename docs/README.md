@@ -1,15 +1,15 @@
 # Fustor Documentation
 
-Welcome to the Fustor documentation. Fustor is a high-reliability, consistency-aware data synchronization platform designed for NFS, S3, MySQL CDC, and other data sources. It can sync data from multiple sources to a central Fusion service, which then serves as a single source of truth for the data, using various views like dir tree and graph
+Welcome to the Fustor documentation. Fustor is a high-reliability, consistency-aware data synchronization platform designed for NFS, S3, MySQL CDC, and other data sources. It can sync data from multiple sources to a central fustord service, which then serves as a single source of truth for the data, using various views like dir tree and graph
 
 ## Core Concepts
 
 - **Pipe**: The fundamental unit of synchronization, connecting a **Source** to a **Sender**.
 - **Source**: A data origin (e.g., local FS, MySQL CDC, S3).
-- **Sender**: A data destination (e.g., Fusion API, S3, HTTP Hook).
-- **View**: A materialized state of the data in the destination system (Fusion).
+- **Sender**: A data destination (e.g., fustord API, S3, HTTP Hook).
+- **View**: A materialized state of the data in the destination system (fustord).
 - **sensord**: The process that runs pipes and captures local events.
-- **Fusion**: The central state manager that performs arbitration and serves the data.
+- **fustord**: The central state manager that performs arbitration and serves the data.
 
 ## Documentation Index
 

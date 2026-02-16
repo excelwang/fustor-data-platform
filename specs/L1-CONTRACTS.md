@@ -2,7 +2,7 @@
 version: 1.0.0
 invariants:
   - id: INV_CONTROL_SURVIVES_DATA
-    statement: "The Control Plane must survive the Data Plane. Business logic errors must never terminate the sensord or Fusion process."
+    statement: "The Control Plane must survive the Data Plane. Business logic errors must never terminate the sensord or fustord process."
   - id: INV_API_NEVER_503
     statement: "The /fs/tree API endpoint must always return a valid response, never 503."
   - id: INV_LAYER_ORDER
@@ -36,7 +36,7 @@ invariants:
   > Responsibility: Fault isolation — prevent individual file errors from cascading.
   > Verification: `PermissionError`, `FileNotFoundError` are logged and skipped; subsequent files continue processing.
 
-- **NO_CRASH_PRINCIPLE**: System MUST NOT crash on any exception. sensord and Fusion MUST log errors and continue operation.
+- **NO_CRASH_PRINCIPLE**: System MUST NOT crash on any exception. sensord and fustord MUST log errors and continue operation.
   > Responsibility: Indestructibility — maintain process uptime.
   > Verification: Zero process terminations due to business logic exceptions in production.
 
@@ -81,7 +81,7 @@ invariants:
   > Responsibility: Survival — Ensure zero downtime during upgrades.
   > Verification: Process PID may change, but pipe connections MUST remain active or reconnect within 1 retry interval.
 
-- **TARGETED_DELIVERY**: Fusion MUST be able to target a specific sensord instance for upgrade, ignoring others sharing the same Session.
+- **TARGETED_DELIVERY**: fustord MUST be able to target a specific sensord instance for upgrade, ignoring others sharing the same Session.
   > Responsibility: Operations — Canary deployments.
   > Verification: Only the targeted sensordID receives the upgrade command.
 
@@ -91,11 +91,11 @@ invariants:
 
 ### Health & Remediation
 
-- **ZOMBIE_DETECTION**: Fusion MUST detect sensords that maintain Heartbeat but fail to send Data events for > `threshold` period.
+- **ZOMBIE_DETECTION**: fustord MUST detect sensords that maintain Heartbeat but fail to send Data events for > `threshold` period.
   > Responsibility: Health — Detect "brain-dead" sensors.
   > Verification: Alert triggered when heartbeat ok but data flow zero for X minutes.
 
-- **REMOTE_REMEDIATION**: Fusion MUST be able to push a "Kill & Restart" or "Clean Slate Config" command to a Zombie sensord.
+- **REMOTE_REMEDIATION**: fustord MUST be able to push a "Kill & Restart" or "Clean Slate Config" command to a Zombie sensord.
   > Responsibility: Survival — Remote fix for non-responsive data planes.
   > Verification: Zombie sensor receives command, terminates, restarts, and resumes normal operation.
 
@@ -103,14 +103,14 @@ invariants:
 
 ### Intrinsic Drive
 
-- **INTRINSIC_DRIVE**: sensord Domain Layer MUST initiate data scanning and synchronization based on local configuration, WITHOUT waiting for Fusion commands.
+- **INTRINSIC_DRIVE**: sensord Domain Layer MUST initiate data scanning and synchronization based on local configuration, WITHOUT waiting for fustord commands.
   > Responsibility: Autonomy — sensord is a proactive sensor, not a passive remote hook.
-  > Verification: sensord starts scanning immediately upon boot/config load, even if Fusion is unreachable.
+  > Verification: sensord starts scanning immediately upon boot/config load, even if fustord is unreachable.
 
 ### Multi-Target Renting
 
-- **MULTI_TARGET_RENTING**: sensord Domain Layer MUST be able to push data to multiple independent Receivers (Fusion, Local-Log, 3rd-Party) simultaneously using the same Stability primitives.
-  > Responsibility: Decoupling — Data ownership belongs to sensord, not Fusion.
+- **MULTI_TARGET_RENTING**: sensord Domain Layer MUST be able to push data to multiple independent Receivers (fustord, Local-Log, 3rd-Party) simultaneously using the same Stability primitives.
+  > Responsibility: Decoupling — Data ownership belongs to sensord, not fustord.
   > Verification: One source event replicated to multiple configured pipes/senders.
 
 ---
@@ -155,7 +155,7 @@ invariants:
 
 ### Queue & Backpressure
 
-- **QUEUE_ISOLATION**: Each FusionPipe MUST have an independent event queue and processing loop.
+- **QUEUE_ISOLATION**: Each fustordPipe MUST have an independent event queue and processing loop.
   > Responsibility: Isolation — different views process independently.
   > Verification: No cross-pipe shared queues exist.
 
@@ -195,7 +195,7 @@ invariants:
   > Verification: All event types from same source share identical `event_schema`.
 
 - **TWO_TIER_ROUTING**: System MUST implement two-tier event routing:
-  > 1. **Tier 1 (FusionPipe)**: Route by `Handler.schema_name` matching `Event.event_schema`
+  > 1. **Tier 1 (fustordPipe)**: Route by `Handler.schema_name` matching `Event.event_schema`
   > 2. **Tier 2 (ViewManager)**: Route by `Driver.target_schema` matching `Event.event_schema`
   > Responsibility: Safety — prevent cross-schema data pollution.
   > Verification: DB events never reach FS memory tree; FS events never reach DB handlers.
@@ -213,7 +213,7 @@ invariants:
 
 > Source: STABILITY_NEUTRALITY, 2026-02-16T0220-neutral-addressing-primitives.md
 
-- **ADDRESSING_ONLY**: Every packet sent from Fusion to sensord MUST be either `unicast(target_id)` or `broadcast(view_id)`.
+- **ADDRESSING_ONLY**: Every packet sent from fustord to sensord MUST be either `unicast(target_id)` or `broadcast(view_id)`.
   > Responsibility: Routing — purely mechanical packet delivery.
   > Verification: Stability Layer code contains only `dispatch(header, payload)`.
 

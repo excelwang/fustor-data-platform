@@ -1,11 +1,11 @@
 #!/bin/bash
 set -e
 
-CONFIG_SRC="/config/fusion-config"
-CONFIG_DST="/root/.fustor/fusion-config"
+CONFIG_SRC="/config/fustord-config"
+CONFIG_DST="/root/.fustor/fustord-config"
 
 if [ -d "$CONFIG_SRC" ]; then
-    echo "Processing Fusion configuration templates from $CONFIG_SRC to $CONFIG_DST..."
+    echo "Processing fustord configuration templates from $CONFIG_SRC to $CONFIG_DST..."
     mkdir -p "$CONFIG_DST"
     
     # Check if there are any YAML files

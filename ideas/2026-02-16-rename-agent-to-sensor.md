@@ -8,7 +8,7 @@
 Replace **"sensord"** with **"Sensor"** across all layers (L0-VISION, L1-CONTRACTS, L2-ARCHITECTURE).
 
 - **Concept**: `sensord` → `Sensor`
-- **Binary/Service**: `fustor-sensord` → `fustor-sensor` (or `sensord` in context)
+- **Binary/Service**: `sensord` → `fustor-sensor` (or `sensord` in context)
 - **Component**: `sensordPipe` → `SensorPipe`
 - **Config**: `sensordConfig` → `SensorConfig`
 - **Symbology**: "Sovereign Sensor" instead of "Autonomous Sensor".
@@ -16,7 +16,7 @@ Replace **"sensord"** with **"Sensor"** across all layers (L0-VISION, L1-CONTRAC
 ### Impact Analysis
 - **L0-VISION**: Update `UBIQUITOUS_LANGUAGE` and all narrative descriptions.
 - **L1-CONTRACTS**: Update all `[sensord]` subjects to `[Relay]`. Update `CONTRACTS.STABILITY` references.
-- **L2-ARCHITECTURE**: Update Component/Topology diagrams. Rename packages `fustor-sensord-sdk` → `fustor-relay-sdk`. 
+- **L2-ARCHITECTURE**: Update Component/Topology diagrams. Rename packages `sensord-sdk` → `fustor-relay-sdk`. 
 - **Codebase**: Recursive rename of `fustor_sensord` packages and classes.
 
 ### Rationale

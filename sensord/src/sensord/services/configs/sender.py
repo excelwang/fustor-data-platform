@@ -21,7 +21,7 @@ class SenderConfigService(BaseConfigService[SenderConfig], SenderConfigServiceIn
     """
     Manages the lifecycle of SenderConfig objects.
     
-    Senders are responsible for transmitting events from sensord to Fusion.
+    Senders are responsible for transmitting events from sensord to fustord.
     Sender configuration service.
     """
     
