@@ -24,7 +24,7 @@ class TestOnDemandScan:
         self,
         docker_env,
         fustord_client,
-        setup_datacasts,
+        setup_datacaststs,
         clean_shared_dir
     ):
         """
@@ -39,9 +39,9 @@ class TestOnDemandScan:
         
         # 1. 确保环境就绪
         assert fustord_client.wait_for_view_ready(timeout=VIEW_READY_TIMEOUT), "View did not become ready"
-        assert fustord_client.wait_for_datacast_ready("client-a", timeout=SHORT_TIMEOUT), "datacast A not ready"
+        assert fustord_client.wait_for_datacastst_ready("client-a", timeout=SHORT_TIMEOUT),datacastcast A not ready"
 
-        # 2. 创建测试文件 (在 NFS Server 侧直接创建，绕过 datacast 的 inotify)
+        # 2. 创建测试文件 (在 NFS Server 侧直接创建，绕过 datacastst 的 inotify)
         test_file_name = f"on_demand_{int(time.time())}.txt"
         test_file_path = f"/exports/{test_file_name}"
         test_file_rel = f"/{test_file_name}"
@@ -50,7 +50,7 @@ class TestOnDemandScan:
         docker_manager.create_file_in_container(CONTAINER_NFS_SERVER, test_file_path, "On-demand scan test content")
         
         # 3. Wait for NFS attribute cache to settle (actimeo=1 + margin)
-        # Without this, datacast's scan might not see the file immediately.
+        # Without this, datacastst's scan might not see the file immediately.
         time.sleep(2.0)
 
         # 4. 触发 On-Demand Scan
@@ -74,11 +74,11 @@ class TestOnDemandScan:
         # We only verify the file appeared — the authority model is tested in unit tests.
         print("[Test] File discovered successfully by on-demand scan.")
         
-        # 6. 白盒验证：检查 datacast 日志中是否有 On-Demand Scan 的记录
-        print("[Test] Verifying datacast logs for on-demand scan record...")
-        datacast_log = docker_manager.exec_in_container(CONTAINER_CLIENT_A, ["cat", "/root/.fustor/logs/datacast.log"]).stdout
+        # 6. 白盒验证：检查 datacastst 日志中是否有 On-Demand Scan 的记录
+        print("[Test] Verifying datacastst logs for on-demand scan record...")
+        datacastst_log = docker_manager.exec_in_container(CONTAINER_CLIENT_A, ["cat", "/root/.fustor/logdatacastcast.log"]).stdout
         # Check for scan-related log entries (the command type is "scan")
-        has_scan_log = "On-Demand scan completed" in datacast_log or "scan" in datacast_log.lower()
+        has_scan_log = "On-Demand scan completed" in datacastst_log or "scan" idatacastcast_log.lower()
         assert has_scan_log, "Log should contain on-demand scan records"
         print("[Test] Success: On-demand scan completed and recorded in logs.")
 

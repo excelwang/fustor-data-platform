@@ -21,7 +21,7 @@ class BridgeCommandsMixin:
         params: Dict[str, Any], 
         timeout: float = 5.0
     ) -> Dict[str, Any]:
-        """Send a command to the datacast and wait for a response."""
+        """Send a command to the datacastst and wait for a response."""
         cmd_id = str(uuid.uuid4())
         future = asyncio.get_running_loop().create_future()
         self._pending_commands[cmd_id] = future

@@ -1,4 +1,4 @@
-# Dockerfile for NFS Client with optional Fustor sensord
+# Dockerfile for NFS Client with optional Fustor datacastd
 FROM python:3.11-slim
 
 WORKDIR /app
@@ -13,31 +13,31 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy the entire monorepo (context is project root)
-COPY sensord /app/sensord
+COPY datacastd /app/datacastd
 COPY core /app/core
-COPY sensord-sdk /app/sensord-sdk
+COPY datacastd-sdk /app/datacastd-sdk
 COPY fustord-sdk /app/fustord-sdk
 COPY extensions /app/extensions
 
 # Set fake version for setuptools-scm (since .git is not copied)
 ENV SETUPTOOLS_SCM_PRETEND_VERSION=0.1.0
 
-# Install Fustor sensord and dependencies (all pip deps declared in package pyproject.toml)
+# Install Fustor datacastd and dependencies (all pip deps declared in package pyproject.toml)
 RUN pip install --no-cache-dir \
     python-dotenv \
     /app/core \
-    /app/sensord-sdk \
+    /app/datacastd-sdk \
     /app/fustord-sdk \
     /app/extensions/schema-fs \
     /app/extensions/source-fs \
     /app/extensions/sender-http \
     /app/extensions/sender-echo \
-    /app/sensord
+    /app/datacastd
 
 
 
 # Create directories
-RUN mkdir -p /mnt/shared /data/sensord
+RUN mkdir -p /mnt/shared /data/datacastd
 
 # Copy entrypoint script
 COPY tests/e2e/containers/nfs-client/entrypoint.sh /entrypoint.sh

@@ -37,9 +37,9 @@ version: 1.0.0
 
 在多 Datacast 汇聚到同一 View (N:1) 的场景下，fustord 必须能够区分每个文件/事件的具体来源 Datacast。
 
-- **标识机制**: 每个 Datacast 必须拥有全局唯一的 `datacast_id`。
-- **自动检测**: Datacast 默认会根据出站流量自动检测本地 IP 作为 `datacast_id`。
-- **目的**: 即使多个 Datacast 向同一个 View 推送数据（共享 View ID），系统也能通过 `datacast_id` 精确区分数据来源，支持血缘追踪。
+- **标识机制**: 每个 Datacast 必须拥有全局唯一的datacastcast_id`。
+- **自动检测**: Datacast 默认会根据出站流量自动检测本地 IP 作为datacastcast_id`。
+- **目的**: 即使多个 Datacast 向同一个 View 推送数据（共享 View ID），系统也能通过datacastcast_id` 精确区分数据来源，支持血缘追踪。
 
 ---
 
@@ -74,7 +74,7 @@ DatacastPipe-G/H/I ─(fustord_pipe_id=C)─┘                    └─ Tree C
 
 ## [definition] Forest_Configuration_Structure_Definition
 
-**Rationale**: Allow binding multiple datacasts to a single forest view through pipe mapping.
+**Rationale**: Allow binding multiple datacaststs to a single forest view through pipe mapping.
 
 ### 3.1 fustord 配置
 
@@ -115,11 +115,11 @@ pipes:
 
 ### 3.2 Datacast 配置 (每台 NFS 服务器)
 
-每个 Datacast 的配置结构不变，但即便是不同服务器，也**必须配置唯一的 `datacast_id`**：
+每个 Datacast 的配置结构不变，但即便是不同服务器，也**必须配置唯一的datacastcast_id`**：
 
 ```yaml
 # Datacast-A (部署在 NFS-A 服务器上)
-datacast_id: "Datacast-nfs-a"  # <--- 必须配置且唯一
+datacastst_id: "Datacast-nfs-a"  # <--- 必须配置且唯一
 
 sources:
   nfs-a-src:

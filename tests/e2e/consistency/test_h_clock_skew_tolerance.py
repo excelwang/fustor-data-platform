@@ -3,8 +3,8 @@ Test H: Clock Skew Tolerance.
 
 验证 Fustor 系统在分布式时钟偏移环境下的正确性：
 - 节点通过 libfaketime 模拟不同的物理时间
-- datacast A (Leader): +2 小时 (领先)
-- datacast B (Follower): -1 小时 (落后)
+- datacastst A (Leader): +2 小时 (领先)
+- datacastst B (Follower): -1 小时 (落后)
 - fustord/NFS/Client C: 默认时间 (基准)
 - Logical Clock 机制应确保发现和同步正常，不受 mtime 偏移影响
 """
@@ -37,14 +37,14 @@ class TestClockSkewTolerance:
         self,
         docker_env,
         fustord_client,
-        setup_datacasts
+        setup_datacaststs
     ):
         """
         验证时钟偏移环境已正确设置。
         
         预期：
-        - datacast A 时间领先约 2 小时
-        - datacast B 时间落后约 1 小时
+        - datacastst A 时间领先约 2 小时
+        - datacastst B 时间落后约 1 小时
         - fustord 时间为物理主机时间
         """
         # Get timestamps from each container
@@ -64,18 +64,18 @@ class TestClockSkewTolerance:
         a_skew = client_a_time - fustord_time
         b_skew = client_b_time - fustord_time
         
-        logger.info(f"datacast A skew: {a_skew}s ({a_skew/3600:.2f}h)")
-        logger.info(f"datacast B skew: {b_skew}s ({b_skew/3600:.2f}h)")
+        logger.info(f"datacastst A skew: {a_skew}s ({a_skew/3600:.2f}h)")
+        logger.info(f"datacastst B skew: {b_skew}s ({b_skew/3600:.2f}h)")
         
         # Assertions
-        assert 7100 < a_skew < 7300, f"datacast A should be ~2h ahead, got {a_skew}s"
-        assert -3700 < b_skew < -3500, f"datacast B should be ~1h behind, got {b_skew}s"
+        assert 7100 < a_skew < 7300, f"datacastst A should be ~2h ahead, got {a_skew}s"
+        assert -3700 < b_skew < -3500, f"datacastst B should be ~1h behind, got {b_skew}s"
 
     def test_audit_discovery_of_new_file_is_flagged_suspect(
         self,
         docker_env,
         fustord_client,
-        setup_datacasts,
+        setup_datacaststs,
         clean_shared_dir,
         wait_for_audit
     ):
@@ -83,9 +83,9 @@ class TestClockSkewTolerance:
         验证跨节点新创建的文件（未被本节点实时捕获，而是通过审计发现）应被标记为 suspect。
         
         预期：
-          - 由 Client C (无监控 datacast) 创建一个文件。mtime 为 T。
-          - fustord 的水位线此时可能由 datacast A (+2h) 的心跳或之前活动保持。
-          - datacast A 通过审计发现该文件。
+          - 由 Client C (无监控 datacastst) 创建一个文件。mtime 为 T。
+          - fustord 的水位线此时可能由 datacastst A (+2h) 的心跳或之前活动保持。
+          - datacastst A 通过审计发现该文件。
           - 由于该文件是新出现的且 mtime 与当前水位线接近（Age < threshold），应标记为 suspect。
         """
         import os.path
@@ -93,12 +93,12 @@ class TestClockSkewTolerance:
         file_path = f"{MOUNT_POINT}/{filename}"
         file_rel = to_view_path(file_path)
         
-        # 1. Create file from Client C (No datacast)
+        # 1. Create file from Client C (No datacastst)
         docker_manager.create_file_in_container(CONTAINER_CLIENT_C, file_path, "from_c")
         
-        # Ensure watermark is not too far ahead by getting samples from datacast B (-1h)
+        # Ensure watermark is not too far ahead by getting samples from datacastst B (-1h)
         # This ensures host-time files (from C) are within the hot threshold.
-        logger.info("Step 1.1: Establishing Mode with datacast B (-1h) to stabilize watermark...")
+        logger.info("Step 1.1: Establishing Mode with datacastst B (-1h) to stabilize watermark...")
         for i in range(3):
             docker_manager.exec_in_container(CONTAINER_CLIENT_B, ["touch", f"{MOUNT_POINT}/warmup_h_{i}.txt"])
         
@@ -111,7 +111,7 @@ class TestClockSkewTolerance:
         # 2. Wait for Audit cycle to complete
         wait_for_audit()
         
-        # 3. Wait for discovery via Audit/Scan from datacast A (Leader)
+        # 3. Wait for discovery via Audit/Scan from datacastst A (Leader)
         assert fustord_client.wait_for_file_in_tree(file_rel, timeout=EXTREME_TIMEOUT) is not None
         
         # 3. Verify suspect flag
@@ -119,15 +119,15 @@ class TestClockSkewTolerance:
         logger.info(f"Audit discovered file flags: {flags}")
         assert flags["integrity_suspect"] is True, "New file discovered via Audit should be suspect"
 
-    def test_realtime_sync_phase_from_past_datacast(
+    def test_realtime_sync_phase_from_past_datacastst(
         self,
         docker_env,
         fustord_client,
-        setup_datacasts,
+        setup_datacaststs,
         clean_shared_dir
     ):
         """
-        验证落后 datacast 的实时修改能正常同步并由于时间较旧而清除 suspect。
+        验证落后 datacastst 的实时修改能正常同步并由于时间较旧而清除 suspect。
         """
         import os.path
         filename = f"past_rt_{int(time.time())}.txt"
@@ -140,7 +140,7 @@ class TestClockSkewTolerance:
         # 2. Wait for it to be suspect (if discovered via audit by A) or just wait for it to appear
         assert fustord_client.wait_for_file_in_tree(file_rel) is not None
         
-        # 3. datacast B (落后 1h) 修改文件。实时事件会清除 suspect。
+        # 3. datacastst B (落后 1h) 修改文件。实时事件会清除 suspect。
         docker_manager.exec_in_container(CONTAINER_CLIENT_B, ["sh", "-c", f"echo 'mod' >> {file_path}"])
         
         # 4. Verify suspect is cleared
@@ -149,24 +149,24 @@ class TestClockSkewTolerance:
         assert flags["integrity_suspect"] is False, "Realtime update should clear suspect status"
 
         # 5. Explicit Regression Test for Split-Brain Timer (Proposal A.1)
-        # Verify that a brand new file from the skewed datacast correctly reaches fustord.
+        # Verify that a brand new file from the skewed datacastst correctly reaches fustord.
         probe_file = f"lag_probe_{int(time.time())}.txt"
         probe_path = f"{MOUNT_POINT}/{probe_file}"
         probe_rel = "/" + probe_file
         
-        logger.info(f"Creating Realtime Probe from lagging datacast B: {probe_file}")
+        logger.info(f"Creating Realtime Probe from lagging datacastst B: {probe_file}")
         docker_manager.create_file_in_container(CONTAINER_CLIENT_B, probe_path, "probe")
         
-        # This will fail if datacast B drops the event due to Index Regression (Part A.1)
+        # This will fail if datacastst B drops the event due to Index Regression (Part A.1)
         assert fustord_client.wait_for_file_in_tree(probe_rel, timeout=MEDIUM_TIMEOUT) is not None, \
-            "Realtime event from lagging datacast B was dropped (possible Split-Brain Timer regression)"
-        logger.info("Verified: Realtime events from lagging datacast survive skew.")
+            "Realtime event from lagging datacastst B was dropped (possible Split-Brain Timer regression)"
+        logger.info("Verified: Realtime events from lagging datacastst survive skew.")
 
     def test_logical_clock_remains_stable_despite_skew(
         self,
         docker_env,
         fustord_client,
-        setup_datacasts,
+        setup_datacaststs,
         clean_shared_dir,
         wait_for_audit
     ):
@@ -177,9 +177,9 @@ class TestClockSkewTolerance:
         Spec §2: 免疫单点故障: 通过全局 Mode 选举将异常样本剔除。
         
         场景：
-          1. datacast B (-1h) 创建多个文件 (Realtime)，产生 diff ≈ +3600 的采样。
-          2. datacast A (+2h) 创建 1 个文件 (Realtime)，产生 diff ≈ -7200 的采样。
-          3. 验证 Mode 选择了 datacast B 的偏差 (3600)，而非 datacast A (−7200)。
+          1. datacastst B (-1h) 创建多个文件 (Realtime)，产生 diff ≈ +3600 的采样。
+          2. datacastst A (+2h) 创建 1 个文件 (Realtime)，产生 diff ≈ -7200 的采样。
+          3. 验证 Mode 选择了 datacastst B 的偏差 (3600)，而datacastcast A (−7200)。
              因此 watermark ≈ T - 3600（即 1h 前的时间）。
           4. Client C (正常时间) 创建文件，验证正确 suspect 判定。
         
@@ -187,21 +187,21 @@ class TestClockSkewTolerance:
             因此 Client C 的文件只能通过 Audit 发现，不影响 Mode。
         """
         
-        # 0. Generate realtime events from datacast B (-1h) to establish Mode
-        # datacast B's files have mtime = T-3600, so diff = T_fustord - (T-3600) = 3600
-        logger.info("Step 0: Establishing Mode with datacast B (-1h) realtime events...")
+        # 0. Generate realtime events from datacastst B (-1h) to establish Mode
+        # datacastst B's files have mtime = T-3600, so diff = T_fustord - (T-3600) = 3600
+        logger.info("Step 0: Establishing Mode with datacastst B (-1h) realtime events...")
         for i in range(5):
             warmup_file_b = f"warmup_b_{int(time.time())}_{i}.txt"
             docker_manager.exec_in_container(CONTAINER_CLIENT_B, ["touch", f"{MOUNT_POINT}/{warmup_file_b}"])
             time.sleep(0.3)  # Brief pause to ensure unique filenames
         
-        # Wait for datacast B's realtime events to be ingested
+        # Wait for datacastst B's realtime events to be ingested
         warmup_rel = to_view_path(f"{MOUNT_POINT}/{warmup_file_b}")
         assert fustord_client.wait_for_file_in_tree(warmup_rel, timeout=LONG_TIMEOUT) is not None, \
-            "datacast B warmup files should be ingested via realtime"
+            "datacastst B warmup files should be ingested via realtime"
         
-        # 1. datacast A (+2h) creates a file (1 event with diff ≈ -7200)
-        logger.info("Step 1: datacast A (+2h) creating file...")
+        # 1. datacastst A (+2h) creates a file (1 event with diff ≈ -7200)
+        logger.info("Step 1: datacastst A (+2h) creating file...")
         filename_a = f"stable_trigger_{int(time.time())}.txt"
         file_path_a = f"{MOUNT_POINT}/{filename_a}"
         file_path_a_rel = to_view_path(file_path_a)
@@ -215,16 +215,16 @@ class TestClockSkewTolerance:
         host_now = time.time()
         logger.info(f"Watermark: {logical_now}, Host Physical: {host_now}, Diff: {logical_now - host_now:.1f}s")
         
-        # Mode should be ~3600 (from datacast B's 5 events) not -7200 (from datacast A's 1-2 events).
+        # Mode should be ~3600 (from datacastst B's 5 events) not -7200 (frodatacastcast A's 1-2 events).
         # Watermark = T_fustord - mode_skew ≈ T - 3600 (i.e., 1 hour behind host time).
         # So logical_now - host_now ≈ -3600. Allow generous tolerance.
         diff = logical_now - host_now
         logger.info(f"Logical Clock drift from host: {diff:.1f}s (expected ≈ -3600)")
         
-        # The clock should NOT have jumped +7200 (datacast A's skew)
-        assert diff < 600, f"Logical Clock jumped too far forwards ({diff:.0f}s). Mode voted for datacast A's +2h skew?"
+        # The clock should NOT have jumped +7200 (datacastst A's skew)
+        assert diff < 600, f"Logical Clock jumped too far forwards ({diff:.0f}s). Mode voted for datacastst A's +2h skew?"
         
-        # The clock should be within datacast B's skew range (≈ -3600 ± tolerance)
+        # The clock should be within datacastst B's skew range (≈ -3600 ± tolerance)
         # Allow wide tolerance since NFS latency and audit events could affect timing
         assert diff > -5000, f"Logical Clock lagged too far behind ({diff:.0f}s)."
         
@@ -248,4 +248,4 @@ class TestClockSkewTolerance:
         logger.info(f"Normal file flags: {flags}")
         
         assert flags["integrity_suspect"] is True, \
-            "Fresh file should be suspect (file mtime is ahead of watermark due to datacast B's -1h skew)"
+            "Fresh file should be suspect (file mtime is ahead of watermark due to datacastst B's -1h skew)"

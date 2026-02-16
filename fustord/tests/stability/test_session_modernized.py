@@ -54,8 +54,8 @@ class TestSessionModernized:
         jm = JobManager()
         return jm
 
-    async def test_datacast_job_lifecycle(self, bridge, job_manager):
-        """Verify datacastJob creation and completion flow using JobManager."""
+    async def test_datacastst_job_lifecycle(self, bridge, job_manager):
+        """Verify datacaststJob creation and completion flow using JobManager."""
         view_id = "view-job"
         sessions = ["s1", "s2"]
         

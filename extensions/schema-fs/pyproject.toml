@@ -5,7 +5,7 @@ description = "Fustor File System Schema - Contract between source-fs and view-f
 readme = "README.md"
 requires-python = ">=3.11"
 license = "MIT"
-dependencies = ["datacast-core"]
+dependencies = ["datacastst-core"]
 
 [[project.authors]]
 name = "Huajin Wang"

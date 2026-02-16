@@ -14,7 +14,7 @@ from pathlib import Path
 from typing import Dict, Optional, List, Any, Union
 from pydantic import BaseModel, field_validator
 
-from datacast_core.common import get_fustor_home_dir
+from datacastst_core.common import get_fustor_home_dir
 from .validators import validate_url_safe_id
 
 logger = logging.getLogger(__name__)
@@ -124,7 +124,7 @@ class PipesConfigLoader:
                 if not data:
                     continue
                 
-                # fustord specific: we might need to distinguish datacast vs fustord configs
+                # fustord specific: we might need to distinguish datacastst vs fustord configs
                 # For now, if it has 'receiver' or 'views', it's likely a fustord pipe config
                 if 'receiver' in data or 'views' in data:
                     config = FustordPipeConfig(**data)

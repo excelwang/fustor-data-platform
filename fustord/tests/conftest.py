@@ -10,7 +10,7 @@ from fustord.management.auth.dependencies import get_view_id_from_auth  # Using 
 @pytest.fixture(scope="session", autouse=True)
 def prevent_logging_reconfiguration():
     """Prevent the application from reconfiguring logging during tests."""
-    with patch("datacast_core.common.logging_config.setup_logging"):
+    with patch("datacastst_core.common.logging_config.setup_logging"):
         yield
 
 @pytest_asyncio.fixture(scope="function")

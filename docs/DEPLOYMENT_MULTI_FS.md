@@ -6,8 +6,8 @@
 
 假设您有 2 台存储服务器，分别挂载了不同的子目录，但逻辑上属于同一个数据集：
 
-- **节点 A (`datacast-1`)**: `/mnt/data/shard-01`
-- **节点 B (`datacast-2`)**: `/mnt/data/shard-02`
+- **节点 A (`datacastst-1`)**: `/mnt/data/shard-01`
+- **节点 B (`datacastst-2`)**: `/mnt/data/shard-02`
 
 目标是在 fustord 端通过单一路径 `/data` 访问所有数据，自动路由到正确的节点。
 
@@ -29,24 +29,24 @@
 uv pip install fustord fustor-view-fs fustor-view-fs-forest fustor-receiver-http
 ```
 
-### 2.2 采集端 (Source datacasts)
+### 2.2 采集端 (Source datacaststs)
 ```bash
-# 常规 datacast 安装
-uv pip install datacast fustor-source-fs fustor-sender-http
+# 常规 datacastst 安装
+uv pip install datacastst fustor-source-fs fustor-sender-http
 ```
 
 ---
 
 ## 3. 配置文件
 
-### 3.1 采集端配置 (datacast)
+### 3.1 采集端配置 (datacastst)
 
-**注意**: 从 v0.9.0 开始，**必须**在配置文件中显式设置 `datacast_id`。
+**注意**: 从 v0.9.0 开始，**必须**在配置文件中显式设置 `datacastst_id`。
 
-#### datacast 1 (Node A)
-`~/.fustor/datacast-config/default.yaml`:
+#### datacastst 1 (Node A)
+`~/.fustor/datacastst-config/default.yaml`:
 ```yaml
-datacast_id: "datacast-shard-01"  # <--- 必须配置
+datacastst_id:datacastcast-shard-01"  # <--- 必须配置
 
 sources:
   fs-source:
@@ -65,10 +65,10 @@ pipes:
     sender: fustord-main
 ```
 
-#### datacast 2 (Node B)
-`~/.fustor/datacast-config/default.yaml`:
+#### datacastst 2 (Node B)
+`~/.fustor/datacastst-config/default.yaml`:
 ```yaml
-datacast_id: "datacast-shard-02"  # <--- 必须配置
+datacastst_id:datacastcast-shard-02"  # <--- 必须配置
 
 sources:
   fs-source:
@@ -142,22 +142,22 @@ services:
       - "8101:8101" # API Port
       - "18888:18888" # Receiver Port
 
-  datacast-1:
+  datacastst-1:
     image: python:3.11-slim
-    command: datacast start
+    command: datacastst start
     volumes:
-      - ./config/datacast-1:/root/.fustor/datacast-config
+      - ./config/datacastst-1:/root/.fustodatacastcast-config
       - /mnt/data/shard-01:/data
     environment:
       # 注意：不再支持 FUSTOR_AGENT_ID 环境变量
-      # 必须在 config/datacast-1/default.yaml 中配置 datacast_id
+      # 必须在 config/datacastst-1/default.yaml 中配datacastcast_id
       PYTHONUNBUFFERED: 1
 
-  datacast-2:
+  datacastst-2:
     image: python:3.11-slim
-    command: datacast start
+    command: datacastst start
     volumes:
-      - ./config/datacast-2:/root/.fustor/datacast-config
+      - ./config/datacastst-2:/root/.fustodatacastcast-config
       - /mnt/data/shard-02:/data
 ```
 
@@ -208,15 +208,15 @@ curl -H "X-API-Key: public-read-key" \
 
 ### 5.3 数据来源识别 (Data Lineage)
 在返回的目录树信息中，每个文件/目录节点都包含以下元数据字段，用于精确识别数据来源：
-*   **last_datacast_id**: 最后更新该文件的 datacast ID (即配置文件中设置的 `datacast_id`)。
-*   **source_uri**: 该文件在源 datacast 上的完整物理路径。
+*   **last_datacastst_id**: 最后更新该文件datacastcast ID (即配置文件中设datacasttacast_id`)。
+*   **source_uri**: 该文件在源 datacastst 上的完整物理路径。
 
 **示例响应片段**:
 ```json
 {
   "name": "example.txt",
   "path": "/example.txt",             // <--- 视图中的逻辑路径
-  "last_datacast_id": "datacast-shard-01",  // <--- 来源 datacast
+  "last_datacastst_id":datacastcast-shard-01",  // <---datacasttacast
   "source_uri": "/mnt/data/shard-01/example.txt", // <--- 物理源路径
   ...
 }
@@ -227,9 +227,9 @@ curl -H "X-API-Key: public-read-key" \
 
 ## 6. 动态扩容 (Dynamic Scaling)
 
-本节介绍如何在 **不停止服务** 的情况下，向现有 datacast 添加新的 NFS 挂载源，并使其出现在 Forest View 聚合视图中。
+本节介绍如何在 **不停止服务** 的情况下，向现有 datacastst 添加新的 NFS 挂载源，并使其出现在 Forest View 聚合视图中。
 
-由于 fustord 的 `API Key` 与 `Pipe` 是 1:1 绑定的，新增 Source 需要同时更新 fustord 和 datacast 的配置。
+由于 fustord 的 `API Key` 与 `Pipe` 是 1:1 绑定的，新增 Source 需要同时更新 fustord 和 datacastst 的配置。
 
 ### 步骤 1: 修改 fustord 配置 (fustord.yaml)
 
@@ -266,9 +266,9 @@ receivers:
 fustord reload
 ```
 
-### 步骤 3: 修改 datacast 配置 (datacast.yaml)
+### 步骤 3: 修改 datacastst 配置datacastcast.yaml)
 
-在 datacast 侧添加采集任务。注意我们需要定义一个 **新 Sender** 来使用上面分配的新 Key。
+在 datacastst 侧添加采集任务。注意我们需要定义一个 **新 Sender** 来使用上面分配的新 Key。
 
 ```yaml
 sources:
@@ -292,13 +292,13 @@ pipes:
     sender: sender-for-new-nfs
 ```
 
-### 步骤 4: 热重载 datacast
+### 步骤 4: 热重载 datacastst
 
-让 datacast 启动新的采集管道：
+让 datacastst 启动新的采集管道：
 
 ```bash
 # 安全重载配置 (不会停止服务)
-datacast reload
+datacastst reload
 ```
 
 完成上述步骤后，新挂载点的数据将自动同步，并可通过 Forest View API 查询到（作为新的 tree key）。
@@ -307,8 +307,8 @@ datacast reload
 
 ## 7. 常见问题
 
-**Q: datacast 启动报错 "datacast ID is not configured"?**
-A: 请检查 datacast 的 YAML 配置文件中是否包含 `datacast_id: "..."` 字段。这是 v0.9.0 引入的强制要求。
+**Q: datacastst 启动报错datacastcast ID is not configured"?**
+A: 请检查 datacastst 的 YAML 配置文件中是否包含datacastcast_id: "..."` 字段。这是 v0.9.0 引入的强制要求。
 
 **Q: 聚合视图中成员 key 是什么?**
 A: Forest View 使用 `pipe_id` 作为内部子树的 key。在查询 API 返回的 `members` 字典中，key 即为对应的 `pipe_id`。

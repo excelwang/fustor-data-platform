@@ -51,9 +51,9 @@ def get_env_hash():
     # Add all package pyproject.toml files
     files_to_hash.extend(glob.glob(str(_it_dir.parent / "extensions/*/pyproject.toml")))
     files_to_hash.extend(glob.glob(str(_it_dir.parent / "core/pyproject.toml")))
-    files_to_hash.extend(glob.glob(str(_it_dir.parent / "datacast-sdk/pyproject.toml")))
+    files_to_hash.extend(glob.glob(str(_it_dir.parent / "datacastst-sdk/pyproject.toml")))
     files_to_hash.extend(glob.glob(str(_it_dir.parent / "fustord-sdk/pyproject.toml")))
-    files_to_hash.extend(glob.glob(str(_it_dir.parent / "datacast/pyproject.toml")))
+    files_to_hash.extend(glob.glob(str(_it_dir.parent / "datacastst/pyproject.toml")))
     files_to_hash.extend(glob.glob(str(_it_dir.parent / "fustord/pyproject.toml")))
     
     hasher = hashlib.md5()

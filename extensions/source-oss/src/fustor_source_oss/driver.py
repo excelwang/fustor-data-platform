@@ -5,10 +5,10 @@ import boto3
 from botocore.exceptions import ClientError
 from datetime import datetime, timezone
 
-from datacast_core.drivers import SourceDriver
-from datacast_core.models.config import SourceConfig, PasswdCredential
-from datacast_core.exceptions import DriverError
-from datacast_core.event import EventBase, EventType
+from datacastst_core.drivers import SourceDriver
+from datacastst_core.models.config import SourceConfig, PasswdCredential
+from datacastst_core.exceptions import DriverError
+from datacastst_core.event import EventBase, EventType
 
 from .config import OssDriverParams, QueueType
 from .mapper import map_s3_objects_to_events_batch
@@ -139,7 +139,7 @@ class OssSourceDriver(SourceDriver):
                             
                             # Filter for objects modified AFTER the last_known_position
                             # We use '>=' to potentially include items modified in the same second as the last checkpoint
-                            # The consumer (datacast) should handle exact duplicates if any.
+                            # The consumer (datacastst) should handle exact duplicates if any.
                             if obj_timestamp >= last_known_position:
                                 new_or_modified_objects.append(s3_obj)
                                 if obj_timestamp > current_max_timestamp:

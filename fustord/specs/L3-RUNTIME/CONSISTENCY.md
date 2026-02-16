@@ -9,7 +9,7 @@ version: 1.0.0
 
 ## [overview] Consistency_Arbitration_Overview
 
-**Rationale**: Define how Fustord reconciles conflicting data streams from multiple datacasts on shared storage.
+**Rationale**: Define how Fustord reconciles conflicting data streams from multiple datacaststs on shared storage.
 
 ### 1.1 目标场景
 
@@ -517,7 +517,7 @@ DatacastPipe 通过 API 发送生命周期信号，触发 fustord 的一致性�
 
 **Steps**:
 1. Scan internal suspect list for due entries.
-2. Dispatch `suspect_check` commands to relevant datacasts via SCP.
+2. Dispatch `suspect_check` commands to relevant datacaststs via SCP.
 3. Receive stability feedback via SDP.
 4. Update node's `integrity_suspect` flag based on feedback.
 - **Sentinels (Every 5 minutes)**: Short cycle integrity check.

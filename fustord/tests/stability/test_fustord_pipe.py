@@ -7,8 +7,8 @@ import asyncio
 from unittest.mock import AsyncMock, MagicMock
 from typing import Any, Dict, List, Optional
 
-from datacast_core.pipe import PipeState
-from datacast_core.pipe.handler import ViewHandler
+from datacastst_core.pipe import PipeState
+from datacastst_core.pipe.handler import ViewHandler
 from fustord.stability import FustordPipe
 
 
@@ -150,7 +150,7 @@ class TestFustordPipeSession:
         await fustord_pipe.start()
         
         # Use bridge to create session (handles election and backing store)
-        await bridge.create_session(task_id="datacast:pipe", session_id="sess-1")
+        await bridge.create_session(task_id="datacastst:pipe", session_id="sess-1")
         
         # Give background event loop time to notify handlers
         await asyncio.sleep(0.05)
@@ -168,11 +168,11 @@ class TestFustordPipeSession:
         
         await fustord_pipe.start()
         
-        await bridge.create_session(task_id="datacast1:pipe", session_id="sess-1")
+        await bridge.create_session(task_id="datacastst1:pipe", session_id="sess-1")
         
         # Make the next session a follower
         mock_view_handler.next_role = "follower"
-        await bridge.create_session(task_id="datacast2:pipe", session_id="sess-2")
+        await bridge.create_session(task_id="datacastst2:pipe", session_id="sess-2")
         
         # Give background event loop time
         await asyncio.sleep(0.05)
@@ -190,8 +190,8 @@ class TestFustordPipeSession:
         
         await fustord_pipe.start()
         
-        await bridge.create_session(task_id="datacast1:pipe", session_id="sess-1")
-        await bridge.create_session(task_id="datacast2:pipe", session_id="sess-2")
+        await bridge.create_session(task_id="datacastst1:pipe", session_id="sess-1")
+        await bridge.create_session(task_id="datacastst2:pipe", session_id="sess-2")
         
         # Close via bridge (which calls pipe.on_session_closed)
         await bridge.close_session("sess-1")

@@ -31,22 +31,22 @@ class TestNewLeaderResumesDuties:
         self,
         docker_env,
         fustord_client,
-        setup_datacasts,
+        setup_datacaststs,
         clean_shared_dir,
         wait_for_audit,
         reset_leadership
     ):
         """
         场景:
-          1. datacast A 是 Leader
-          2. datacast A 宕机，datacast B 升级为 Leader
-          3. 无 datacast 客户端 C 创建文件
-          4. datacast B（新 Leader）执行 Audit，发现盲区文件
+          1. datacastst A 是 Leader
+          2. datacastst A 宕datacastcast B 升级为 Leader
+          3. 无 datacastst 客户端 C 创建文件
+          4. datacastst B（新 Leader）执行 Audit，发现盲区文件
         预期:
           - 新 Leader 正常执行 Audit
           - 盲区文件被发现
         """
-        # Stop datacast A to trigger failover
+        # Stop datacastst A to trigger failover
         docker_manager.stop_container(CONTAINER_CLIENT_A)
         
         try:
@@ -67,13 +67,13 @@ class TestNewLeaderResumesDuties:
                 pytest.fail("View failed to become ready after failover in test_new_leader_performs_audit")
             
             # Verify B is now leader
-            logger.info("Waiting for datacast B to become leader...")
+            logger.info("Waiting for datacastst B to become leader...")
             new_leader = None
             start_poll = time.time()
             while time.time() - start_poll < EXTREME_TIMEOUT:
                 sessions = fustord_client.get_sessions()
                 for s in sessions:
-                    if s.get("role") == "leader" and s.get("datacast_id", "").startswith("client-b"):
+                    if s.get("role") == "leader" and s.get("datacastst_id", "").startswith("client-b"):
                         new_leader = s
                         break
                 if new_leader:
@@ -81,8 +81,8 @@ class TestNewLeaderResumesDuties:
                 time.sleep(POLL_INTERVAL)
             
             assert new_leader is not None, "New leader should exist"
-            assert new_leader.get("datacast_id", "").startswith("client-b"), \
-                "datacast B should be the new leader"
+            assert new_leader.get("datacastst_id", "").startswith("client-b"), \
+                "datacastst B should be the new leader"
             
             # Create file from blind-spot
             # Create file from blind-spot
@@ -125,10 +125,10 @@ class TestNewLeaderResumesDuties:
             
         finally:
             docker_manager.start_container(CONTAINER_CLIENT_A)
-            setup_datacasts["ensure_datacast_running"](
+            setup_datacaststs["ensurdatacastcast_running"](
                 CONTAINER_CLIENT_A, 
-                setup_datacasts["api_key"], 
-                setup_datacasts["view_id"]
+                setup_datacaststs["api_key"], 
+                setup_datacaststs["view_id"]
             )
             time.sleep(SHORT_TIMEOUT)
 
@@ -137,7 +137,7 @@ class TestNewLeaderResumesDuties:
         self,
         docker_env,
         fustord_client,
-        setup_datacasts,
+        setup_datacaststs,
         clean_shared_dir,
         reset_leadership
     ):
@@ -164,7 +164,7 @@ class TestNewLeaderResumesDuties:
         # Wait for initial sync
         time.sleep(STRESS_DELAY)
         
-        # Stop datacast A
+        # Stop datacastst A
         docker_manager.stop_container(CONTAINER_CLIENT_A)
         
         try:
@@ -203,10 +203,10 @@ class TestNewLeaderResumesDuties:
             
         finally:
             docker_manager.start_container(CONTAINER_CLIENT_A)
-            setup_datacasts["ensure_datacast_running"](
+            setup_datacaststs["ensurdatacastcast_running"](
                 CONTAINER_CLIENT_A, 
-                setup_datacasts["api_key"], 
-                setup_datacasts["view_id"]
+                setup_datacaststs["api_key"], 
+                setup_datacaststs["view_id"]
             )
             time.sleep(SHORT_TIMEOUT)
 
@@ -215,7 +215,7 @@ class TestNewLeaderResumesDuties:
         self,
         docker_env,
         fustord_client,
-        setup_datacasts,
+        setup_datacaststs,
         reset_leadership
     ):
         """
@@ -230,24 +230,24 @@ class TestNewLeaderResumesDuties:
             
             # Restart A
             docker_manager.start_container(CONTAINER_CLIENT_A)
-            setup_datacasts["ensure_datacast_running"](
+            setup_datacaststs["ensurdatacastcast_running"](
                 CONTAINER_CLIENT_A, 
-                setup_datacasts["api_key"], 
-                setup_datacasts["view_id"]
+                setup_datacaststs["api_key"], 
+                setup_datacaststs["view_id"]
             )
             # Wait for A to register new session
             time.sleep(MEDIUM_TIMEOUT)
             
             # Check roles
             sessions = fustord_client.get_sessions()
-            logger.info(f"Checking roles for returning datacast A. Sessions: {sessions}")
+            logger.info(f"Checking roles for returning datacastst A. Sessions: {sessions}")
             
             roles = {}
             for s in sessions:
-                aid = s.get("datacast_id", "")
+                aid = s.get("datacastst_id", "")
                 role = s.get("role")
                 if aid.startswith("client-a"):
-                    # For datacast-a, we might have a stale session. 
+                    # For datacastst-a, we might have a stale session. 
                     # Prefer leader if multiple exist, or the one with "can_snapshot"
                     if roles.get("client-a") != "leader":
                         roles["client-a"] = role
@@ -258,11 +258,11 @@ class TestNewLeaderResumesDuties:
             logger.info(f"Inferred roles: {roles}")
             # B should remain leader
             assert roles.get("client-b") == "leader", \
-                f"datacast B should remain leader, got roles: {roles}, sessions: {sessions}"
+                f"datacastst B should remain leader, got roles: {roles}, sessions: {sessions}"
             
             # A should be follower
             assert roles.get("client-a") == "follower", \
-                f"Returning datacast A should become follower, got roles: {roles}, sessions: {sessions}"
+                f"Returning datacastst A should become follower, got roles: {roles}, sessions: {sessions}"
             
         finally:
             # Final cleanup - restart to restore original state if needed

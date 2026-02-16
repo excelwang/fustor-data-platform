@@ -6,7 +6,7 @@ This conftest imports modular fixtures from the fixtures/ package.
 For implementation details, see:
 - fixtures/docker.py: Docker environment management
 - fixtures/fustord.py: fustord client and configuration
-- fixtures/datacasts.py: datacast setup and configuration
+- fixtures/datacaststs.pydatacastcast setup and configuration
 - fixtures/leadership.py: Leadership management and audit control
 """
 import os
@@ -63,7 +63,7 @@ def pytest_addoption(parser):
 
 from fixtures.docker import docker_env, clean_shared_dir
 from fixtures.fustord import test_view, test_api_key, test_query_key, fustord_client
-from fixtures.datacasts import setup_datacasts, setup_unskewed_datacasts
+from fixtures.datacaststs import setudatacastcasts, setup_unskedatacasttacasts
 from fixtures.leadership import wait_for_audit, reset_leadership
 
 
@@ -78,7 +78,7 @@ def reset_fustord_state(request, fustord_client, clean_shared_dir):
     NOT autouse — tests that need a clean slate should declare this explicitly.
     
     What it does:
-    1. Kill all datacasts in ALL containers (and wait for death) [SKIPPED IN FAST MODE]
+    1. Kill all datacaststs in ALL containers (and wait for death) [SKIPPED IN FAST MODE]
     2. Reset fustord state via API (clears sessions, views)
     3. Verify no stale sessions remain
     """
@@ -86,17 +86,17 @@ def reset_fustord_state(request, fustord_client, clean_shared_dir):
     containers = [CONTAINER_CLIENT_A, CONTAINER_CLIENT_B, CONTAINER_CLIENT_C]
     
     if not fast_mode:
-        # 1. Kill datacasts and clean up local state in ALL containers
+        # 1. Kill datacaststs and clean up local state in ALL containers
         for container in containers:
-            docker_manager.cleanup_datacast_state(container)
+            docker_manager.cleanup_datacastst_state(container)
         
-        # Small delay to ensure all datacast processes are fully dead
+        # Small delay to ensure all datacastst processes are fully dead
         # and their last heartbeats/requests have been processed
         time.sleep(1.0)
     else:
-        logger.info("⚡ Fast mode: Skipping datacast termination. Only resetting fustord/NFS.")
+        logger.info("⚡ Fast mode: Skipping datacastst termination. Only resetting fustord/NFS.")
     
-    # 2. Reset fustord state (AFTER datacasts are dead, so no re-registration)
+    # 2. Reset fustord state (AFTER datacaststs are dead, so no re-registration)
     try:
         fustord_client.reset()
         
@@ -111,7 +111,7 @@ def reset_fustord_state(request, fustord_client, clean_shared_dir):
         else:
             remaining = fustord_client.get_sessions()
             if remaining:
-                logger.warning(f"Sessions still exist after reset wait: {[s.get('datacast_id') for s in remaining]}")
+                logger.warning(f"Sessions still exist after reset wait: {[s.get('datacastst_id') for s in remaining]}")
         
         # Wait for View to be READY (Initial snapshot complete)
         time.sleep(1.0)
@@ -130,7 +130,7 @@ def reset_fustord_state(request, fustord_client, clean_shared_dir):
     # 3. Clear logs
     for container in containers + [CONTAINER_FUSION]:
         try:
-            log_path = "/root/.fustor/logs/datacast.log" if "client" in container else "/root/.fustor/logs/fustord.log"
+            log_path = "/root/.fustor/logs/datacastst.log" if "client" in container else "/root/.fustor/logs/fustord.log"
             docker_manager.exec_in_container(container, ["sh", "-c", f"> {log_path}"], timeout=5)
         except Exception:
             pass
@@ -139,6 +139,6 @@ def reset_fustord_state(request, fustord_client, clean_shared_dir):
 
 
 # ============================================================================
-# Re-export ensure_datacast_running for tests that need it directly
+# Re-export ensure_datacastst_running for tests that need it directly
 # ============================================================================
-from fixtures.datacasts import ensure_datacast_running
+from fixtures.datacaststs import ensurdatacastcast_running

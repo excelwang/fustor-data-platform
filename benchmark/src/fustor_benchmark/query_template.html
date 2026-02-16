@@ -1,68 +1,251 @@
 <!DOCTYPE html>
 <html>
+
 <head>
     <meta charset="utf-8">
     <title>Fustor Benchmark Report</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
     <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin: 40px; background: #f4f7f6; color: #333; }
-        .container { max-width: 1400px; margin: auto; background: white; padding: 40px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
-        h1 { color: #2c3e50; border-bottom: 2px solid #eee; padding-bottom: 15px; margin-top: 0; }
-        h2 { color: #34495e; margin-top: 40px; border-bottom: 1px solid #eee; padding-bottom: 10px; }
-        .summary-group { margin-bottom: 30px; }
-        .summary-title { font-size: 18px; font-weight: bold; color: #7f8c8d; margin-bottom: 15px; text-transform: uppercase; letter-spacing: 1px; }
-        .summary { display: flex; justify-content: space-between; margin: 0 -10px 20px -10px; }
-        .stat-card { background: #fff; padding: 20px; border-radius: 10px; flex: 1; margin: 0 10px; text-align: center; border: 1px solid #eee; border-top: 5px solid #3498db; transition: transform 0.2s; }
-        .stat-card:hover { transform: translateY(-5px); }
-        .stat-card.fustord { border-top-color: #2ecc71; }
-        .stat-card.integrity { border-top-color: #e74c3c; }
-        .stat-card.gain { border-top-color: #f1c40f; }
-        .stat-value { font-size: 28px; font-weight: bold; margin: 10px 0; color: #2c3e50; }
-        .stat-label { font-size: 14px; color: #7f8c8d; text-transform: uppercase; }
-        .chart-row { display: flex; gap: 15px; margin-bottom: 40px; align-items: flex-start; }
-        .chart-box { flex: 1; background: #fff; padding: 15px; border-radius: 10px; border: 1px solid #eee; min-width: 0; }
-        .chart-container { position: relative; height: 320px; width: 100%; }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 14px; table-layout: fixed; }
-        th, td { text-align: left; padding: 12px; border-bottom: 1px solid #eee; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-        th { background: #f8f9fa; color: #2c3e50; font-weight: 600; }
-        .info-bar { background: #e8f4fd; padding: 15px; border-radius: 8px; margin-bottom: 30px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; font-size: 13px; }
-        .info-item { display: flex; gap: 10px; }
-        .info-label { color: #5a6c7a; font-weight: 600; min-width: 100px; }
-        .note-box { background: #fff9db; padding: 15px; border-left: 5px solid #fcc419; margin: 20px 0; font-size: 14px; line-height: 1.6; }
-        .task-name { font-weight: bold; color: #2980b9; }
-        .param-value { color: #e67e22; font-weight: bold; }
-        .optimistic-flag { color: #e74c3c; font-weight: bold; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            margin: 40px;
+            background: #f4f7f6;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: auto;
+            background: white;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        }
+
+        h1 {
+            color: #2c3e50;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 15px;
+            margin-top: 0;
+        }
+
+        h2 {
+            color: #34495e;
+            margin-top: 40px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+        }
+
+        .summary-group {
+            margin-bottom: 30px;
+        }
+
+        .summary-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #7f8c8d;
+            margin-bottom: 15px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .summary {
+            display: flex;
+            justify-content: space-between;
+            margin: 0 -10px 20px -10px;
+        }
+
+        .stat-card {
+            background: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            flex: 1;
+            margin: 0 10px;
+            text-align: center;
+            border: 1px solid #eee;
+            border-top: 5px solid #3498db;
+            transition: transform 0.2s;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .stat-card.fustord {
+            border-top-color: #2ecc71;
+        }
+
+        .stat-card.integrity {
+            border-top-color: #e74c3c;
+        }
+
+        .stat-card.gain {
+            border-top-color: #f1c40f;
+        }
+
+        .stat-value {
+            font-size: 28px;
+            font-weight: bold;
+            margin: 10px 0;
+            color: #2c3e50;
+        }
+
+        .stat-label {
+            font-size: 14px;
+            color: #7f8c8d;
+            text-transform: uppercase;
+        }
+
+        .chart-row {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 40px;
+            align-items: flex-start;
+        }
+
+        .chart-box {
+            flex: 1;
+            background: #fff;
+            padding: 15px;
+            border-radius: 10px;
+            border: 1px solid #eee;
+            min-width: 0;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 320px;
+            width: 100%;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            font-size: 14px;
+            table-layout: fixed;
+        }
+
+        th,
+        td {
+            text-align: left;
+            padding: 12px;
+            border-bottom: 1px solid #eee;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        th {
+            background: #f8f9fa;
+            color: #2c3e50;
+            font-weight: 600;
+        }
+
+        .info-bar {
+            background: #e8f4fd;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            font-size: 13px;
+        }
+
+        .info-item {
+            display: flex;
+            gap: 10px;
+        }
+
+        .info-label {
+            color: #5a6c7a;
+            font-weight: 600;
+            min-width: 100px;
+        }
+
+        .note-box {
+            background: #fff9db;
+            padding: 15px;
+            border-left: 5px solid #fcc419;
+            margin: 20px 0;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .task-name {
+            font-weight: bold;
+            color: #2980b9;
+        }
+
+        .param-value {
+            color: #e67e22;
+            font-weight: bold;
+        }
+
+        .optimistic-flag {
+            color: #e74c3c;
+            font-weight: bold;
+        }
     </style>
 </head>
+
 <body>
     <div class="container">
         <h1>Fustor Performance Benchmark</h1>
         <div class="info-bar">
             <div class="info-item"><span class="info-label">📅 Timestamp:</span> <strong>{{timestamp}}</strong></div>
-            <div class="info-item"><span class="info-label">📂 Data Scale:</span> <strong>{{total_files}} files ({{total_dirs}} dirs)</strong></div>
+            <div class="info-item"><span class="info-label">📂 Data Scale:</span> <strong>{{total_files}} files
+                    ({{total_dirs}} dirs)</strong></div>
             <div class="info-item"><span class="info-label">🚀 Requests:</span> <strong>{{reqs}}</strong></div>
             <div class="info-item"><span class="info-label">📂 Target Depth:</span> <strong>{{depth}}</strong></div>
-            <div class="info-item"><span class="info-label">👥 Concurrency:</span> <strong>{{concurrency}}</strong></div>
-            <div class="info-item"><span class="info-label">⏱️ Integrity Intv:</span> <strong class="param-value">{{integrity_interval}}s</strong></div>
+            <div class="info-item"><span class="info-label">👥 Concurrency:</span> <strong>{{concurrency}}</strong>
+            </div>
+            <div class="info-item"><span class="info-label">⏱️ Integrity Intv:</span> <strong
+                    class="param-value">{{integrity_interval}}s</strong></div>
         </div>
 
         <div class="summary-group">
             <div class="summary-title">Latency Summary (响应延迟)</div>
             <div class="summary">
-                <div class="stat-card"><div class="stat-label">OS Baseline</div><div class="stat-value">{{os_avg}} ms</div></div>
-                <div class="stat-card integrity"><div class="stat-label">OS Integrity <span class="optimistic-flag">(Best Case)</span></div><div class="stat-value">{{os_integrity_avg}} ms</div></div>
-                <div class="stat-card fustord"><div class="stat-label">fustord API</div><div class="stat-value">{{fustord_avg}} ms</div></div>
-                <div class="stat-card gain"><div class="stat-label">Latency Speedup</div><div class="stat-value" style="color: #2ecc71">{{gain_latency}}</div></div>
+                <div class="stat-card">
+                    <div class="stat-label">OS Baseline</div>
+                    <div class="stat-value">{{os_avg}} ms</div>
+                </div>
+                <div class="stat-card integrity">
+                    <div class="stat-label">OS Integrity <span class="optimistic-flag">(Best Case)</span></div>
+                    <div class="stat-value">{{os_integrity_avg}} ms</div>
+                </div>
+                <div class="stat-card fustord">
+                    <div class="stat-label">fustord API</div>
+                    <div class="stat-value">{{fustord_avg}} ms</div>
+                </div>
+                <div class="stat-card gain">
+                    <div class="stat-label">Latency Speedup</div>
+                    <div class="stat-value" style="color: #2ecc71">{{gain_latency}}</div>
+                </div>
             </div>
         </div>
 
         <div class="summary-group">
             <div class="summary-title">Throughput Summary (系统吞吐率)</div>
             <div class="summary">
-                <div class="stat-card"><div class="stat-label">OS Baseline</div><div class="stat-value">{{os_qps}}</div></div>
-                <div class="stat-card integrity"><div class="stat-label">OS Integrity <span class="optimistic-flag">(Best Case)</span></div><div class="stat-value">{{os_integrity_qps}}</div></div>
-                <div class="stat-card fustord"><div class="stat-label">fustord API</div><div class="stat-value">{{fustord_qps}}</div></div>
-                <div class="stat-card gain"><div class="stat-label">QPS Gain</div><div class="stat-value" style="color: #2ecc71">{{gain_qps}}</div></div>
+                <div class="stat-card">
+                    <div class="stat-label">OS Baseline</div>
+                    <div class="stat-value">{{os_qps}}</div>
+                </div>
+                <div class="stat-card integrity">
+                    <div class="stat-label">OS Integrity <span class="optimistic-flag">(Best Case)</span></div>
+                    <div class="stat-value">{{os_integrity_qps}}</div>
+                </div>
+                <div class="stat-card fustord">
+                    <div class="stat-label">fustord API</div>
+                    <div class="stat-value">{{fustord_qps}}</div>
+                </div>
+                <div class="stat-card gain">
+                    <div class="stat-label">QPS Gain</div>
+                    <div class="stat-value" style="color: #2ecc71">{{gain_qps}}</div>
+                </div>
             </div>
         </div>
 
@@ -83,11 +266,13 @@
 
         <div class="note-box">
             <strong>⚠️ 实验严谨性说明 (Scientific Scrutiny):</strong><br>
-            本次测试测得的 <strong>OS Integrity (Double Sampling)</strong> 延迟与吞吐率均为该方案的 <strong><span class="optimistic-flag">理论最优/最乐观情况 (Best-case Scenario)</span></strong>：
+            本次测试测得的 <strong>OS Integrity (Double Sampling)</strong> 延迟与吞吐率均为该方案的 <strong><span
+                    class="optimistic-flag">理论最优/最乐观情况 (Best-case Scenario)</span></strong>：
             <ul>
                 <li>由于基准测试的目标文件夹是由 fustord API 预先发现的，这意味着这些目标在测试开始前就已经是稳定、完整的。</li>
                 <li>在真实生产环境中，如果文件正处于活跃写入状态，OS Integrity 方案在经历 60s 等待后，通常会因检测到元数据变化而被迫进入 <strong>“重试循环”</strong>。</li>
-                <li><strong>结论</strong>：真实环境下的 OS Integrity 延迟将呈 60s 的倍数级增长，吞吐率将进一步折半。而 fustord API 无论文件是否正在写入，其性能表现始终保持恒定。</li>
+                <li><strong>结论</strong>：真实环境下的 OS Integrity 延迟将呈 60s 的倍数级增长，吞吐率将进一步折半。而 fustord API
+                    无论文件是否正在写入，其性能表现始终保持恒定。</li>
             </ul>
         </div>
 
@@ -111,9 +296,12 @@
             <section>
                 <h3>1. 任务定义 (Task Definitions)</h3>
                 <ul>
-                    <li><span class="task-name">OS Baseline (Pure find Scan)</span>: 执行原生 <code>find</code> 扫描。该方案无法识别正在写入的文件，在 NFS 环境下极易产生“脏读”，数据一致性等级为“低”。</li>
-                    <li><span class="task-name">OS Integrity (Double Sampling)</span>: 模拟 NFS 环境下确保文件完整的真实方案。包含首次采样 -> 强制 <strong>{{integrity_interval}}s</strong> 物理等待 -> 二次校验。<strong>当前测量值为无重试的最优性能。</strong></li>
-                    <li><span class="task-name">fustord API (Perception Mode)</span>: 基于 sensord 实时感知的元数据检索。无需任何物理静默等待即可返回可靠数据。</li>
+                    <li><span class="task-name">OS Baseline (Pure find Scan)</span>: 执行原生 <code>find</code>
+                        扫描。该方案无法识别正在写入的文件，在 NFS 环境下极易产生“脏读”，数据一致性等级为“低”。</li>
+                    <li><span class="task-name">OS Integrity (Double Sampling)</span>: 模拟 NFS 环境下确保文件完整的真实方案。包含首次采样 ->
+                        强制 <strong>{{integrity_interval}}s</strong> 物理等待 -> 二次校验。<strong>当前测量值为无重试的最优性能。</strong></li>
+                    <li><span class="task-name">fustord API (Perception Mode)</span>: 基于 datacastd
+                        实时感知的元数据检索。无需任何物理静默等待即可返回可靠数据。</li>
                 </ul>
             </section>
         </div>
@@ -135,7 +323,7 @@
         const groups = ['os', 'os_integrity', 'fustord_dry_net', 'fustord_dry', 'fustord'];
         metrics.forEach(m => {
             const row = document.createElement('tr');
-            row.innerHTML = `<td><strong>${m.label}</strong></td>` + 
+            row.innerHTML = `<td><strong>${m.label}</strong></td>` +
                 groups.map(g => `<td>${format(rawData[g][m.key], m.dec)}</td>`).join('');
             tableBody.appendChild(row);
         });
@@ -148,14 +336,14 @@
             type: 'bar',
             data: {
                 labels: commonLabels,
-                datasets: [{ 
-                    label: 'QPS', 
-                    data: getVal('qps'), 
+                datasets: [{
+                    label: 'QPS',
+                    data: getVal('qps'),
                     backgroundColor: ['#3498db', '#e74c3c', '#2ecc71'],
                     maxBarThickness: 40
                 }]
             },
-            options: { 
+            options: {
                 responsive: true, maintainAspectRatio: false,
                 plugins: { legend: { display: false } },
                 scales: { y: { type: 'logarithmic', title: { display: true, text: 'Requests/sec (Log Scale)' } } }
@@ -167,14 +355,14 @@
             type: 'bar',
             data: {
                 labels: commonLabels,
-                datasets: [{ 
-                    label: 'Avg Latency', 
-                    data: getVal('avg'), 
+                datasets: [{
+                    label: 'Avg Latency',
+                    data: getVal('avg'),
                     backgroundColor: ['#3498db', '#e74c3c', '#2ecc71'],
                     maxBarThickness: 40
                 }]
             },
-            options: { 
+            options: {
                 responsive: true, maintainAspectRatio: false,
                 plugins: { legend: { display: false } },
                 scales: { y: { type: 'logarithmic', title: { display: true, text: 'ms (Log Scale)' } } }
@@ -194,7 +382,7 @@
                     { label: 'fustord API', data: getS('fustord'), borderColor: '#2ecc71', fill: false, tension: 0.1 }
                 ]
             },
-            options: { 
+            options: {
                 responsive: true, maintainAspectRatio: false,
                 scales: { y: { type: 'logarithmic' } },
                 plugins: { legend: { position: 'bottom' } }
@@ -202,4 +390,5 @@
         });
     </script>
 </body>
+
 </html>

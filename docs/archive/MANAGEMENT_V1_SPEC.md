@@ -9,9 +9,9 @@ The Management Module provided a centralized control plane for the Fustor cluste
 2.  **Frontend UI (`management-ui/`)**: A static web interface for visualization and configuration.
 
 ### Key Responsibilities
-*   **Cluster Monitoring**: Real-time dashboard of all connected datacasts, active Pipes, and client Sessions.
-*   **Configuration Management**: Centralized editing of `fustord.yaml` and remote `datacast.yaml` configurations.
-*   **Remote Command Dispatch**: Ability to send control commands (reload, upgrade, scan) to datacasts via the existing heartbeat channel.
+*   **Cluster Monitoring**: Real-time dashboard of all connected datacaststs, active Pipes, and client Sessions.
+*   **Configuration Management**: Centralized editing of `fustord.yaml` and remote `datacastst.yaml` configurations.
+*   **Remote Command Dispatch**: Ability to send control commands (reload, upgrade, scan) to datacaststs via the existing heartbeat channel.
 
 ---
 
@@ -20,16 +20,16 @@ The Management Module provided a centralized control plane for the Fustor cluste
 ### 2.1 Dashboard & Monitoring
 The dashboard provided a real-time snapshot of the system state by querying the in-memory `SessionManager` and `PipeManager`.
 
-*   **datacasts**:
-    *   List all connected datacasts (grouped by `datacast_id`).
+*   **datacaststs**:
+    *   List all connected datacaststs (grouped bydatacastcast_id`).
     *   Show connection status (Active/Idle), Client IP, and Version.
-    *   Track number of active sessions per datacast.
+    *   Track number of active sessions per datacastst.
 *   **Pipes**:
     *   List all configured fustord Pipes.
     *   Show state (`RUNNING`, `STOPPED`, `ERROR`).
     *   Show associated Views and Receivers.
 *   **Sessions**:
-    *   Detailed list of all active sessions (User reads & datacast pushes).
+    *   Detailed list of all active sessions (User reads & datacastst pushes).
     *   Metrics: `age_seconds`, `idle_seconds`, `events_pushed`.
     *   **Role Tracking**: Identified which session was the **Leader** for a given View.
 
@@ -42,20 +42,20 @@ The dashboard provided a real-time snapshot of the system state by querying the 
     *   Receivers must use valid Drivers.
 *   **Hot Reload**: Triggered a process reload (via `SIGHUP`) after saving configuration.
 
-#### datacast Configuration (Remote)
-*   **Fetch**: datacasts could be commanded to report their current configuration (`report_config`).
-*   **Push Update**: Admins could push a new configuration to an datacast.
+#### datacastst Configuration (Remote)
+*   **Fetch**: datacaststs could be commanded to report their current configuration (`report_config`).
+*   **Push Update**: Admins could push a new configuration to an datacastst.
 *   **Safety Constraints**:
-    *   **Source/Sender Protection**: To prevent bricking an datacast, the API restricted modifications to `sources` and `senders` sections.
+    *   **Source/Sender Protection**: To prevent bricking an datacastst, the API restricted modifications to `sources` and `senders` sections.
     *   **Pipe Management**: Allowed adding/removing Pipes dynamically.
 
-### 2.3 Remote datacast Control
-The module used the `SessionManager`'s command queue to send instructions to datacasts. Commands were piggybacked on the datacast's heartbeat response.
+### 2.3 Remote datacastst Control
+The module used the `SessionManager`'s command queue to send instructions to datacaststs. Commands were piggybacked on thdatacastcast's heartbeat response.
 
 **Supported Commands:**
-*   `reload_config`: Force datacast to reload its configuration from disk.
-*   `report_config`: Request datacast to upload its current YAML config.
-*   `upgrade`: Trigger datacast self-update (with version argument).
+*   `reload_config`: Force datacastst to reload its configuration from disk.
+*   `report_config`: Request datacastst to upload its current YAML config.
+*   `upgrade`: Trigger datacastst self-update (with version argument).
 *   `scan`: Trigger a file system scan (Snapshot) for a specific path.
 
 ---
@@ -63,13 +63,13 @@ The module used the `SessionManager`'s command queue to send instructions to dat
 ## 3. Architecture & Data Flow
 
 ### 3.1 Command Queue Pattern
-Since datacasts sit behind firewalls (NAT), fustord cannot initiate connections to them. The Management module used a **Reverse Command Pattern**:
+Since datacaststs sit behind firewalls (NAT), fustord cannot initiate connections to them. The Management module used a **Reverse Command Pattern**:
 
-1.  **User Action**: Admin clicks "Reload datacast" in UI.
+1.  **User Action**: Admin clicks "Reload datacastst" in UI.
 2.  **Queue**: API adds a command object to `SessionInfo.pending_commands` in memory.
-3.  **Heartbeat**: datacast sends a heartbeat (or data push) to fustord.
+3.  **Heartbeat**: datacastst sends a heartbeat (or data push) to fustord.
 4.  **Dispatch**: fustord checks the queue and attaches the command to the HTTP response.
-5.  **Execution**: datacast receives the response, extracts the command, and executes it locally.
+5.  **Execution**: datacastst receives the response, extracts the command, and executes it locally.
 
 ### 3.2 Security
 *   **Authentication**: All management endpoints were protected by a `X-Management-Key` header (HMAC validation against `fustord.yaml` config).
@@ -80,14 +80,14 @@ Since datacasts sit behind firewalls (NAT), fustord cannot initiate connections 
 ## 4. API Reference (Summary)
 
 ### Dashboard
-*   `GET /api/v1/management/dashboard`: Full system state (datacasts, Pipes, Views, Sessions).
+*   `GET /api/v1/management/dashboard`: Full system state (datacaststs, Pipes, Views, Sessions).
 *   `GET /api/v1/management/drivers`: List available drivers for all subsystems.
 
-### datacast Control
-*   `POST /api/v1/management/datacasts/{datacast_id}/command`: Queue a command (reload, scan, upgrade).
-*   `GET /api/v1/management/datacasts/{datacast_id}/config`: Get cached datacast config.
-*   `POST /api/v1/management/datacasts/{datacast_id}/config`: Push new config (raw YAML).
-*   `POST /api/v1/management/datacasts/{datacast_id}/config/structured`: Push new config (JSON).
+### datacastst Control
+*   `POST /api/v1/management/datacaststsdatacastcast_id}/command`: Queue a command (reload, scan, upgrade).
+*   `GET /api/v1/management/datacaststsdatacastcast_id}/config`: Get cacdatacasttacast config.
+*   `POST /api/v1/management/datacaststsdatacastcast_id}/config`: Push new config (raw YAML).
+*   `POST /api/v1/management/datacaststsdatacastcast_id}/config/structured`: Push new config (JSON).
 
 ### fustord Control
 *   `GET /api/v1/management/config`: Get current `fustord.yaml`.
@@ -98,7 +98,7 @@ Since datacasts sit behind firewalls (NAT), fustord cannot initiate connections 
 
 ## 5. Known Limitations (Reasons for Removal)
 
-1.  **State Ephemerality**: datacast configurations were cached in memory (in `SessionInfo`). Restarting fustord meant losing the ability to view datacast configs until they re-reported.
+1.  **State Ephemerality**: datacastst configurations were cached in memory (in `SessionInfo`). Restarting fustord meant losing the ability to viedatacastcast configs until they re-reported.
 2.  **Concurrency Risks**: Configuration updates (file writes) lacked locking or versioning, leading to potential race conditions.
 3.  **Deployment Coupling**: The UI was bundled as a static asset within the Python package, making frontend updates difficult.
 4.  **Security Model**: Shared API key was insufficient for granular access control.
@@ -107,6 +107,6 @@ Since datacasts sit behind firewalls (NAT), fustord cannot initiate connections 
 
 For reimplementation, consider:
 *   **Decoupled UI**: Build a standalone React/Vue app that talks to the API.
-*   **State Persistence**: Store datacast configurations and Command history in a database (SQLite/Postgres).
+*   **State Persistence**: Store datacastst configurations and Command history in a database (SQLite/Postgres).
 *   **WebSocket Control**: Use WebSockets for real-time command delivery instead of HTTP heartbeat polling.
 *   **OpLock**: Implement Optimistic Locking (ETag/Version) for configuration updates.

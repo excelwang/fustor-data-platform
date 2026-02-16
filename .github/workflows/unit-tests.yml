@@ -28,7 +28,7 @@ jobs:
 
       - name: Run unit tests
         run: |
-          uv run pytest --cov=sensord/src --cov=fustord/src --cov=core/src --cov-report=xml sensord/tests fustord/tests core/tests extensions/*/tests
+          uv run pytest --cov=datacastd/src --cov=fustord/src --cov=core/src --cov-report=xml datacastd/tests fustord/tests core/tests extensions/*/tests
 
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v4

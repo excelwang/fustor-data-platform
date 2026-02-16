@@ -12,10 +12,10 @@ from ..utils import docker_manager
 logger = logging.getLogger("fustor_test")
 
 class TestDebugTree:
-    def test_dump_tree(self, docker_env, fustord_client, setup_datacasts):
+    def test_dump_tree(self, docker_env, fustord_client, setup_datacaststs):
         """Dump the full file tree to debug path issues."""
         
-        # Create a file via Realtime (datacast A)
+        # Create a file via Realtime (datacastst A)
         realtime_file = f"{MOUNT_POINT}/debug_realtime.txt"
         docker_manager.create_file_in_container(
             CONTAINER_CLIENT_A, realtime_file, "realtime content"

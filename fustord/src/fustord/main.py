@@ -11,7 +11,7 @@ import logging
 
 # --- Configuration and Core Imports ---
 from fustord.config.unified import fustord_config
-from datacast_core.common import logging_config
+from datacastst_core.common import logging_config
 
 logger = logging.getLogger(__name__)
 
@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 from fustord.stability.runtime_objects import pipe_manager
 from fustord.domain.view_state_manager import view_state_manager
 from fustord.stability import runtime_objects
-from datacast_core.event import EventBase
+from datacastst_core.event import EventBase
 
 # --- View Manager Module Imports ---
 from fustord.domain.view_manager.manager import process_event as process_single_event, cleanup_all_expired_suspects
@@ -36,7 +36,7 @@ async def lifespan(app: FastAPI):
     runtime_objects.pipe_manager = pm
     
     # 2. Setup Logging from config
-    from datacast_core.common import get_fustor_home_dir
+    from datacastst_core.common import get_fustor_home_dir
     log_path = get_fustor_home_dir() / "logs" / "fustord.log"
     logging_config.setup_logging(
         log_file_path=str(log_path),

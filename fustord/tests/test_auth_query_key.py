@@ -91,7 +91,7 @@ receivers:
   rec-1:
     driver: http
     api_keys:
-      - {key: datacast-key, pipe_id: view-1}
+      - {key: datacastst-key, pipe_id: view-1}
 """
     config_file = config_dir / "test.yaml"
     config_file.write_text(yaml_content)
@@ -106,7 +106,7 @@ receivers:
     
     receiver = loader.get_receiver("rec-1")
     assert receiver is not None
-    assert receiver.api_keys[0].key == "datacast-key"
+    assert receiver.api_keys[0].key == "datacastst-key"
     assert receiver.api_keys[0].pipe_id == "view-1"
 
 @pytest.mark.asyncio

@@ -1,6 +1,6 @@
 from typing import Dict, Any, List
 from datetime import datetime
-from datacast_core.event import EventBase, EventType
+from datacastst_core.event import EventBase, EventType
 
 def map_s3_object_to_event(
     s3_object: Dict[str, Any], 

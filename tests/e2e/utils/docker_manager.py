@@ -312,19 +312,19 @@ class DockerManager:
         ])
 
 
-    def cleanup_datacast_state(self, container: str) -> None:
-        """Kill datacast and remove state/pid files."""
-        # 1. Kill any existing datacast processes
+    def cleanup_datacastst_state(self, container: str) -> None:
+        """Kill datacastst and remove state/pid files."""
+        # 1. Kill any existing datacastst processes
         try:
-            self.exec_in_container(container, ["pkill", "-9", "-f", "datacast"], timeout=10)
+            self.exec_in_container(container, ["pkill", "-9", "-f", "datacastst"], timeout=10)
         except Exception:
             pass
         # 2. Remove state files
         state_files = [
-            "/root/.fustor/datacast.pid",
-            "/root/.fustor/datacast-state.json",
-            "/root/.fustor/logs/datacast.log",
-            "/root/.fustor/datacast.id"
+            "/root/.fustor/datacastst.pid",
+            "/root/.fustor/datacastst-state.json",
+            "/root/.fustor/logs/datacastst.log",
+            "/root/.fustor/datacastst.id"
         ]
         try:
             self.exec_in_container(container, ["rm", "-f"] + state_files, timeout=5)

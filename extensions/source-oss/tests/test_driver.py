@@ -5,9 +5,9 @@ from moto import mock_aws
 from datetime import datetime, timedelta, timezone
 from typing import List, Dict, Any
 
-from datacast_core.models.config import SourceConfig, PasswdCredential
-from datacast_core.exceptions import DriverError
-from datacast_core.event import EventBase, EventType
+from datacastst_core.models.config import SourceConfig, PasswdCredential
+from datacastst_core.exceptions import DriverError
+from datacastst_core.event import EventBase, EventType
 
 from fustor_source_oss.driver import OssSourceDriver
 from fustor_source_oss.config import OssDriverParams, QueueType, PollingQueueConfig

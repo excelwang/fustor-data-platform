@@ -52,8 +52,8 @@ Symmetry is found in the **Protocol Carrier layer**, not the Pipe layer. The car
 
 | Symmetric Point | Responsibility | Implementation Carrier |
 |-----------------|----------------|------------------------|
-| **Frame Definition** | Shared models for SCP/SDP packets | `datacast_core.protocol` |
-| **Negotiation Logic** | Logic for `session_timeout` and `role` | `datacast_core.protocol.scp` |
+| **Frame Definition** | Shared models for SCP/SDP packets | `datacastst_core.protocol` |
+| **Negotiation Logic** | Logic for `session_timeout` and `role` | `datacastst_core.protocol.scp` |
 | **Reliability Primitives** | Retries (Client) / Backpressure (Server) | `Stability Layer` |
 
 By extracting the Protocol Carrier into `Datacast-core`, we achieve ecosystem-wide alignment without creating a monolithic, over-complicated Pipe component.

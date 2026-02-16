@@ -151,7 +151,7 @@ Domain/Management services utilize the Stability Layer as a generic "renting" pl
 #### 2. Targeted Task (State Mutation)
 - **Purpose**: Control & Lifecycle (e.g., `upgrade`, `reload`, `stop`).
 - **Target**: Specific `Datacast` instance (via `task_id`).
-- **Primitive**: `Stability.unicast(datacast_id)`
+- **Primitive**: `Stability.unicast(datacastst_id)`
 - **Success Criteria**: Ack from target.
 - **Failure**: Control Loss.
 

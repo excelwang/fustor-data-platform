@@ -4,7 +4,7 @@ import logging
 from typing import List, Optional, TYPE_CHECKING
 from fastapi import APIRouter
 from importlib.metadata import entry_points
-from datacast_core.transport.receiver import ReceiverRegistry, Receiver
+from datacastst_core.transport.receiver import ReceiverRegistry, Receiver
 from fustord.config.unified import fustord_config
 from fustord.domain.view_manager.manager import get_cached_view_manager
 from fustord.management.api.consistency import consistency_router

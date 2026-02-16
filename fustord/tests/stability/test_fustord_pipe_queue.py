@@ -4,8 +4,8 @@ from unittest.mock import MagicMock, AsyncMock
 from typing import Dict, Any, Optional
 
 from fustord.stability.pipe import FustordPipe
-from datacast_core.pipe.handler import ViewHandler
-from datacast_core.event import EventBase
+from datacastst_core.pipe.handler import ViewHandler
+from datacastst_core.event import EventBase
 
 class MockViewHandler(ViewHandler):
     def __init__(self, handler_id: str):

@@ -22,7 +22,7 @@
 │  │                                                                    │ │
 │  │  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐            │ │
 │  │  │ NFS Client A │  │ NFS Client B │  │ NFS Client C │            │ │
-│  │  │  (datacast A)   │  │  (datacast B)   │  │  (No datacast)  │            │ │
+│  │  │  (datacastst A)   │  │ datacastcast B)   │  │  datacasttacast)  │            │ │
 │  │  │   Leader     │  │   Follower   │  │  Blind-spot  │            │ │
 │  │  └──────────────┘  └──────────────┘  └──────────────┘            │ │
 │  └────────────────────────────────────────────────────────────────────┘ │
@@ -73,13 +73,13 @@ rm tests/e2e/.env_state  # 强制刷新哈希状态
 ```
 
 ### 2. 代码生效机制
-- **热生效**: 核心代码（`datacast_core`, `datacast`, `fustord` 等）已通过 **Volume 挂载**。修改 `src` 目录代码后，测试固件会自动重启进程使代码生效，**无需重启容器**。
+- **热生效**: 核心代码（`datacastst_core`,datacastcast`, `fustord` 等）已通过 **Volume 挂载**。修改 `src` 目录代码后，测试固件会自动重启进程使代码生效，**无需重启容器**。
 - **三方库变更**: 修改了 `pyproject.toml` 中的 `dependencies` 后，系统会自动触发镜像重建。
 
 ### 3. 排障与日志
 测试失败时，可以通过以下命令查看实时日志：
 - **fustord 日志**: `docker logs -f fustord`
-- **datacast 日志**: `docker exec client-a cat /tmp/datacast.log`
+- **datacastst 日志**: `docker exec client-a cat /tmdatacastcast.log`
 - **查看状态**: `docker compose -f tests/e2e/docker-compose.yml ps`
 
 ## 测试用例清单
@@ -89,7 +89,7 @@ rm tests/e2e/.env_state  # 强制刷新哈希状态
 > 以下仅保留需要真实 Docker/NFS 环境的 E2E 测试。
 
 ### A. Leader/Follower 选举 & 会话管理
-- A1: 第一个 datacast 成为 Leader
+- A1: 第一个 datacastst 成为 Leader
 - A2: Follower 只发送 Realtime 事件
 - A3: 组件崩溃隔离 / 会话恢复
 - A4: 视图发现 & 并发控制
@@ -111,7 +111,7 @@ rm tests/e2e/.env_state  # 强制刷新哈希状态
 - H: 分布式时钟偏移容忍度验证
 
 ### HB. 心跳超时
-- HB1: datacast 心跳超时后自动恢复
+- HB1: datacastst 心跳超时后自动恢复
 
 ### K. 高级部署
 - K: Fan-Out / Aggregation / HA 动态配置
@@ -128,7 +128,7 @@ tests/e2e/
 ├── conftest.py                 # Pytest 核心 Fixtures
 ├── .env_state                  # [自动生成] 环境哈希快照
 ├── utils/                      # DockerManager 与 API Client
-├── fixtures/                   # 模块化测试组件 (Docker/datacast/Leadership)
+├── fixtures/                   # 模块化测试组件 (Docker/datacastst/Leadership)
 └── consistency/                # 核心一致性测试用例
 ```
 
@@ -136,4 +136,4 @@ tests/e2e/
 
 - [CONSISTENCY_DESIGN.md](../../docs/CONSISTENCY_DESIGN.md) - 一致性设计文档
 - [CONFIGURATION.md](../../docs/CONFIGURATION.md) - YAML 配置说明
-- [integration-testing Skill](../../.datacast/skills/integration-testing/SKILL.md) - AI 助手集成测试指南
+- [integration-testing Skill](../../.datacastst/skills/integration-testing/SKILL.md) - AI 助手集成测试指南

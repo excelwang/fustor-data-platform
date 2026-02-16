@@ -1,7 +1,7 @@
 """
 Test E1: Leader failover when leader crashes.
 
-验证当 Leader datacast 宕机后，Follower 接管成为新 Leader。
+验证当 Leader datacastst 宕机后，Follower 接管成为新 Leader。
 参考文档: CONSISTENCY_DESIGN.md - Section 3.3 (Follower 在 Leader 会话超时后可升级为 Leader)
 """
 import pytest
@@ -13,24 +13,24 @@ from ..fixtures.constants import SHORT_TIMEOUT, MEDIUM_TIMEOUT, EXTREME_TIMEOUT,
 
 
 class TestLeaderFailover:
-    """Test leader failover when leader datacast crashes."""
+    """Test leader failover when leader datacastst crashes."""
 
     def test_follower_becomes_leader_after_crash(
         self,
         docker_env,
         fustord_client,
-        setup_datacasts,
+        setup_datacaststs,
         reset_leadership
     ):
         """
         场景:
-          1. datacast A 是 Leader，datacast B 是 Follower
-          2. datacast A 的容器停止（模拟崩溃）
+          1. datacastst A 是 Leadedatacastcast B 是 Follower
+          2. datacastst A 的容器停止（模拟崩溃）
           3. fustord 检测到 Leader 会话超时
-          4. datacast B 升级为新 Leader
+          4. datacastst B 升级为新 Leader
         预期:
-          - datacast B 成为 Leader
-          - datacast B 获得 Snapshot/Audit 权限
+          - datacastst B 成为 Leader
+          - datacastst B 获得 Snapshot/Audit 权限
         """
         # Verify initial state: A is leader, B is follower
         sessions = fustord_client.get_sessions()
@@ -38,23 +38,23 @@ class TestLeaderFailover:
         leader_session = None
         follower_session = None
         for s in sessions:
-            aid = s.get("datacast_id", "")
+            aid = s.get("datacastst_id", "")
             if aid.startswith("client-a"):
                 leader_session = s
             elif aid.startswith("client-b"):
                 follower_session = s
         
-        assert leader_session is not None, "datacast A session should exist"
-        assert leader_session.get("role") == "leader", "datacast A should be leader initially"
+        assert leader_session is not None, "datacastst A session should exist"
+        assert leader_session.get("role") == "leader", "datacastst A should be leader initially"
         
         if follower_session:
-            assert follower_session.get("role") == "follower", "datacast B should be follower initially"
+            assert follower_session.get("role") == "follower", "datacastst B should be follower initially"
         
-        # Stop datacast A container immediately (simulate crash, no grace period)
+        # Stop datacastst A container immediately (simulate crash, no grace period)
         docker_manager.stop_container(CONTAINER_CLIENT_A, timeout=0)
         
         try:
-            # Poll for datacast B to become the new leader
+            # Poll for datacastst B to become the new leader
             # Session timeout is 5s (from docker-compose), cleanup runs every 1s
             # So we need to wait at most ~6-7s, but use MEDIUM_TIMEOUT for safety
             timeout_wait = MEDIUM_TIMEOUT
@@ -65,7 +65,7 @@ class TestLeaderFailover:
             while time.time() - start < timeout_wait:
                 sessions_after = fustord_client.get_sessions()
                 for s in sessions_after:
-                    if s.get("role") == "leader" and s.get("datacast_id", "").startswith("client-b"):
+                    if s.get("role") == "leader" and s.get("datacastst_id", "").startswith("client-b"):
                         new_leader = s
                         break
                 if new_leader:
@@ -73,7 +73,7 @@ class TestLeaderFailover:
                 time.sleep(1.0)
             
             assert new_leader is not None, \
-                f"datacast B should become leader within {timeout_wait}s. Sessions: {fustord_client.get_sessions()}"
+                f"datacastst B should become leader within {timeout_wait}s. Sessions: {fustord_client.get_sessions()}"
             
             # Verify new leader has proper permissions
             assert new_leader.get("can_snapshot") is True, \
@@ -82,12 +82,12 @@ class TestLeaderFailover:
                 "New leader should have audit permission"
             
         finally:
-            # Restart datacast A container and datacast process for other tests
+            # Restart datacastst A container andatacastcast process for other tests
             docker_manager.start_container(CONTAINER_CLIENT_A)
-            setup_datacasts["ensure_datacast_running"](
+            setup_datacaststs["ensurdatacastcast_running"](
                 CONTAINER_CLIENT_A, 
-                setup_datacasts["api_key"], 
-                setup_datacasts["view_id"]
+                setup_datacaststs["api_key"], 
+                setup_datacaststs["view_id"]
             )
             time.sleep(SHORT_TIMEOUT)  # Wait for restart
 
@@ -95,7 +95,7 @@ class TestLeaderFailover:
         self,
         docker_env,
         fustord_client,
-        setup_datacasts,
+        setup_datacaststs,
         clean_shared_dir
     ):
         """
@@ -143,12 +143,12 @@ class TestLeaderFailover:
                 pytest.fail("View failed to become ready after failover (New Leader Snapshot timed out)")
             
             # Data should still be accessible
-            # After failover, datacast B should perform Audit and report the missing file
+            # After failover, datacastst B should perform Audit and report the missing file
             # or at least not delete it if it was already synced.
-            # Wait for the file to be present in fustord's tree (giving it time for datacast B audit)
+            # Wait for the file to be present in fustord's tree (giving it time for datacastst B audit)
             found_after = fustord_client.wait_for_file_in_tree(
                 file_path=test_file_rel,
-                timeout=EXTREME_TIMEOUT  # Allow time for datacast B promotion + Audit cycle
+                timeout=EXTREME_TIMEOUT  # Allow time for datacastst B promotion + Audit cycle
             )
             
             assert found_after is not None, \
@@ -156,9 +156,9 @@ class TestLeaderFailover:
             
         finally:
             docker_manager.start_container(CONTAINER_CLIENT_A)
-            setup_datacasts["ensure_datacast_running"](
+            setup_datacaststs["ensurdatacastcast_running"](
                 CONTAINER_CLIENT_A, 
-                setup_datacasts["api_key"], 
-                setup_datacasts["view_id"]
+                setup_datacaststs["api_key"], 
+                setup_datacaststs["view_id"]
             )
             time.sleep(SHORT_TIMEOUT)

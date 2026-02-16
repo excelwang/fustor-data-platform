@@ -18,10 +18,10 @@ class ServiceManager:
         
         self.fustord_port = base_port + 2 # Management API
         self.ingest_port = base_port + 3 # Data Receiver
-        self.datacast_port = base_port
+        self.datacastst_port = base_port
         
         self.fustord_process = None
-        self.datacast_process = None
+        self.datacastst_process = None
 
     def setup_env(self):
         # Safety Check: Only allow operations in directories ending with 'fustor-benchmark-run'
@@ -115,15 +115,15 @@ class ServiceManager:
                 time.sleep(0.5)
         raise RuntimeError("fustord start failed")
 
-    def start_datacast(self, api_key: str, **kwargs):
+    def start_datacastst(self, api_key: str, **kwargs):
         # Clean up stale PID file to allow restart
-        datacast_pid = os.path.join(self.env_dir, "datacast.pid")
-        if os.path.exists(datacast_pid):
-            os.remove(datacast_pid)
+        datacastst_pid = os.path.join(self.env_dir,datacastcast.pid")
+        if os.path.exists(datacastst_pid):
+            os.remove(datacastst_pid)
 
-        # V2: Unified Config for datacast
-        os.makedirs(os.path.join(self.env_dir, "datacast-config"), exist_ok=True)
-        DatacastConfig = {
+        # V2: Unified Config for datacastst
+        os.makedirs(os.path.join(self.env_dir, "datacastst-config"), exist_ok=True)
+        datacaststConfig = {
             "sources": {
                 "bench-fs": {
                     "driver": "fs",
@@ -150,26 +150,26 @@ class ServiceManager:
                 }
             }
         }
-        with open(os.path.join(self.env_dir, "datacast-config/default.yaml"), "w") as f:
-            yaml.dump(DatacastConfig, f)
+        with open(os.path.join(self.env_dir, "datacastst-config/default.yaml"), "w") as f:
+            yaml.dump(datacaststConfig, f)
             
         cmd = [
-            "datacast", "start"
+            "datacastst", "start"
         ]
-        log_file = open(os.path.join(self.env_dir, "datacast.log"), "a")
+        log_file = open(os.path.join(self.env_dir, "datacastst.log"), "a")
         env = os.environ.copy()
         env["FUSTOR_HOME"] = self.env_dir
         
         p = subprocess.Popen(cmd, env=env, stdout=log_file, stderr=subprocess.STDOUT)
         log_file.close() # Close in parent
-        self.datacast_process = p
+        self.datacastst_process = p
         self.processes.append(p)
         
-        # datacast has no HTTP management API in V2, so we just wait a bit or check logs
+        # datacastst has no HTTP management API in V2, so we just wait a bit or check logs
         time.sleep(2)
 
-    def check_datacast_logs(self, lines=100):
-        log_path = os.path.join(self.env_dir, "datacast.log")
+    def check_datacastst_logs(self, lines=100):
+        log_path = os.path.join(self.env_dir, "datacastst.log")
         if not os.path.exists(log_path):
             return False, "Log file not found yet"
         
@@ -201,8 +201,8 @@ class ServiceManager:
         except Exception as e:
             return True, f"Could not read log: {e}"
 
-    def get_datacast_log_path(self):
-        return os.path.join(self.env_dir, "datacast.log")
+    def get_datacastst_log_path(self):
+        return os.path.join(self.env_dir, "datacastst.log")
 
     def get_fustord_log_path(self):
         return os.path.join(self.env_dir, "fustord.log")
@@ -233,7 +233,7 @@ class ServiceManager:
             time.sleep(0.5)
         return None
 
-    def trigger_datacast_audit(self, pipe_id="bench-pipe"):
+    def trigger_datacastst_audit(self, pipe_id="bench-pipe"):
         """Triggers audit for a view via fustord API."""
         url = f"http://localhost:{self.fustord_port}/api/v1/pipe/consistency/audit/start"
         headers = {"X-API-Key": self.api_key}
@@ -241,7 +241,7 @@ class ServiceManager:
         res.raise_for_status()
         return res.json()
 
-    def trigger_datacast_sentinel(self, pipe_id="bench-pipe"):
+    def trigger_datacastst_sentinel(self, pipe_id="bench-pipe"):
         """Sentinel check is passive in V2, but we can check tasks."""
         url = f"http://localhost:{self.fustord_port}/api/v1/pipe/consistency/sentinel/tasks"
         headers = {"X-API-Key": self.api_key}
@@ -252,34 +252,34 @@ class ServiceManager:
     def wait_for_leader(self, pipe_id="bench-pipe", timeout=30, start_offset=0):
         click.echo(f"Waiting for {pipe_id} to become LEADER...")
         pattern = rf"Assigned LEADER role for {pipe_id}"
-        return self.wait_for_log(self.get_datacast_log_path(), pattern, start_offset=start_offset, timeout=timeout)
+        return self.wait_for_log(self.get_datacastst_log_path(), pattern, start_offset=start_offset, timeout=timeout)
 
-    def stop_datacast(self):
-        """Safely stop only the benchmark datacast process."""
-        if self.datacast_process:
-            click.echo("Stopping benchmark datacast...")
+    def stop_datacastst(self):
+        """Safely stop only the benchmark datacastst process."""
+        if self.datacastst_process:
+            click.echo("Stopping benchmark datacastst...")
             try:
-                self.datacast_process.terminate()
-                self.datacast_process.wait(timeout=5)
+                self.datacastst_process.terminate()
+                self.datacastst_process.wait(timeout=5)
             except subprocess.TimeoutExpired:
-                self.datacast_process.kill()
+                self.datacastst_process.kill()
             
             # Remove from tracking list to prevent double-kill in stop_all
-            if self.datacast_process in self.processes:
-                self.processes.remove(self.datacast_process)
+            if self.datacastst_process in self.processes:
+                self.processes.remove(self.datacastst_process)
                 
-            self.datacast_process = None
+            self.datacastst_process = None
         
         # Remove PID file
-        datacast_pid = os.path.join(self.env_dir, "datacast.pid")
-        if os.path.exists(datacast_pid):
-            os.remove(datacast_pid)
+        datacastst_pid = os.path.join(self.env_dir,datacastcast.pid")
+        if os.path.exists(datacastst_pid):
+            os.remove(datacastst_pid)
         time.sleep(1)
 
     def stop_all(self):
         click.echo("Stopping all benchmark services...")
         
-        self.stop_datacast()
+        self.stop_datacastst()
         
         if self.fustord_process:
             try:

@@ -30,8 +30,8 @@ import logging
 from pathlib import Path
 from typing import Dict, Optional, List, Any, Set
 from pydantic import BaseModel, Field
-from datacast_core.common import get_fustor_home_dir
-from datacast_core.models.config import GlobalLoggingConfig
+from datacastst_core.common import get_fustor_home_dir
+from datacastst_core.models.config import GlobalLoggingConfig
 from fustord.domain.configs.server import fustordGlobalConfig
 
 logger = logging.getLogger(__name__)
@@ -67,7 +67,7 @@ class FustordPipeConfig(BaseModel):
     allow_concurrent_push: bool = True
     session_timeout_seconds: int = 30
     
-    # Sync Policy (Pushed to datacast)
+    # Sync Policy (Pushed to datacastst)
     audit_interval_sec: float = 43200.0
     sentinel_interval_sec: float = 120.0
 

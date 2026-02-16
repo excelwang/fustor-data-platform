@@ -25,11 +25,11 @@ uv.lock
 *.pkl
 *.db
 it/.env_state
-.sensord/skills
+.datacastd/skills
 bug_list.md
 it/proposals
 fustor_home
-fustor_home_sensord2
+fustor_home_datacastd2
 deploy
 docker_deploy/
 deploy_fs_3node_v2

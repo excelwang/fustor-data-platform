@@ -1,6 +1,6 @@
 from typing import Optional, Dict, Any
 from pydantic import BaseModel, Field
-from datacast_core.event import EventBase
+from datacastst_core.event import EventBase
 
 # ResponseBase was from fustor_common.models, but we can define a simple base here
 class ResponseBase(BaseModel):

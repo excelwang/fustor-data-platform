@@ -2,7 +2,7 @@
 
 The Fustor Pipe uses an `IntFlag` bitmask to represent its current state. This allows for composite states where multiple flags can be active simultaneously (e.g., `RUNNING | SNAPSHOT_SYNC`).
 
-## State Flags (`datacast_core.pipe.PipeState`)
+## State Flags (`datacastst_core.pipe.PipeState`)
 
 | Flag | Value | Description |
 |------|-------|-------------|
@@ -28,7 +28,7 @@ The Fustor Pipe uses an `IntFlag` bitmask to represent its current state. This a
 - **`RUNNING | RECONNECTING`**: Session lost, but still trying to recover without full restart.
 - **`ERROR`**: Fatal failure, manual intervention or full restart required.
 
-## State Transitions (datacast)
+## State Transitions (datacastst)
 
 1. **Start**: `STOPPED` -> `INITIALIZING` -> `RUNNING`
 2. **Pipe Flow**: `RUNNING` -> `RUNNING | SNAPSHOT_SYNC` -> `RUNNING | MESSAGE_SYNC`
