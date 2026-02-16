@@ -28,8 +28,8 @@ class BridgeCommandsMixin:
         
         try:
             command_payload = {"id": cmd_id, "type": command, **params}
-            for vid in self._pipe.view_ids:
-                await self._session_manager.queue_command(vid, session_id, command_payload)
+            # Queue command locally in the session store
+            self.store.queue_command(session_id, command_payload)
            
             logger.debug(f"Queued command {command} ({cmd_id}) for session {session_id}, waiting {timeout}s...")
             return await asyncio.wait_for(future, timeout=timeout)

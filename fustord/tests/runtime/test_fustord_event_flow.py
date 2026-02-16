@@ -40,7 +40,7 @@ class TestfustordEventFlow:
         mock_vsm = AsyncMock()
         mock_vsm.is_leader.return_value = True
         
-        with patch('fustord.stability.pipe.ingestion.view_state_manager', mock_vsm):
+        with patch('fustord.stability.mixins.ingestion.view_state_manager', mock_vsm):
             # Process Snapshot End
             await pipe.process_events([], session_id, source_type="snapshot", is_end=True)
             
@@ -58,7 +58,7 @@ class TestfustordEventFlow:
         mock_vsm = AsyncMock()
         mock_vsm.is_leader.return_value = False
         
-        with patch('fustord.stability.pipe.ingestion.view_state_manager', mock_vsm):
+        with patch('fustord.stability.mixins.ingestion.view_state_manager', mock_vsm):
             # Process Snapshot End
             await pipe.process_events([], session_id, source_type="snapshot", is_end=True)
             

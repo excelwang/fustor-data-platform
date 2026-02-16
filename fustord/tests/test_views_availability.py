@@ -20,6 +20,8 @@ async def client():
         yield c
     
     app.dependency_overrides.clear()
+    from fustord.stability import runtime_objects
+    runtime_objects.on_command_fallback = None
 
 @pytest_asyncio.fixture(autouse=True)
 async def mock_view_deps():
@@ -30,7 +32,8 @@ async def mock_view_deps():
     mock_driver.is_ready = True
     mock_vm.driver_instances = {"test_driver": mock_driver}
     
-    with patch("fustord.management.api.views.get_cached_view_manager", new_callable=AsyncMock) as mock_get:
+    with patch("fustord.management.api.views.get_cached_view_manager", new_callable=AsyncMock) as mock_get, \
+         patch("fustord.stability.runtime_objects.on_command_fallback", None):
         mock_get.return_value = mock_vm
         yield mock_vm, mock_driver
 

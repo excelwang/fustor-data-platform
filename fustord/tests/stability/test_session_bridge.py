@@ -1,22 +1,16 @@
-# fustord/tests/runtime/test_session_bridge.py
-"""
-Tests for PipeSessionBridge.
-"""
+
 import pytest
 import asyncio
 from unittest.mock import MagicMock, AsyncMock, patch
 
-from fustord.stability import (
-    FustordPipe,
-    PipeSessionBridge,
-    create_session_bridge,
-)
-
+from fustord.stability.pipe import FustordPipe
+from fustord.stability.session_bridge import PipeSessionBridge, create_session_bridge
 
 @pytest.fixture
 def mock_pipe():
     """Create a mock FustordPipe."""
     pipe = MagicMock(spec=FustordPipe)
+    pipe.pipe_id = "test-pipe"
     pipe.view_id = "1"
     pipe.view_ids = ["1"]
     pipe._active_sessions = {}
@@ -34,7 +28,7 @@ def mock_pipe():
     
     pipe.get_session_role = get_role
     
-    # Mock get_session_info - returns session info with session_id added, or None if not found
+    # Mock get_session_info
     async def get_session_info(session_id):
         session = pipe._active_sessions.get(session_id)
         if session:
@@ -49,59 +43,32 @@ def mock_pipe():
     
     return pipe
 
-
 @pytest.fixture
-def mock_session_manager():
-    """Create a mock SessionManager."""
-    manager = MagicMock()
-    manager.create_session_entry = AsyncMock()
-    manager.keep_session_alive = AsyncMock()
-    manager.terminate_session = AsyncMock()
-    manager.remove_session = AsyncMock()
-    manager.get_session_info = AsyncMock(return_value=None)
-    return manager
-
-
-@pytest.fixture
-def session_bridge(mock_pipe, mock_session_manager):
+def session_bridge(mock_pipe):
     """Create a PipeSessionBridge."""
-    return PipeSessionBridge(mock_pipe, mock_session_manager)
-
+    return PipeSessionBridge(mock_pipe)
 
 class TestPipeSessionBridgeInit:
     """Test bridge initialization."""
     
-    def test_init(self, mock_pipe, mock_session_manager):
-        """Bridge should initialize with pipe and session manager."""
-        bridge = PipeSessionBridge(mock_pipe, mock_session_manager)
-        
+    def test_init(self, mock_pipe):
+        """Bridge should initialize with pipe."""
+        bridge = PipeSessionBridge(mock_pipe)
         assert bridge._pipe is mock_pipe
-        assert bridge._session_manager is mock_session_manager
 
     @pytest.mark.asyncio
-    async def test_close_session(self, session_bridge, mock_pipe, mock_session_manager):
-        """close_session should close in both systems."""
+    async def test_close_session(self, session_bridge, mock_pipe):
+        """close_session should close the session on the pipe."""
         with patch("fustord.domain.view_state_manager.view_state_manager.unlock_for_session", AsyncMock()), \
              patch("fustord.domain.view_state_manager.view_state_manager.release_leader", AsyncMock()):
-            # First create a session
-            async def set_role(session_id, **kwargs):
-                mock_pipe._active_sessions[session_id] = {"role": "leader"}
             
-            mock_pipe.on_session_created = set_role
             mock_pipe.on_session_closed = AsyncMock()
             
             # Close session
             result = await session_bridge.close_session("sess-123")
             
-            # Verify session manager was called (terminate_session is used now)
-            mock_session_manager.terminate_session.assert_called_once_with(
-                view_id="1",
-                session_id="sess-123"
-            )
-            
             # Verify pipe was called
             mock_pipe.on_session_closed.assert_called_once_with("sess-123")
-            
             assert result is True
 
     @pytest.mark.asyncio
@@ -123,13 +90,11 @@ class TestPipeSessionBridgeInit:
         info = await session_bridge.get_session_info("nonexistent")
         assert info is None
 
-
 class TestConvenienceFunction:
     """Test create_session_bridge convenience function."""
     
-    def test_create_session_bridge_with_explicit_manager(self, mock_pipe, mock_session_manager):
-        """create_session_bridge should work with explicit session manager."""
-        bridge = create_session_bridge(mock_pipe, mock_session_manager)
-        
+    def test_create_session_bridge(self, mock_pipe):
+        """create_session_bridge should work."""
+        bridge = create_session_bridge(mock_pipe)
         assert isinstance(bridge, PipeSessionBridge)
-        assert bridge._session_manager is mock_session_manager
+        assert bridge._pipe is mock_pipe

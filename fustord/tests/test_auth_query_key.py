@@ -139,12 +139,8 @@ async def test_auth_dependency_integration():
             response = await client.get("/api/v1/pipe/session/", headers={"X-API-Key": "wrong-key"})
             assert response.status_code in [401, 403]
             
-            # 3. 正确 Key 访问 - 需要 mock PipeManager
-            with patch("fustord.management.api.session.session_manager", new_callable=MagicMock) as mock_sm:
-                mock_sm.get_view_sessions = AsyncMock(return_value={})
-                
-                # Also need to mock PipeManager for session creation
-                with patch("fustord.management.api.session.runtime_objects") as mock_runtime:
+            # Correct correct mock for PipeManager (previously session_manager was patched here)
+            with patch("fustord.management.api.session.runtime_objects") as mock_runtime:
                     mock_pipe = Mock()
                     mock_pipe.pipe_id = "test-pipe"
                     mock_pipe.view_ids = ["test-view"]

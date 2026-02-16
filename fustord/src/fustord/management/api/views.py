@@ -86,7 +86,7 @@ class FallbackDriverWrapper:
         # Explicit override for standard ABC method to centralize readiness check + fallback
         try:
             # 1. Centralized Readiness Check
-            from ..runtime.readiness import check_view_readiness
+            from fustord.stability.readiness import check_view_readiness
             await check_view_readiness(self._view_id)
 
             # 2. Attempt Primary Driver
@@ -180,7 +180,7 @@ def make_readiness_checker(view_name: str) -> Callable:
         driver_instance = manager.driver_instances.get(view_name)
         
         # 1. Centralized Check
-        from ..runtime.readiness import check_view_readiness
+        from fustord.stability.readiness import check_view_readiness
         from fustor_core.exceptions import ViewNotReadyError
         
         try:
@@ -362,10 +362,8 @@ async def list_view_jobs(view_id: str, authorized_view_id: str = Depends(get_vie
             status_code=status.HTTP_403_FORBIDDEN, 
             detail="API Key not authorized for this view"
         )
-    from fustord.stability.session_manager import session_manager
-    all_jobs = session_manager.get_sensord_jobs()
-    # Filter by view_id
-    jobs = [j for j in all_jobs if j.get("view_id") == view_id]
+    from fustord.domain.job_manager import job_manager
+    jobs = job_manager.get_jobs(view_id=view_id)
     return {"jobs": jobs}
 
 
@@ -376,20 +374,14 @@ async def get_view_job_status(view_id: str, job_id: str, authorized_view_id: str
             status_code=status.HTTP_403_FORBIDDEN, 
             detail="API Key not authorized for this view"
         )
-    from fustord.stability.session_manager import session_manager
-    all_jobs = session_manager.get_sensord_jobs()
+    from fustord.domain.job_manager import job_manager
+    all_jobs = job_manager.get_jobs(view_id=view_id)
     job = next((j for j in all_jobs if j["job_id"] == job_id), None)
     
     if not job:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"sensord job '{job_id}' not found"
-        )
-        
-    if job.get("view_id") != view_id:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Job '{job_id}' not found in view {view_id}"
         )
         
     return job
@@ -403,42 +395,31 @@ async def list_view_sessions(view_id: str, authorized_view_id: str = Depends(get
             detail="API Key not authorized for this view"
         )
     
-    from fustord.stability.session_manager import session_manager
-    from fustord.domain.view_state_manager import view_state_manager
-    from fustord.stability import runtime_objects
+    from fustord.stability.runtime_objects import pipe_manager
+    if not pipe_manager:
+         return {"view_id": view_id, "active_sessions": [], "count": 0}
+         
+    sessions = await pipe_manager.list_sessions(view_id=view_id)
     
-    sessions = await session_manager.get_view_sessions(view_id)
-    pipe = runtime_objects.pipe_manager.get_pipe(view_id) if runtime_objects.pipe_manager else None
-    
+    # sessions from list_sessions already contains role, task_id etc.
+    # But we want to ensure it matches the historical API format if needed.
     session_list = []
-    for session_id, session_info in sessions.items():
-        session_data = {
-            "session_id": session_id,
-            "task_id": session_info.task_id,
-            "sensord_id": session_info.task_id.split(":")[0] if session_info.task_id and ":" in session_info.task_id else session_info.task_id,
-            
-            "client_ip": session_info.client_ip,
-            "source_uri": session_info.source_uri,
-            "last_activity": session_info.last_activity,
-            "created_at": session_info.created_at,
-            "allow_concurrent_push": session_info.allow_concurrent_push,
-            "session_timeout_seconds": session_info.session_timeout_seconds
-        }
-        
-        if pipe:
-            # Prefer Pipe's role check (handles Forest Mode scoped election)
-            role = await pipe.get_session_role(session_id)
-            is_leader = (role == "leader")
-        else:
-            is_leader = await view_state_manager.is_leader(view_id, session_id)
-            
-        session_data["role"] = "leader" if is_leader else "follower"
-        session_data["can_snapshot"] = is_leader
-        session_data["can_audit"] = is_leader
-        session_data["can_realtime"] = session_info.can_realtime
-        session_data["can_send"] = True
-        
-        session_list.append(session_data)
+    for s in sessions:
+        # Normalize fields for API consistency
+        session_list.append({
+            "session_id": s["session_id"],
+            "task_id": s.get("task_id"),
+            "sensord_id": s.get("task_id", "").split(":")[0] if s.get("task_id") and ":" in s["task_id"] else s.get("task_id"),
+            "client_ip": s.get("client_ip"),
+            "source_uri": s.get("source_uri"),
+            "last_activity": s.get("last_activity"),
+            "created_at": s.get("created_at"),
+            "role": "leader" if s.get("is_leader") else "follower",
+            "can_snapshot": s.get("is_leader", False),
+            "can_audit": s.get("is_leader", False),
+            "can_realtime": True, # Traditional default
+            "can_send": True
+        })
     
     return {
         "view_id": view_id,

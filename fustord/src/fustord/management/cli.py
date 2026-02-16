@@ -21,8 +21,8 @@ import time
 
 from fustor_core.common import setup_logging, get_fustor_home_dir
 from fustor_core.common import setup_logging, get_fustor_home_dir
-from .config.unified import fustord_config
-from .runner import run_fustord
+from fustord.config.unified import fustord_config
+from fustord.runner import run_fustord
 
 # Define standard directories and file names for fustord
 HOME_FUSTOR_DIR = get_fustor_home_dir()
@@ -135,7 +135,7 @@ def start(configs, reload, port, host, daemon, verbose, no_console_log):
         if configs:
             os.environ["FUSTOR_FUSION_CONFIGS"] = ",".join(configs)
         
-        from .main import app as fastapi_app
+        from fustord.main import app as fastapi_app
         
         click.echo(f"fustord starting on http://{host}:{port}")
         

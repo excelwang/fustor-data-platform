@@ -16,7 +16,7 @@ from fustor_core.common import logging_config
 logger = logging.getLogger(__name__)
 
 # --- Ingestor Service Specific Imports ---
-from fustord.stability.session_manager import session_manager
+from fustord.stability.runtime_objects import pipe_manager
 from fustord.domain.view_state_manager import view_state_manager
 from fustord.stability import runtime_objects
 from fustor_core.event import EventBase
@@ -149,7 +149,7 @@ async def lifespan(app: FastAPI):
     # Start periodic session cleanup
     cleanup_interval = fustord_config.fustord.session_cleanup_interval
     logger.info(f"Starting session cleanup (Interval: {cleanup_interval}s)")
-    await session_manager.start_periodic_cleanup(cleanup_interval)
+    # Session cleanup is now handled periodically by individual pipes
 
     # Note: View auto-start is now handled by PipeManager via pipe config
     
@@ -162,7 +162,7 @@ async def lifespan(app: FastAPI):
     if runtime_objects.pipe_manager:
         await runtime_objects.pipe_manager.stop()
         
-    await session_manager.stop_periodic_cleanup()
+    # Global session cleanup stopped
     logger.info("Application shutdown complete.")
 
 

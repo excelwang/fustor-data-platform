@@ -4,7 +4,6 @@ import uuid
 import time
 from typing import Any, Dict, Optional, TYPE_CHECKING
 from fustord.domain.view_state_manager import view_state_manager
-from fustord.stability.session_manager import session_manager as global_session_manager
 
 if TYPE_CHECKING:
     from ..session_bridge import PipeSessionBridge
@@ -25,12 +24,13 @@ class BridgeLifecycleMixin:
         session_id: Optional[str] = None,
         source_uri: Optional[str] = None, **kwargs
     ) -> Dict[str, Any]:
-        """Create a session in both Pipe and SessionManager."""
+        """Create a session in the PipeSessionStore."""
         session_id = session_id or str(uuid.uuid4())
         
         if allow_concurrent_push is None:
             allow_concurrent_push = getattr(self._pipe, 'allow_concurrent_push', True)
 
+        # Scoped election check (usually first view)
         view_id = self._pipe.view_ids[0]
         view_handler = self._pipe.find_handler_for_view(view_id)
         
@@ -49,34 +49,28 @@ class BridgeLifecycleMixin:
         if is_leader:
              self.store.record_leader(session_id, election_key)
              if not allow_concurrent_push:
-                 locked_sid = await view_state_manager.get_locked_session_id(election_key)
-                 if locked_sid:
-                       all_active = await global_session_manager.get_all_active_sessions()
-                       is_active = any(locked_sid in view_sess for view_sess in all_active.values())
-                       if not is_active:
-                            logger.warning(f"View {election_key} locked by stale session {locked_sid}. Auto-unlocking.")
-                            await view_state_manager.unlock_for_session(election_key, locked_sid)
+                  locked_sid = await view_state_manager.get_locked_session_id(election_key)
+                  if locked_sid:
+                        # Check if locked_sid is active in ANY pipe
+                        from fustord.stability.runtime_objects import pipe_manager
+                        is_active = pipe_manager.is_session_active(locked_sid) if pipe_manager else False
+                        
+                        if not is_active:
+                             logger.warning(f"View {election_key} locked by stale session {locked_sid}. Auto-unlocking.")
+                             await view_state_manager.unlock_for_session(election_key, locked_sid)
 
-                 locked = await view_state_manager.lock_for_session(election_key, session_id)
-                 if not locked:
-                       raise ValueError(f"View {election_key} is currently locked by another session")
+                  locked = await view_state_manager.lock_for_session(election_key, session_id)
+                  if not locked:
+                        raise ValueError(f"View {election_key} is currently locked by another session")
         
-        for vid in self._pipe.view_ids:
-            await self._session_manager.create_session_entry(
-                view_id=vid,
-                session_id=session_id,
-                task_id=task_id,
-                client_ip=client_ip,
-                allow_concurrent_push=allow_concurrent_push,
-                session_timeout_seconds=session_timeout_seconds,
-                source_uri=source_uri
-            )
-        
-        lineage = {}
-        if source_uri: lineage["source_uri"] = source_uri
-        if task_id: lineage["sensord_id"] = task_id.split(":")[0] if ":" in task_id else task_id
-            
-        self.store.add_session(session_id, lineage)
+        # Add to local store (Source of Truth)
+        self.store.add_session(
+            session_id=session_id,
+            task_id=task_id,
+            client_ip=client_ip,
+            source_uri=source_uri,
+            timeout=session_timeout_seconds
+        )
 
         await self.event_queue.put({
             "type": "create",
@@ -93,7 +87,7 @@ class BridgeLifecycleMixin:
             is_leader=is_leader
         )
         
-        timeout = session_timeout_seconds or 30
+        timeout = session_timeout_seconds or self.store.default_timeout
         return {
             "session_id": session_id,
             "role": "leader" if is_leader else "follower",
@@ -108,26 +102,20 @@ class BridgeLifecycleMixin:
         sensord_status: Optional[Dict[str, Any]] = None
     ) -> Dict[str, Any]:
         """Keep session alive (heartbeat)."""
-        commands = []
-        alive = False
-        for vid in self._pipe.view_ids:
-            v_alive, commands_batch = await self._session_manager.keep_session_alive(
-                view_id=vid,
-                session_id=session_id,
-                client_ip=client_ip,
-                can_realtime=can_realtime,
-                sensord_status=sensord_status
-            )
-            if v_alive:
-                alive = True
-                commands.extend(commands_batch)
+        # 1. Update local store
+        count = self.store.record_heartbeat(
+            session_id=session_id,
+            can_realtime=can_realtime,
+            sensord_status=sensord_status
+        )
         
-        if not alive:
+        if count == 0:
             return {"status": "error", "message": f"Session {session_id} expired", "session_id": session_id}
         
+        # 2. Update pipe stats/lifecycle
         await self._pipe.keep_session_alive(session_id, can_realtime=can_realtime, sensord_status=sensord_status)
         
-        count = self.store.record_heartbeat(session_id)
+        # 3. Periodic leader verification
         if count % self._LEADER_VERIFY_INTERVAL == 0:
             for vid in self._pipe.view_ids:
                 view_handler = self._pipe.find_handler_for_view(vid)
@@ -145,6 +133,14 @@ class BridgeLifecycleMixin:
                          pass
     
         role = await self._pipe.get_session_role(session_id)
+        
+        # Extract pending commands from entry
+        entry = self.store.get_session(session_id)
+        commands = []
+        if entry and entry.pending_commands:
+            commands = entry.pending_commands[:]
+            entry.pending_commands.clear()
+
         return {
             "role": role,
             "session_id": session_id,
@@ -154,10 +150,7 @@ class BridgeLifecycleMixin:
         }
     
     async def close_session(self: "PipeSessionBridge", session_id: str) -> bool:
-        """Close a session in both systems."""
-        for vid in self._pipe.view_ids:
-            await self._session_manager.terminate_session(view_id=vid, session_id=session_id)
-
+        """Close a session."""
         keys_to_clean = [k for k, s in self.store.leader_cache.items() if session_id in s]
         for key in keys_to_clean:
             await view_state_manager.unlock_for_session(key, session_id)
@@ -167,3 +160,10 @@ class BridgeLifecycleMixin:
         await self.event_queue.put({"type": "close", "session_id": session_id})
         await self._pipe.on_session_closed(session_id)
         return True
+
+    async def cleanup_expired_sessions(self: "PipeSessionBridge"):
+        """Periodic cleanup task called by Pipe."""
+        expired = self.store.get_expired_sessions()
+        for sid in expired:
+            logger.info(f"Bridge {self._pipe.id}: Session {sid} expired. Terminating.")
+            await self.close_session(sid)

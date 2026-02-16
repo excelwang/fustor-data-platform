@@ -47,5 +47,6 @@ async def test_wrapper_centralized_readiness_logic():
             with pytest.raises(HTTPException) as exc:
                 await wrapper.get_data_view(path="/")
             assert exc.value.status_code == 503
-            # Matches the code in views.py
-            assert "performing initial synchronization" in str(exc.value.detail) or "View Not Ready" in str(exc.value.detail)
+            # Matches the messages in fustord.stability.readiness
+            detail = str(exc.value.detail)
+            assert "No active leader session" in detail or "snapshot sync phase in progress" in detail

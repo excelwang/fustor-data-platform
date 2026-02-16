@@ -5,7 +5,7 @@ import time
 from typing import Any, Dict, List, Optional
 from fustor_core.event import EventBase
 from fustor_core.common.metrics import get_metrics
-from fustord.stability.session_manager import session_manager
+
 from fustord.domain.view_state_manager import view_state_manager
 
 logger = logging.getLogger("fustord.pipe")
@@ -76,7 +76,7 @@ class IngestionMixin:
                 config_yaml = metadata.get("config_yaml")
                 if config_yaml:
                     for vid in self.view_ids:
-                        session_info = await session_manager.get_session_info(vid, session_id)
+                        session_info = await self.get_session_info(session_id)
                         if session_info:
                             session_info.reported_config = config_yaml
                     logger.info(f"Pipe {self.id}: Cached reported config for session {session_id}")

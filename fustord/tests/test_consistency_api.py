@@ -24,7 +24,7 @@ def mock_view_manager():
 @pytest.fixture
 def client(mock_view_manager):
     # Setup mock pipe manager to ensure routers are registered
-    with patch("fustord.stability_objects.pipe_manager") as mock_pm:
+    with patch("fustord.stability.runtime_objects.pipe_manager") as mock_pm:
         mock_pm.get_pipes.return_value = {}
         # Force router setup with the mock PM
         setup_pipe_routers()

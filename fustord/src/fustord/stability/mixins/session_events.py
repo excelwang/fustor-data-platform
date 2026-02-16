@@ -3,7 +3,6 @@ import asyncio
 import logging
 import time
 from typing import Any, Dict, Optional, List
-from fustord.stability.session_manager import session_manager
 
 logger = logging.getLogger("fustord.pipe")
 
@@ -89,16 +88,7 @@ class SessionEventsMixin:
         logger.info(f"Session {session_id} closed acknowledgement in pipe {self.id}")
     
     async def keep_session_alive(self, session_id: str, can_realtime: bool = False, sensord_status: Optional[Dict[str, Any]] = None) -> bool:
-        """Update last activity for a session."""
-        # Keep session alive for ALL views served by this pipe
-        for vid in self.view_ids:
-            si = await session_manager.keep_session_alive(
-                vid, 
-                session_id, 
-                can_realtime=can_realtime, 
-                sensord_status=sensord_status
-            )
-        
+        """Update last activity for a session (stats only)."""
         if sensord_status:
             self._last_sensord_status = sensord_status
         return True 
@@ -120,41 +110,56 @@ class SessionEventsMixin:
         """
         try:
             while self.is_running():
-                await asyncio.sleep(60)
+                await asyncio.sleep(10) # More frequent cleanup
+                if self.session_bridge:
+                    await self.session_bridge.cleanup_expired_sessions()
         except asyncio.CancelledError:
             pass
 
     async def get_session_info(self, session_id: str) -> Optional[Dict[str, Any]]:
-        """Get information about a specific session."""
-        si = None
-        for vid in self.view_ids:
-            si = await session_manager.get_session_info(vid, session_id)
-            if si:
-                break
-        
-        if si:
+        """Get information about a specific session from local store."""
+        if not self.session_bridge:
+             return None
+             
+        entry = self.session_bridge.store.get_session(session_id)
+        if entry:
             return {
-                "session_id": si.session_id,
-                "task_id": si.task_id,
-                "client_ip": si.client_ip,
-                "source_uri": si.source_uri,
-                "created_at": si.created_at,
-                "last_activity": si.last_activity,
+                "session_id": entry.session_id,
+                "task_id": entry.task_id,
+                "client_ip": entry.client_ip,
+                "source_uri": entry.source_uri,
+                "created_at": entry.created_at,
+                "last_activity": entry.last_activity,
             }
         return None
     
     async def get_all_sessions(self) -> Dict[str, Dict[str, Any]]:
-        """Get all active sessions."""
-        si_map = {}
-        for vid in self.view_ids:
-            v_sessions = await session_manager.get_view_sessions(vid)
-            si_map.update(v_sessions)
-            
-        return {k: {"task_id": v.task_id} for k, v in si_map.items()}
+        """Get all active sessions from local store."""
+        if not self.session_bridge:
+             return {}
+             
+        p_sessions = self.session_bridge.store.get_all_sessions()
+        return {
+            sid: {
+                "task_id": entry.task_id,
+                "view_ids": entry.view_ids,
+                "source_uri": entry.source_uri,
+                "created_at": entry.created_at,
+                "last_activity": entry.last_activity,
+                "is_leader": self.session_bridge.store.is_any_leader(sid)
+            } 
+            for sid, entry in p_sessions.items()
+        }
         
     @property
     def leader_session(self) -> Optional[str]:
         """
-        Get the current leader session ID.
+        Get any current leader session ID for this pipe.
         """
-        return self._cached_leader_session
+        if not self.session_bridge:
+             return None
+        # Return the first session that matches any leader key
+        for sid in self.session_bridge.store.sessions:
+             if self.session_bridge.store.is_any_leader(sid):
+                  return sid
+        return None

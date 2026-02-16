@@ -56,11 +56,16 @@ async def test_clear_all_sessions():
     """
     Test that clear_all_sessions properly removes all sessions and releases locks
     """
-    await session_manager.cleanup_expired_sessions()
+    # Use runtime_objects.pipe_manager instead of session_manager
+    if not runtime_objects.pipe_manager:
+        from fustord.stability.pipe_manager import FustordPipeManager
+        runtime_objects.pipe_manager = FustordPipeManager()
+    
+    pm = runtime_objects.pipe_manager
     view_state_manager._states.clear()
     
     view_id = "7"
-    await setup_dummy_pipe(view_id, allow_concurrent_push=False)
+    pipe = await setup_dummy_pipe(view_id, allow_concurrent_push=False)
     
     config = make_session_config(allow_concurrent_push=False, session_timeout_seconds=30)
     
@@ -75,16 +80,17 @@ async def test_clear_all_sessions():
         result = await create_session(payload, request, view_id)
         session_id = result["session_id"]
         
-        # Verify session exists
-        assert view_id in session_manager._sessions
-        assert session_id in session_manager._sessions[view_id]
+        # Verify session exists in pipe
+        sessions = await pipe.get_all_sessions()
+        assert session_id in sessions
         assert await view_state_manager.is_locked_by_session(view_id, session_id)
         
-        # Clear all sessions for this view
-        await session_manager.clear_all_sessions(view_id)
+        # Clear all sessions for this view via PipeManager
+        await pm.clear_all_sessions(view_id)
         
-        # Verify session is gone
-        if view_id in session_manager._sessions:
-            assert session_id not in session_manager._sessions[view_id]
-        else:
-            assert True  # View entry removed implies session removed
+        # Verify session is gone from pipe
+        sessions = await pipe.get_all_sessions()
+        assert session_id not in sessions
+        
+        # Verify lock is released (bridge.close_session should handle it)
+        assert not await view_state_manager.is_locked_by_session(view_id, session_id)

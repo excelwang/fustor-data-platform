@@ -42,6 +42,43 @@ class FustordPipeManager(ManagerLifecycleMixin, ManagerCallbacksMixin):
     def get_pipes(self) -> Dict[str, FustordPipe]:
         return self._pipes.copy()
 
+    def is_session_active(self, session_id: str) -> bool:
+        """Check if session is active in any pipe."""
+        return session_id in self._session_to_pipe
+
+    async def list_sessions(self, view_id: Optional[str] = None) -> List[Dict[str, Any]]:
+        """List all active sessions across all pipes, optionally filtered by view_id."""
+        sessions = []
+        for pipe in self._pipes.values():
+            if view_id and view_id not in pipe.view_ids:
+                continue
+            
+            p_sessions = await pipe.get_all_sessions()
+            for sid, info in p_sessions.items():
+                if view_id and view_id not in info.get("view_ids", []):
+                    continue
+                sessions.append({"session_id": sid, **info})
+        return sessions
+
+    async def clear_all_sessions(self, view_id: Optional[str] = None):
+        """Terminate all sessions across all pipes, optionally filtered by view."""
+        for p_id in list(self._pipes.keys()):
+            pipe = self._pipes[p_id]
+            if view_id and view_id not in pipe.view_ids:
+                continue
+            
+            # Use list() to avoid mutation during iteration
+            p_sessions = await pipe.get_all_sessions()
+            for sid in list(p_sessions.keys()):
+                await self._on_session_closed(sid)
+
+    async def cleanup_expired_sessions(self):
+        """Identify and remove expired sessions from all pipes."""
+        for p_id in list(self._pipes.keys()):
+            bridge = self._bridges.get(p_id)
+            if bridge:
+                await bridge.cleanup_expired_sessions()
+
     def get_pipe(self, pipe_id: str) -> Optional[FustordPipe]:
         """Get a specific pipe instance by ID."""
         return self._pipes.get(pipe_id)

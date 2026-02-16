@@ -79,11 +79,11 @@ class ManagerCallbacksMixin:
 
     async def _on_scan_complete(self: "FustordPipeManager", session_id: str, scan_path: str, job_id: Optional[str] = None):
         """Handle technical scan completion notification."""
-        from fustord.stability.session_manager import session_manager
+        from fustord.domain.job_manager import job_manager
         pipe_id = self._session_to_pipe.get(session_id)
         if pipe_id:
             fustord_pipe = self._pipes.get(pipe_id)
             if fustord_pipe:
                 for vid in fustord_pipe.view_ids:
-                    await session_manager.complete_sensord_job(vid, session_id, scan_path, job_id)
+                    await job_manager.complete_job_for_session(vid, session_id, scan_path, job_id)
                 logger.debug(f"Scan complete (job_id={job_id}) for session {session_id}")

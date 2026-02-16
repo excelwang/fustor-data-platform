@@ -62,7 +62,8 @@ async def test_session_creation_multiple_servers():
     """
     Test that multiple servers can create sessions without 409 errors when using different task IDs
     """
-    await session_manager.cleanup_expired_sessions()
+    if runtime_objects.pipe_manager:
+        await runtime_objects.pipe_manager.cleanup_expired_sessions()
     view_state_manager._states.clear()
     
     view_id = "1"
@@ -85,7 +86,8 @@ async def test_session_creation_multiple_servers():
         assert await view_state_manager.is_locked_by_session(view_id, session_id1)
         
         await asyncio.sleep(1.5)
-        await session_manager.cleanup_expired_sessions()
+        if runtime_objects.pipe_manager:
+            await runtime_objects.pipe_manager.cleanup_expired_sessions()
         
         payload2 = type('CreateSessionPayload', (), {})()
         payload2.task_id = "task_server2"
@@ -108,7 +110,8 @@ async def test_session_creation_same_task_id():
     """
     Test that sessions with the same task_id are properly rejected when concurrent push is not allowed
     """
-    await session_manager.cleanup_expired_sessions()
+    if runtime_objects.pipe_manager:
+        await runtime_objects.pipe_manager.cleanup_expired_sessions()
     view_state_manager._states.clear()
     
     view_id = "2"
@@ -148,7 +151,8 @@ async def test_session_creation_different_task_id():
     """
     Test that sessions with different task IDs are rejected when concurrent push is not allowed
     """
-    await session_manager.cleanup_expired_sessions()
+    if runtime_objects.pipe_manager:
+        await runtime_objects.pipe_manager.cleanup_expired_sessions()
     view_state_manager._states.clear()
     
     view_id = "3"
@@ -190,7 +194,8 @@ async def test_concurrent_push_allowed():
     """
     Test that multiple sessions are allowed when concurrent push is enabled
     """
-    await session_manager.cleanup_expired_sessions()
+    if runtime_objects.pipe_manager:
+        await runtime_objects.pipe_manager.cleanup_expired_sessions()
     view_state_manager._states.clear()
     
     view_id = "4"
@@ -230,7 +235,8 @@ async def test_same_task_id_with_concurrent_push():
     """
     Test that same task IDs are rejected even when concurrent push is enabled
     """
-    await session_manager.cleanup_expired_sessions()
+    if runtime_objects.pipe_manager:
+        await runtime_objects.pipe_manager.cleanup_expired_sessions()
     view_state_manager._states.clear()
     
     view_id = "5"
@@ -270,7 +276,8 @@ async def test_stale_lock_handling():
     """
     Test the handling of stale locks where view is locked by a session not in session manager
     """
-    await session_manager.cleanup_expired_sessions()
+    if runtime_objects.pipe_manager:
+        await runtime_objects.pipe_manager.cleanup_expired_sessions()
     view_state_manager._states.clear()
     
     view_id = "6"

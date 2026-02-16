@@ -175,15 +175,14 @@ class FustordPipe(
 
     async def get_dto(self) -> Dict[str, Any]:
         """Get pipestatus as a dictionary."""
-        from fustord.stability.session_manager import session_manager
         from fustord.domain.view_state_manager import view_state_manager
         
-        all_sessions = set()
+        all_sessions = await self.get_all_sessions()
+        leaders = {}
         for vid in self.view_ids:
-            s_map = await session_manager.get_view_sessions(vid)
-            all_sessions.update(s_map.keys())
-            
-        leaders = {vid: await view_state_manager.get_leader(vid) for vid in self.view_ids}
+            l_sid = await view_state_manager.get_leader(vid)
+            if l_sid:
+                 leaders[vid] = l_sid
 
         return {
             "id": self.id,

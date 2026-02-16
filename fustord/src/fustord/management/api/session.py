@@ -1,4 +1,4 @@
-# fustord/src/fustord/api/session.py
+# fustord/src/fustord/management/api/session.py
 """
 Session management API for creating, maintaining, and closing pipesessions.
 """
@@ -10,12 +10,8 @@ import time
 import uuid
 
 from fustord.management.auth.dependencies import get_pipe_id_from_auth, get_view_id_from_auth
-
-
 from fustord.config.unified import fustord_config
-from fustord.stability.session_manager import session_manager
 from fustord.domain.view_state_manager import view_state_manager
-from fustord.domain.view_manager.manager import reset_views, on_session_start, on_session_close
 from fustord.stability import runtime_objects
 
 
@@ -65,10 +61,13 @@ async def _check_duplicate_task(
     Check if task_id is already active in this view.
     Returns True if duplicate exists.
     """
-    sessions = await session_manager.get_view_sessions(view_id)
-    for si in sessions.values():
-        if si.task_id == task_id:
-            logger.warning(f"Task {task_id} already has an active session {si.session_id} on view {view_id}")
+    if not runtime_objects.pipe_manager:
+        return False
+        
+    sessions = await runtime_objects.pipe_manager.list_sessions(view_id=view_id)
+    for s in sessions:
+        if s.get("task_id") == task_id:
+            logger.warning(f"Task {task_id} already has an active session {s['session_id']} on view {view_id}")
             return True
     return False
 
@@ -150,7 +149,6 @@ async def heartbeat(
     # 1. Lookup Pipe
     pipe = runtime_objects.pipe_manager.get_pipe(pipe_id) if runtime_objects.pipe_manager else None
     if not pipe:
-        # Fallback to legacy behavior if pipe manager not active
         raise HTTPException(status_code=404, detail="Pipe not found")
 
     # 2. Update via Pipe Runtime (broadcasts to all views)
@@ -191,49 +189,45 @@ async def end_session(
     End a session. 
     Authorized for Pipe Owners (Pipe Key) and View Admins (View Key).
     """
+    if not runtime_objects.pipe_manager:
+        raise HTTPException(status_code=503, detail="PipeManager not available")
+
     # 1. Try interpreting identity as Pipe ID
     try:
-        if runtime_objects.pipe_manager:
-            bridge = runtime_objects.pipe_manager.get_bridge(identity)
-            if bridge:
-                await bridge.close_session(session_id)
-                return {"status": "ok", "message": f"Session {session_id} terminated on pipe {identity}"}
-            
-            # 2. Case 2: Identity is a View ID (Admin Mode)
-            # Find all pipes serving this view
-            pipes = runtime_objects.pipe_manager.resolve_pipes_for_view(identity)
-            if pipes:
-                closed_count = 0
-                errors = []
-                for p_id in pipes:
-                    try:
-                        bridge = runtime_objects.pipe_manager.get_bridge(p_id)
-                        if bridge:
-                            # Idempotent close
-                            await bridge.close_session(session_id)
-                            closed_count += 1
-                    except Exception as e:
-                        logger.error(f"Failed to close session {session_id} on pipe {p_id}: {e}")
-                        errors.append(str(e))
-                
-                if errors:
-                     logger.warning(f"Session {session_id} termination had errors: {errors}")
-                     
-                return {"status": "ok", "message": f"Session {session_id} terminated on {closed_count} pipes via View Auth"}
-
-        # Fallback legacy Local Session Manager (if no bridge found)
-        # Treat identity as view_id since legacy SM is view-based
-        await session_manager.terminate_session(identity, session_id)
+        bridge = runtime_objects.pipe_manager.get_bridge(identity)
+        if bridge:
+            await bridge.close_session(session_id)
+            return {"status": "ok", "message": f"Session {session_id} terminated on pipe {identity}"}
         
-        return {
-            "status": "ok",
-            "message": f"Session {session_id} terminated successfully (Legacy)",
-        }
+        # 2. Case 2: Identity is a View ID (Admin Mode)
+        # Find all pipes serving this view
+        pipes = runtime_objects.pipe_manager.resolve_pipes_for_view(identity)
+        if pipes:
+            closed_count = 0
+            errors = []
+            for p_id in pipes:
+                try:
+                    bridge = runtime_objects.pipe_manager.get_bridge(p_id)
+                    if bridge:
+                        # Idempotent close
+                        await bridge.close_session(session_id)
+                        closed_count += 1
+                except Exception as e:
+                    logger.error(f"Failed to close session {session_id} on pipe {p_id}: {e}")
+                    errors.append(str(e))
+            
+            if errors:
+                 logger.warning(f"Session {session_id} termination had errors: {errors}")
+                 
+            return {"status": "ok", "message": f"Session {session_id} terminated on {closed_count} pipes via View Auth"}
+
+        # If not a pipe or view with active sessions, it might be already closed
+        raise HTTPException(status_code=404, detail=f"Session {session_id} or authorized resource {identity} not found")
+
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Failed to terminate session {session_id}: {e}", exc_info=True)
-        # Return 500 but log detailed info. 
-        # Actually user prefers 500 if it fails, but we want to avoid crashing the test runner if possible?
-        # No, if it fails, it fails. But we logged the stack trace now.
         raise HTTPException(status_code=500, detail=f"Failed to terminate session: {str(e)}")
     
 @session_router.get("/", tags=["Session Management"], summary="Get current authorized identity for API Key")
