@@ -11,8 +11,8 @@
 - **AUTONOMY**: Sensord is a self-contained process that detects and buffers data changes independently of any consumer.
 - **SYNC**: Real-time and periodic data extraction from heterogeneous storage (NFS, OSS, etc.)
 - **RESILIENCE**: Sensord process runs indefinitely; the control plane ("The Shell") is immune to data plane failures.
-- **PROTOCOL**: Standardized decoupling of Control (SCP) and Data (SDP) protocols allowing multiple concurrent consumers.
-- **MANAGEMENT**: Support for remote fleet management (upgrade, config reload) via standardized command interfaces.
+- **PROTOCOL**: Standardized decoupling of Control Protocol (SCP) and Data Protocol (SDP) allowing multiple concurrent consumers.
+- **MANAGEMENT**: Support for remote fleet management (upgrade, config reload) via standardized command interfaces and SCP.
 
 #### Consumer Integration (Generic Expectations)
 - **AGGREGATION**: Consumers may perform multi-source consistency arbitration.
@@ -86,7 +86,7 @@ Sensord formally separates its communication into two distinct protocols:
 ### 2. Sensord Data Protocol (SDP)
 - **Layer**: Domain Layer.
 - **Purpose**: Data Contract & Consistency. Defines event schemas, change semantics (mtime, size), and consistency metadata (Atomic Write, Audit flags).
-- **Invariant**: SDP is extensible and schema-driven (e.g., `Sensord-schema-fs`).
+- **Invariant**: SDP is extensible and schema-driven (e.g., `sensord-schema-fs`).
 
 ## VISION.LAYER_MODEL
 

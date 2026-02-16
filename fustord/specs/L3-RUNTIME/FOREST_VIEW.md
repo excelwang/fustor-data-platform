@@ -52,11 +52,11 @@ version: 1.0.0
 - **Reuse**: 内部子树直接复用 `FSViewDriver` 的逻辑（Arbitration, Audit, Consistency）。
 
 ```
-SensordPipe-A ─(fustord_pipe_id=A)─┐                    ┌─ Tree A (FSViewDriver)
+SensordPipe-A/B/C ─(fustord_pipe_id=A)─┐                    ┌─ Tree A (FSViewDriver)
                                │                    │
-SensordPipe-B ─(fustord_pipe_id=B)─┼─► ForestView ────► ├─ Tree B (FSViewDriver)
+SensordPipe-D/E/F ─(fustord_pipe_id=B)─┼─► ForestView ────► ├─ Tree B (FSViewDriver)
                                │   (Router)         │
-SensordPipe-C ─(fustord_pipe_id=C)─┘                    └─ Tree C (FSViewDriver)
+SensordPipe-G/H/I ─(fustord_pipe_id=C)─┘                    └─ Tree C (FSViewDriver)
 ```
 
 ### 2.2 为什么不用其他方案
