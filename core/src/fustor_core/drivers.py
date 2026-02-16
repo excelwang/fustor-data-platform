@@ -1,9 +1,5 @@
 """
-Abstract Base Classes for Fusensord Drivers.
-
-This module defines the formal interface for Source and Sender drivers.
-All drivers must inherit from the appropriate base class and implement its
-abstract methods.
+Abstract Base Classes for Fustor Drivers.
 """
 from abc import ABC, abstractmethod
 from typing import (

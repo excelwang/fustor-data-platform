@@ -268,7 +268,3 @@ class ViewStateManager:
 
 # Global instance
 view_state_manager = ViewStateManager()
-
-# Legacy aliases
-ViewStateManager = ViewStateManager
-view_state_manager = view_state_manager

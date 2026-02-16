@@ -30,10 +30,10 @@ class StubViewHandler(ViewHandler):
     async def process_event(self, event):
         self.events.append(event)
 
-    async def on_session_start(self):
+    async def on_session_start(self, **kwargs):
         pass
 
-    async def on_session_close(self):
+    async def on_session_close(self, **kwargs):
         pass
 
     async def handle_audit_end(self):
@@ -79,7 +79,7 @@ async def test_snapshot_end_by_leader(pipe, handler):
     mock_vsm.is_leader = AsyncMock(return_value=True)
     mock_vsm.set_snapshot_complete = AsyncMock()
 
-    with patch("fustord.view_state_manager.view_state_manager", mock_vsm):
+    with patch("fustord.runtime.pipe.ingestion.view_state_manager", mock_vsm):
         result = await pipe.process_events(
             [_make_event_dict()],
             session_id="leader-sess",
@@ -97,7 +97,7 @@ async def test_snapshot_end_by_follower_ignored(pipe, handler):
     mock_vsm.is_leader = AsyncMock(return_value=False)
     mock_vsm.set_snapshot_complete = AsyncMock()
 
-    with patch("fustord.view_state_manager.view_state_manager", mock_vsm):
+    with patch("fustord.runtime.pipe.ingestion.view_state_manager", mock_vsm):
         result = await pipe.process_events(
             [_make_event_dict()],
             session_id="follower-sess",

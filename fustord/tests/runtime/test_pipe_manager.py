@@ -7,7 +7,7 @@ from fustor_core.event import EventBase
 
 @pytest.fixture
 def mock_receivers_config():
-    with patch("fustord.runtime.pipe_manager.fustord_config") as mock:
+    with patch("fustord.runtime.pipe.manager_lifecycle.fustord_config") as mock:
         mock.get_all_receivers.return_value = {}
         yield mock
 
@@ -106,7 +106,7 @@ class TestPipeManager:
         }
         
         # Mock dependencies - note patching where they are DEFINED or imported strictly
-        with patch("fustord.runtime.pipe_manager.get_cached_view_manager", new_callable=AsyncMock) as mock_get_vm, \
+        with patch("fustord.runtime.pipe.manager_lifecycle.get_cached_view_manager", new_callable=AsyncMock) as mock_get_vm, \
              patch("fustord.runtime.view_handler_adapter.create_view_handler_from_manager") as mock_create_handler, \
              patch("fustord.runtime.session_bridge.create_session_bridge") as mock_bridge, \
              patch("fustor_core.transport.ReceiverRegistry.create") as mock_recv_create:
