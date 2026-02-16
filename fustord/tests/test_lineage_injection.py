@@ -2,7 +2,6 @@ import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
 from fustord.stability.pipe import FustordPipe
 from sensord_core.event import EventBase
-from fustord.stability.session_manager import SessionManager, session_manager
 from fustord_sdk.interfaces import SessionInfo
 
 @pytest.mark.asyncio

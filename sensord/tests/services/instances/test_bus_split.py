@@ -3,7 +3,7 @@ import asyncio
 from unittest.mock import AsyncMock, MagicMock, patch
 import threading
 
-from sensord.stability.bus_manager import EventBusService, EventBusInstanceRuntime
+from sensord.domain.event_bus import EventBusManager, EventBusInstanceRuntime
 from sensord_core.models.config import SourceConfig, PasswdCredential
 from sensord_core.models.states import EventBusState
 from sensord_core.event import InsertEvent
@@ -31,11 +31,11 @@ def source_config():
 
 @pytest.fixture
 def event_bus_service(source_config, mock_source_driver_service):
-    service = EventBusService(
+    service = EventBusManager(
         source_configs={"test_source": source_config},
         source_driver_service=mock_source_driver_service
     )
-    service.pipe_instance_service = AsyncMock()
+    service.pipe_manager = AsyncMock()
     return service
 
 @pytest.mark.asyncio
@@ -91,8 +91,8 @@ async def test_bus_split_logic(event_bus_service, source_config):
     
     # 4. Verify results
     # check if remap_pipe_to_new_bus was called for S2
-    event_bus_service.pipe_instance_service.remap_pipe_to_new_bus.assert_called_once()
-    call_args = event_bus_service.pipe_instance_service.remap_pipe_to_new_bus.call_args
+    event_bus_service.pipe_manager.remap_pipe_to_new_bus.assert_called_once()
+    call_args = event_bus_service.pipe_manager.remap_pipe_to_new_bus.call_args
     pipe_id, new_bus_runtime, lost = call_args[0]
     
     assert pipe_id == "S2"

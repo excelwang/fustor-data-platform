@@ -78,11 +78,11 @@ class BaseInstanceServiceInterface(Protocol):
     def list_instances(self) -> List[Any]:
         ...
 
-class EventBusServiceInterface(BaseInstanceServiceInterface):
+class EventBusManagerInterface(BaseInstanceServiceInterface):
     """
-    Interface for managing EventBusService objects.
+    Interface for managing EventBusManager objects.
     """
-    def set_dependencies(self, pipe_instance_service: "PipeInstanceService"):
+    def set_dependencies(self, pipe_manager: "PipeManagerInterface"):
         ...
 
     async def get_or_create_bus_for_subscriber(
@@ -157,9 +157,9 @@ class SenderDriverServiceInterface(Protocol):
 
 from sensord_core.models.states import PipeState
 
-class PipeInstanceServiceInterface(BaseInstanceServiceInterface):
+class PipeManagerInterface(BaseInstanceServiceInterface):
     """
-    Interface for managing PipeInstanceService objects.
+    Interface for managing PipeManager objects.
     """
     async def start_one(self, id: str):
         ...

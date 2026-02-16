@@ -28,18 +28,18 @@ class RequiredFieldsTracker:
     def wait_for_change(self, timeout: Optional[float] = None) -> bool:
         return self._event.wait(timeout)
 
-from .base import BaseInstanceService
+from sensord.stability.base import BaseInstanceService
 from sensord_core.models.states import EventBusInstance, EventBusState
 from sensord_core.models.config import SourceConfig, FieldMapping
 from sensord.stability.bus import MemoryEventBus
 from sensord_core.exceptions import ConfigError, NotFoundError, DriverError, TransientSourceBufferFullError
 
 if TYPE_CHECKING:
-    from sensord.stability.pipe_manager import PipeInstanceService
+    from sensord.stability.pipe_manager import PipeManager
     from sensord.domain.drivers.source_driver import SourceDriverService
 
 logger = logging.getLogger("sensord")
-from sensord_sdk.interfaces import EventBusServiceInterface # Import the interface
+from sensord_sdk.interfaces import EventBusManagerInterface # Import the interface
 
 class EventBusInstanceRuntime:
     def __init__(self, source_id, source_config: SourceConfig, source_signature: Any, source_driver_service: "SourceDriverService", initial_start_position: int = 0, loop: Optional[asyncio.AbstractEventLoop] = None):
@@ -195,17 +195,17 @@ class EventBusInstanceRuntime:
             statistics=self.statistics
         )
 
-class EventBusService(BaseInstanceService, EventBusServiceInterface): # Inherit from the interface
+class EventBusManager(BaseInstanceService, EventBusManagerInterface): # Inherit from the interface
     def __init__(self, source_configs: Dict[str, SourceConfig], source_driver_service: "SourceDriverService"):
         super().__init__()
         self.source_configs = source_configs
         self.source_driver_service = source_driver_service
         self.bus_by_signature: Dict[Any, EventBusInstanceRuntime] = {}
         self._bus_creation_locks: Dict[str, asyncio.Lock] = collections.defaultdict(asyncio.Lock)
-        self.pipe_instance_service: Optional["PipeInstanceService"] = None
+        self.pipe_manager: Optional["PipeManager"] = None
 
-    def set_dependencies(self, pipe_instance_service: "PipeInstanceService"):
-        self.pipe_instance_service = pipe_instance_service
+    def set_dependencies(self, pipe_manager: "PipeManager"):
+        self.pipe_manager = pipe_manager
 
     def _generate_source_signature(self, source_config: SourceConfig) -> Any:
         return (source_config.driver, source_config.uri, source_config.credential)
@@ -320,4 +320,4 @@ class EventBusService(BaseInstanceService, EventBusServiceInterface): # Inherit 
             )
             
             # The remapping pipe instance needs to know about the signal too
-            await self.pipe_instance_service.remap_pipe_to_new_bus(task_to_split_id, new_bus, needed_position_lost)
+            await self.pipe_manager.remap_pipe_to_new_bus(task_to_split_id, new_bus, needed_position_lost)

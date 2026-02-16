@@ -3,7 +3,7 @@ from unittest.mock import MagicMock, AsyncMock, patch
 import asyncio
 import threading
 
-from sensord.stability.bus_manager import EventBusService, EventBusInstanceRuntime
+from sensord.domain.event_bus import EventBusManager, EventBusInstanceRuntime
 from sensord_core.models.config import SourceConfig, PasswdCredential
 from sensord_core.models.states import EventBusState
 from sensord_core.exceptions import DriverError, TransientSourceBufferFullError
@@ -31,7 +31,7 @@ def source_config():
 
 @pytest.fixture
 def event_bus_service(source_config, mock_source_driver_service):
-    service = EventBusService(
+    service = EventBusManager(
         source_configs={"test_source": source_config},
         source_driver_service=mock_source_driver_service
     )

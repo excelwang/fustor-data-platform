@@ -3,13 +3,14 @@ import pytest
 from pathlib import Path
 from unittest.mock import patch, MagicMock, AsyncMock
 
-from sensord.stability.pipe_manager import PipeInstanceService
+from sensord.stability.pipe_manager import PipeManager
 from sensord.domain.configs.pipe import PipeConfigService
 from sensord.domain.configs.source import SourceConfigService
 from sensord.domain.configs.sender import SenderConfigService
-from sensord.stability.bus_manager import EventBusService
+from sensord.domain.event_bus import EventBusManager
 from sensord.domain.drivers.source_driver import SourceDriverService
 from sensord.domain.drivers.sender_driver import SenderDriverService
+from sensord_core.models.states import PipeState
 from sensord_core.models.config import AppConfig, PipeConfig, SourceConfig, SenderConfig, PasswdCredential
 from sensord.config.unified import SensordPipeConfig
 
@@ -35,22 +36,34 @@ def mock_services():
     mock_bus_instance_runtime = MagicMock()
     mock_bus_instance_runtime.id = "mock-bus-id"
 
-    bus_svc = EventBusService(source_configs={"s1": source_cfg}, source_driver_service=source_dr_svc)
-    bus_svc.get_or_create_bus_for_subscriber = AsyncMock(return_value=(mock_bus_instance_runtime, False))
+    bus_mgr = EventBusManager(source_configs={"s1": source_cfg}, source_driver_service=source_dr_svc)
+    bus_mgr.get_or_create_bus_for_subscriber = AsyncMock(return_value=(mock_bus_instance_runtime, False))
     
     # Patch discovery before creating services
     with patch.object(SourceDriverService, "_discover_installed_drivers", return_value={}), \
          patch.object(SenderDriverService, "_discover_installed_drivers", return_value={}):
-        service = PipeInstanceService(
-            pipe_config_service=pipe_cfg_svc,
-            source_config_service=source_cfg_svc,
-            sender_config_service=sender_cfg_svc,
-            bus_service=bus_svc,
-            sender_driver_service=sender_dr_svc,
-            source_driver_service=source_dr_svc,
-        )
-        service.source_driver_service._get_driver_by_type = MagicMock(return_value=MagicMock())
-        service.sender_driver_service._get_driver_by_type = MagicMock(return_value=MagicMock())
+        
+        with patch("sensord.stability.pipe_manager.SensordPipe") as mock_pipe_cls:
+            mock_pipe_instance = AsyncMock(id="p1", state=PipeState.STARTING)
+            mock_pipe_cls.return_value = mock_pipe_instance
+            
+            # Mock get_config on instances because SourceConfigService uses global sensord_config
+            # and we want to bypass that for this integration test of PipeManager
+            source_cfg_svc.get_config = MagicMock(side_effect=lambda id: source_cfg if id == "s1" else None)
+            sender_cfg_svc.get_config = MagicMock(side_effect=lambda id: sender_cfg if id == "se1" else None)
+
+            service = PipeManager(
+                pipe_config_service=pipe_cfg_svc,
+                source_config_service=source_cfg_svc,
+                sender_config_service=sender_cfg_svc,
+                bus_manager=bus_mgr,
+                sender_driver_service=MagicMock(),
+                source_driver_service=MagicMock()
+            )
+            # Inject bus manager dependency
+            bus_mgr.set_dependencies(service)
+            service.source_driver_service._get_driver_by_type = MagicMock(return_value=MagicMock())
+            service.sender_driver_service._get_driver_by_type = MagicMock(return_value=MagicMock())
     return service, pipe_cfg_svc
 
 @pytest.mark.asyncio
@@ -104,8 +117,14 @@ async def test_pipe_service_restart_outdated_pipes(mock_services):
 async def test_pipe_service_stop_all_cleans_up(mock_services):
     """Stop all should close bus service and stop all pipes."""
     service, _ = mock_services
-    service.bus_service = MagicMock(spec=EventBusService)
+    # The attribute is bus_manager, not bus_service
+    # But we want to verify calls on the existing bus_manager mock from fixture, or replace it.
+    # The fixture sets bus_mgr. Let's spy on it or mock methods on it.
     
+    # We can just use the existing bus_manager from the service
+    service.bus_manager.get_or_create_bus_for_subscriber = AsyncMock(return_value=(MagicMock(id="mock-bus-for-stop-all"), False))
+    service.bus_manager.release_all_unused_buses = AsyncMock() 
+
     mock_pipe_instance = AsyncMock() # Single mock instance
     mock_pipe_instance.id = "p1"
     mock_pipe_instance.bus = MagicMock(id="mock-bus-id-1") # Ensure bus attribute exists
@@ -116,10 +135,6 @@ async def test_pipe_service_stop_all_cleans_up(mock_services):
         sensord_pipe_config = SensordPipeConfig(source="s1", sender="se1")
         mock_sensord_config.get_pipe.return_value = sensord_pipe_config
 
-        # Mock bus_service.get_or_create_bus_for_subscriber as it is called in start_one
-        service.bus_service.get_or_create_bus_for_subscriber = AsyncMock(return_value=(MagicMock(id="mock-bus-for-stop-all"), False))
-        service.bus_service.release_all_unused_buses = AsyncMock() # Ensure this is awaitable
-
         await service.start_one("p1")
         
         # Capture the instance before stop_all removes it from the pool
@@ -128,5 +143,5 @@ async def test_pipe_service_stop_all_cleans_up(mock_services):
         await service.stop_all()
             
         captured_instance.stop.assert_called_once()
-        service.bus_service.release_all_unused_buses.assert_called_once()
+        service.bus_manager.release_all_unused_buses.assert_called_once()
         assert len(service.pool) == 0

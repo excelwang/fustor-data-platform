@@ -181,6 +181,7 @@ class sensordConfigLoader:
             for src_id, src_data in data.get("sources", {}).items():
                 if src_id in self._sources:
                     logger.warning(f"Source '{src_id}' redefined in {path}")
+                print(f"DEBUG: Loading source {src_id} from {path}")
                 self._sources[src_id] = SourceConfig(**src_data)
             
             # Merge senders
@@ -333,6 +334,38 @@ class sensordConfigLoader:
         """Force reload all configurations."""
         self._loaded = False
         self.load_all()
+
+    def add_source(self, id: str, config: SourceConfig) -> None:
+        self.ensure_loaded()
+        self._sources[id] = config
+
+    def delete_source(self, id: str) -> None:
+        self.ensure_loaded()
+        if id in self._sources:
+            del self._sources[id]
+
+    def update_source(self, id: str, updates: Dict[str, Any]) -> None:
+        self.ensure_loaded()
+        if id in self._sources:
+            conf = self._sources[id]
+            for key, value in updates.items():
+                setattr(conf, key, value)
+    
+    def add_sender(self, id: str, config: SenderConfig) -> None:
+        self.ensure_loaded()
+        self._senders[id] = config
+
+    def delete_sender(self, id: str) -> None:
+        self.ensure_loaded()
+        if id in self._senders:
+            del self._senders[id]
+
+    def update_sender(self, id: str, updates: Dict[str, Any]) -> None:
+        self.ensure_loaded()
+        if id in self._senders:
+            conf = self._senders[id]
+            for key, value in updates.items():
+                setattr(conf, key, value)
 
 
 # Global instance

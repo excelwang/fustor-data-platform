@@ -8,8 +8,9 @@ from unittest.mock import MagicMock, Mock, patch, AsyncMock
 from sensord.stability.pipe import SensordPipe
 from sensord.domain.drivers.source_driver import SourceDriverService
 from sensord.domain.drivers.sender_driver import SenderDriverService
-from sensord.stability.bus_manager import EventBusService
-from sensord.stability.pipe_manager import PipeInstanceService
+from sensord_core.models.states import PipeState
+from sensord.domain.event_bus import EventBusManager
+from sensord.stability.pipe_manager import PipeManager
 from sensord.domain.configs.pipe import PipeConfigService
 from sensord.domain.configs.source import SourceConfigService
 from sensord.domain.configs.sender import SenderConfigService
@@ -59,7 +60,7 @@ class MockSenderDriver:
 
 @pytest.mark.asyncio
 async def test_pipe_instance_service_integration(integration_configs, tmp_path: Path, caplog):
-    """Integration test for PipeInstanceService using SensordPipe."""
+    """Integration test for PipeManager using SensordPipe."""
     pipe_config, source_config, sender_config = integration_configs
     
     # Setup AppConfig
@@ -116,16 +117,23 @@ async def test_pipe_instance_service_integration(integration_configs, tmp_path: 
             source_dr_svc._get_driver_by_type = MagicMock(return_value=MockSourceDriver)
             sender_dr_svc._get_driver_by_type = MagicMock(return_value=MockSenderDriver)
 
-            bus_svc = EventBusService(source_configs={"test_source": source_config}, source_driver_service=source_dr_svc)
+            bus_svc = EventBusManager(source_configs={"test_source": source_config}, source_driver_service=source_dr_svc)
         
-        service = PipeInstanceService(
-            pipe_config_service=pipe_cfg_svc,
-            source_config_service=source_cfg_svc,
-            sender_config_service=sender_cfg_svc,
-            bus_service=bus_svc,
-            sender_driver_service=sender_dr_svc,
-            source_driver_service=source_dr_svc,
-        )
+        with patch("sensord.stability.pipe_manager.SensordPipe") as mock_pipe_cls:
+            mock_pipe_instance = AsyncMock(id="test_pipe", state=PipeState.STARTING)
+            mock_pipe_cls.return_value = mock_pipe_instance
+            
+            source_cfg_svc.get_config = MagicMock(side_effect=lambda id: source_config if id == "test_source" else None)
+            sender_cfg_svc.get_config = MagicMock(side_effect=lambda id: sender_config if id == "test_sender" else None)
+
+            service = PipeManager(
+                pipe_config_service=pipe_cfg_svc,
+                source_config_service=source_cfg_svc,
+                sender_config_service=sender_cfg_svc,
+                bus_manager=bus_svc,
+                sender_driver_service=sender_dr_svc,
+                source_driver_service=source_dr_svc
+            )
 
         # Prepare some data
         test_file = tmp_path / "test1.txt"

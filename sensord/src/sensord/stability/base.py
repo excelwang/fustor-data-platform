@@ -5,7 +5,7 @@ logger = logging.getLogger("sensord")
 
 class BaseInstanceService:
     """
-    Base class for instance management services (PipeInstanceService, EventBusService).
+    Base class for instance management services (PipeManager, EventBusManager).
     """
     def __init__(self):
         self.pool: Dict[str, Any] = {}

@@ -9,7 +9,7 @@ from sensord.stability.pipe import SensordPipe
 from sensord.domain.source_handler_adapter import SourceHandlerAdapter
 from sensord.stability.sender_adapter import SenderHandlerAdapter
 from sensord_core.exceptions import NotFoundError
-from sensord_sdk.interfaces import PipeInstanceServiceInterface # Import the interface
+from sensord_sdk.interfaces import PipeManagerInterface # Import the interface
 
 
 @dataclass
@@ -31,19 +31,22 @@ if TYPE_CHECKING:
     from sensord.domain.configs.pipe import PipeConfigService
     from sensord.domain.configs.source import SourceConfigService
     from sensord.domain.configs.sender import SenderConfigService
-    from sensord.stability.bus_manager import EventBusService, EventBusInstanceRuntime
+    from sensord.domain.configs.pipe import PipeConfigService
+    from sensord.domain.configs.source import SourceConfigService
+    from sensord.domain.configs.sender import SenderConfigService
+    from sensord.domain.event_bus import EventBusManager, EventBusInstanceRuntime
     from sensord.domain.drivers.sender_driver import SenderDriverService
     from sensord.domain.drivers.source_driver import SourceDriverService
 
 logger = logging.getLogger("sensord")
 
-class PipeInstanceService(BaseInstanceService, PipeInstanceServiceInterface): # Inherit from the interface
+class PipeManager(BaseInstanceService, PipeManagerInterface): # Inherit from the interface
     def __init__(
         self, 
         pipe_config_service: "PipeConfigService",
         source_config_service: "SourceConfigService",
         sender_config_service: "SenderConfigService",
-        bus_service: "EventBusService",
+        bus_manager: "EventBusManager",
         sender_driver_service: "SenderDriverService",
         source_driver_service: "SourceDriverService",
     ):
@@ -51,7 +54,7 @@ class PipeInstanceService(BaseInstanceService, PipeInstanceServiceInterface): # 
         self.pipe_config_service = pipe_config_service
         self.source_config_service = source_config_service
         self.sender_config_service = sender_config_service
-        self.bus_service = bus_service
+        self.bus_manager = bus_manager
         self.sender_driver_service = sender_driver_service
         self.source_driver_service = source_driver_service
         self.logger = logging.getLogger("sensord") 
@@ -118,7 +121,7 @@ class PipeInstanceService(BaseInstanceService, PipeInstanceServiceInterface): # 
             field_mappings = getattr(pipe_config, "fields_mapping", [])
             
             # We assume start from position 0 for new pipes
-            event_bus, needed_position_lost = await self.bus_service.get_or_create_bus_for_subscriber(
+            event_bus, needed_position_lost = await self.bus_manager.get_or_create_bus_for_subscriber(
                 source_id=pipe_config.source,
                 source_config=source_config,
                 pipe_id=id, # Use pipe_id as subscriber_id
@@ -175,7 +178,7 @@ class PipeInstanceService(BaseInstanceService, PipeInstanceServiceInterface): # 
                 source_handler=source_handler,
                 sender_handler=sender_handler,
                 event_bus=event_bus,
-                bus_service=self.bus_service
+                bus_manager=self.bus_manager,
             )
             
             self.pool[id] = pipe
@@ -226,7 +229,7 @@ class PipeInstanceService(BaseInstanceService, PipeInstanceServiceInterface): # 
             
             if should_release_bus and bus_id:
                 # Use task_id for bus subscription release
-                await self.bus_service.release_subscriber(bus_id, instance.task_id)
+                await self.bus_manager.release_subscriber(bus_id, instance.task_id)
         except KeyError:
             # Race condition: already removed
             self.logger.warning(f"Pipe instance '{id}' was already stopped/removed during stop request.")
@@ -254,7 +257,7 @@ class PipeInstanceService(BaseInstanceService, PipeInstanceServiceInterface): # 
         await pipe_instance.remap_to_new_bus(new_bus, needed_position_lost)
         
         if old_bus_id:
-            await self.bus_service.release_subscriber(old_bus_id, pipe_instance.task_id)
+            await self.bus_manager.release_subscriber(old_bus_id, pipe_instance.task_id)
         
         self.logger.info(f"Pipe task '{pipe_instance.id}' remapped to bus '{new_bus.id}' successfully.")
 
@@ -362,7 +365,7 @@ class PipeInstanceService(BaseInstanceService, PipeInstanceServiceInterface): # 
         if stop_tasks:
             await asyncio.gather(*stop_tasks)
 
-        await self.bus_service.release_all_unused_buses()
+        await self.bus_manager.release_all_unused_buses()
 
     async def trigger_audit(self, id: str):
         instance = self.get_instance(id)
@@ -375,4 +378,3 @@ class PipeInstanceService(BaseInstanceService, PipeInstanceServiceInterface): # 
         if not instance:
             raise NotFoundError(f"Pipe instance '{id}' not found.")
         await instance.trigger_sentinel()
-

@@ -6,7 +6,14 @@ from unittest.mock import MagicMock, AsyncMock
 import yaml
 
 from sensord.app import App
-from sensord_core.models.config import SenderConfig, PipeConfig, PasswdCredential, FieldMapping, SourceConfig
+from sensord.domain.configs.pipe import PipeConfigService, SensordPipeConfig
+from sensord.domain.configs.source import SourceConfigService, SourceConfig
+from sensord.domain.configs.sender import SenderConfigService, SenderConfig
+from sensord.domain.event_bus import EventBusManager
+from sensord.stability.pipe_manager import PipeManager
+from sensord.domain.drivers.source_driver import SourceDriverService
+from sensord.domain.drivers.sender_driver import SenderDriverService
+from sensord_core.models.config import PasswdCredential, FieldMapping # Kept as they are used and not replaced by new imports
 from sensord_core.event import EventBase, InsertEvent
 
 @pytest.fixture(scope="function")

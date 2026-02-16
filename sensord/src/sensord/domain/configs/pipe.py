@@ -2,7 +2,7 @@ import logging
 from typing import Optional, Dict, Any, List
 
 from sensord_core.models.config import AppConfig, PipeConfig, FieldMapping
-from sensord.stability.pipe_manager import PipeInstanceService
+from sensord.stability.pipe_manager import PipeManager
 from .base import BaseConfigService
 from .source import SourceConfigService
 from .sender import SenderConfigService
@@ -22,15 +22,15 @@ class PipeConfigService(BaseConfigService[PipeConfig], PipeConfigServiceInterfac
         sender_config_service: SenderConfigService
     ):
         super().__init__(app_config, None, 'pipe')
-        self.pipe_instance_service: Optional[PipeInstanceService] = None
+        self.pipe_instance_service: Optional[PipeManager] = None
         self.source_config_service = source_config_service
         self.sender_config_service = sender_config_service
         
         # Ensure YAML configs are loaded
         sensord_config.ensure_loaded()
 
-    def set_dependencies(self, pipe_instance_service: PipeInstanceService):
-        """Injects the PipeInstanceService for dependency management."""
+    def set_dependencies(self, pipe_instance_service: PipeManager):
+        """Injects the PipeManager for dependency management."""
         self.pipe_instance_service = pipe_instance_service
 
     def _convert_yaml_to_model(self, y_cfg: SensordPipeConfig) -> PipeConfig:

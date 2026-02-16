@@ -5,7 +5,7 @@ from typing import Dict, Optional, List, Any
 
 
 from sensord_core.models.config import AppConfig, SourceConfig
-from sensord.stability.pipe_manager import PipeInstanceService
+from sensord.stability.pipe_manager import PipeManager
 from .base import BaseConfigService
 from ..common import config_lock
 from .. import schema_cache # Import schema_cache at the top level
@@ -21,25 +21,40 @@ class SourceConfigService(BaseConfigService[SourceConfig], SourceConfigServiceIn
     """
     def __init__(self, app_config: AppConfig):
         super().__init__(app_config, None, 'source')
-        self.pipe_instance_service: Optional[PipeInstanceService] = None
+        self.pipe_instance_service: Optional[PipeManager] = None
 
-    def set_dependencies(self, pipe_instance_service: PipeInstanceService):
+    def set_dependencies(self, pipe_instance_service: PipeManager):
         """
-        Injects the PipeInstanceService for dependency management.
+        Injects the PipeManager for dependency management.
         This is to resolve circular dependencies between services.
         """
         self.pipe_instance_service = pipe_instance_service
 
+    def list_configs(self) -> Dict[str, SourceConfig]:
+        """List all configs from YAML."""
+        from sensord.config.unified import sensord_config
+        return sensord_config.get_all_sources()
+
+    def get_config(self, id: str) -> Optional[SourceConfig]:
+        """Get config by ID from YAML."""
+        from sensord.config.unified import sensord_config
+        return sensord_config.get_source(id)
+
     async def add_config(self, id: str, config: SourceConfig) -> SourceConfig:
         """
         Adds a new source configuration.
-        Note: The schema cache is not created here. It must be generated
-        by calling 'discover_and_cache_fields'.
         """
-        async with config_lock:
-            self._add_config_to_app(id, config)
-        logger.info(f"Source '{id}' configuration added.")
-        return config
+        return await super().add_config(id, config)
+
+    def _add_config_to_app(self, id: str, config: SourceConfig):
+        from sensord.config.unified import sensord_config
+        sensord_config.add_source(id, config)
+
+    def _delete_config_from_app(self, id: str) -> SourceConfig:
+        from sensord.config.unified import sensord_config
+        conf = sensord_config.get_source(id)
+        sensord_config.delete_source(id)
+        return conf
 
     async def update_config(self, id: str, updates: Dict[str, Any]) -> SourceConfig:
         """
@@ -72,7 +87,8 @@ class SourceConfigService(BaseConfigService[SourceConfig], SourceConfigServiceIn
         Returns:
             A list of the configuration IDs that were deleted.
         """
-        all_pipe_configs = self.app_config.get_pipes().values()
+        from sensord.config.unified import sensord_config
+        all_pipe_configs = sensord_config.get_all_pipes().values()
         in_use_source_ids = {p.source for p in all_pipe_configs}
 
         all_source_configs = self.list_configs()
@@ -89,17 +105,16 @@ class SourceConfigService(BaseConfigService[SourceConfig], SourceConfigServiceIn
 
         deleted_ids = []
         async with config_lock:
-            source_dict = self.app_config.get_sources()
             for an_id in obsolete_ids:
-                if an_id in source_dict:
-                    source_dict.pop(an_id)
-                    # Also remove the schema cache files associated with the obsolete config
-                    schema_cache.delete_schema(an_id)
-                    logger.info(f"Removed schema cache for obsolete source '{an_id}'.")
-                    deleted_ids.append(an_id)
-            
-            if deleted_ids:
-                pass
+                # Use _delete_config_from_app to avoid re-acquiring lock/checking deps again
+                # but we must check if it still exists (race condition)
+                from sensord.config.unified import sensord_config
+                if sensord_config.get_source(an_id):
+                     self._delete_config_from_app(an_id)
+                     # Also remove the schema cache files associated with the obsolete config
+                     schema_cache.delete_schema(an_id)
+                     logger.info(f"Removed schema cache for obsolete source '{an_id}'.")
+                     deleted_ids.append(an_id)
         
         logger.info(f"Successfully cleaned up {len(deleted_ids)} source configurations.")
         return deleted_ids

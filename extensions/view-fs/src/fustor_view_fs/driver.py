@@ -231,19 +231,20 @@ class FSViewDriver(FSViewBase):
         Events produced are MessageSource.ON_DEMAND_JOB (Tier 3 compensatory, see §4.5).
         Returns: (success, job_id)
         """
-        from fustord.stability.session_manager import session_manager
+        from fustord.stability.pipe_manager import pipe_manager
+        from fustord.domain.job_manager import job_manager
         
         async with self._global_read_lock():
             # 1. Get ALL active sessions for this view
-            active_sessions = await session_manager.get_view_sessions(self.view_id)
+            active_sessions = await pipe_manager.list_sessions(self.view_id)
             if not active_sessions:
                 self.logger.warning(f"No active sessions for view {self.view_id}. Cannot trigger on-demand scan.")
                 return False, None
             
-            session_ids = list(active_sessions.keys())
+            session_ids = [s["session_id"] for s in active_sessions]
             
             # 2. Create a unified sensord job record for tracking all sessions
-            job_id = await session_manager.create_sensord_job(self.view_id, path, session_ids)
+            job_id = await job_manager.create_job(self.view_id, path, session_ids)
             
             # 3. Queue the command for EACH session (Broadcast)
             command = {
@@ -255,9 +256,23 @@ class FSViewDriver(FSViewBase):
             }
             
             success_count = 0
-            for session_id in session_ids:
-                if await session_manager.queue_command(self.view_id, session_id, command):
-                    success_count += 1
+            # iterate pipes to find bridges and queue commands
+            pipes = pipe_manager.get_pipes()
+            for pipe in pipes.values():
+                if self.view_id not in pipe.view_ids:
+                    continue
+                
+                bridge = pipe.session_bridge
+                if not bridge:
+                    continue
+                
+                # Filter sessions handled by this pipe
+                pipe_sessions = await pipe.get_all_sessions() # active sessions on this pipe
+                for session_id in session_ids:
+                    if session_id in pipe_sessions:
+                        # Direct queue via bridge store
+                        bridge.store.queue_command(session_id, command)
+                        success_count += 1
             
             self.logger.info(f"Broadcasted on-demand scan {job_id} to {success_count}/{len(session_ids)} sessions for path {path}")
             return success_count > 0, job_id

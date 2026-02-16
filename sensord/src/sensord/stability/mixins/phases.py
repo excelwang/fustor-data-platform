@@ -109,8 +109,8 @@ async def run_bus_message_sync(pipe: "SensordPipe") -> None:
                 get_metrics().counter("fustor.sensord.events_pushed", len(events), {"pipe": pipe.id, "phase": "realtime_bus"})
                 
                 # Commit to bus using pipe.task_id
-                if pipe._bus_service:
-                    await pipe._bus_service.commit_and_handle_split(
+                if pipe._bus_manager:
+                    await pipe._bus_manager.commit_and_handle_split(
                         pipe._bus.id, 
                         pipe.task_id, 
                         len(events), 

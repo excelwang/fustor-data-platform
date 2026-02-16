@@ -12,13 +12,19 @@ from typing import Dict, Any, Optional, List
 from sensord_core.common import get_fustor_home_dir
 # ID generation is removed per config-only requirement
 
+# Import config services
+from .domain.configs.pipe import PipeConfigService
+from .domain.configs.source import SourceConfigService
+from .domain.configs.sender import SenderConfigService
+from sensord_core.models.config import AppConfig
+
 from .config.unified import sensord_config, SensordPipeConfig
 
 # Import driver and instance services
 from .domain.drivers.source_driver import SourceDriverService
 from .domain.drivers.sender_driver import SenderDriverService
-from .stability.bus_manager import EventBusService
-from .stability.pipe_manager import PipeInstanceService
+from .domain.event_bus import EventBusManager
+from .stability.pipe_manager import PipeManager
 from .stability.sender_adapter import SenderHandlerAdapter
 from .domain.source_handler_adapter import SourceHandlerAdapter
 
@@ -45,6 +51,7 @@ class App:
         self.logger = logging.getLogger("sensord")
         self.logger.info("Initializing application...")
         
+        
         # Determine which pipes to start based on config_list
         self._target_pipe_ids = self._resolve_target_pipes(config_list)
         
@@ -53,18 +60,47 @@ class App:
         self.sender_driver_service = SenderDriverService()
         
         # Instance services
-        self.event_bus_service = EventBusService(
+        self.event_bus_manager = EventBusManager(
             {},  # Will be populated dynamically
             self.source_driver_service
         )
         
-        self.pipe_runtime: Dict[str, Any] = {}
+        # self.pipe_runtime is now a property delegating to pipe_manager
         
         # Track config signature for reload detection
         self.config_signature = sensord_config.get_config_signature()
         
+        # Initialize Config Services (adapter for PipeManager)
+        # Note: In future, PipeManager might use sensord_config directly
+        self.app_config = AppConfig()
+        self.source_config_service = SourceConfigService(self.app_config)
+        self.sender_config_service = SenderConfigService(self.app_config)
+        self.pipe_config_service = PipeConfigService(
+            self.app_config, 
+            self.source_config_service, 
+            self.sender_config_service
+        )
+        
+        # Initialize PipeManager
+        self.pipe_manager = PipeManager(
+            self.pipe_config_service,
+            self.source_config_service,
+            self.sender_config_service,
+            self.event_bus_manager,
+            self.sender_driver_service,
+            self.source_driver_service
+        )
+        
+        # Set circular dependency
+        self.event_bus_manager.set_dependencies(self.pipe_manager)
+
         self.logger.info(f"Target pipes: {self._target_pipe_ids}")
     
+    @property
+    def pipe_runtime(self) -> Dict[str, Any]:
+        """Expose running pipes from PipeManager."""
+        return self.pipe_manager.pool
+
     def _resolve_target_pipes(self, config_list: Optional[List[str]]) -> List[str]:
         """Resolve which pipe IDs to start."""
         if config_list is None:
@@ -100,11 +136,12 @@ class App:
         # Runtime validation for redundancy
         self._validate_runtime_uniqueness(self._target_pipe_ids)
         
-        for pipe_id in self._target_pipe_ids:
-            try:
-                await self._start_pipe(pipe_id)
-            except Exception as e:
-                self.logger.error(f"Failed to start pipe '{pipe_id}': {e}", exc_info=True)
+        try:
+            # Batch start via PipeManager
+            results = await self.pipe_manager.start_all_enabled()
+            self.logger.info(f"Startup results: {results}")
+        except Exception as e:
+            self.logger.error(f"Failed to start pipes: {e}", exc_info=True)
 
     def _validate_runtime_uniqueness(self, pipe_ids: List[str]):
         """Ensure no two pipes in the list share the same source and sender."""
@@ -127,103 +164,21 @@ class App:
             seen_pairs[pair] = pid
     
     async def _start_pipe(self, pipe_id: str):
-        """Start a single pipe using resolved configuration."""
-        self.logger.info(f"Starting pipe: {pipe_id}")
-        
-        resolved = sensord_config.resolve_pipe_refs(pipe_id)
-        if not resolved:
-            raise ValueError(f"Could not resolve configuration for pipe '{pipe_id}'")
-        
-        pipe_cfg = resolved['pipe']
-        source_cfg = resolved['source']
-        sender_cfg = resolved['sender']
-        
-        # 1. Get or create event bus for source
-        # Identity (sensord_id) will be resolved dynamically by the pipe itself.
-        # For bus subscription, we use pipe_id for now. 
-        # Note: In ForestView, task_id (sensord_id:pipe_id) is used for routing.
-        # So we actually need the identity before subscribing to the bus?
-        # If identity is dynamic per sender, then task_id for bus is also dynamic.
-        source_id = pipe_cfg.source
-        
-        # Convert fields_mapping to FieldMapping objects for EventBus
-        from sensord_core.models.config import FieldMapping
-        field_mappings = [
-            FieldMapping(**m) if isinstance(m, dict) else m 
-            for m in pipe_cfg.fields_mapping
-        ]
-
-        bus_runtime, _ = await self.event_bus_service.get_or_create_bus_for_subscriber(
-            source_id=source_id,
-            source_config=source_cfg,
-            pipe_id=pipe_id, # Use pipe_id as subscriber_id for now
-            required_position=0,
-            fields_mapping=field_mappings
-        )
-        
-        # 2. Create sender driver
-        # SenderDriverService expects a Config object, unified config provides Pydantic SenderConfig
-        sender = self.sender_driver_service.create_driver(pipe_cfg.sender, sender_cfg)
-        
-        # 3. Create pipe instance
-        from .stability.pipe import SensordPipe
-        
-        # Adapt unified SensordPipeConfig to what SensordPipe expects (dict-like or object)
-        # SensordPipe usually takes a config dict or object. 
-        # We'll pass the unified config object directly if SensordPipe supports it, 
-        # or convert relevant fields.
-        # Wrap drivers in adapters for SensordPipe
-        # SensordPipe requires SourceHandler and SenderHandler
-        
-        # Source Handler: Adapt from the bus's source driver
-        source_handler = SourceHandlerAdapter(bus_runtime.source_driver_instance)
-        
-        # Sender Handler: Adapt from the sender driver
-        sender_handler = SenderHandlerAdapter(sender)
-        
-        # Helper to get dict from pydantic model (v1/v2 compatible)
-        pipe_config_dict = pipe_cfg.model_dump() if hasattr(pipe_cfg, "model_dump") else pipe_cfg.dict()
-
-        pipe = SensordPipe(
-            pipe_id=pipe_id,
-            config=pipe_config_dict,
-            source_handler=source_handler,
-            sender_handler=sender_handler,
-            event_bus=bus_runtime,
-            bus_service=self.event_bus_service
-        )
-        
-        # 4. Start pipe
-        await pipe.start()
-        self.pipe_runtime[pipe_id] = pipe
-        self.logger.info(f"Pipe '{pipe_id}' started successfully")
+        """Delegated to PipeManager now."""
+        await self.pipe_manager.start_one(pipe_id, raise_on_error=True)
 
     async def _stop_pipe(self, pipe_id: str):
-        """Stop a single pipe and release its resources."""
-        pipe = self.pipe_runtime.get(pipe_id)
-        if not pipe:
-            return
-        
-        self.logger.info(f"Stopping pipe: {pipe_id}")
-        await pipe.stop()
-        
-        # Release subscriber from bus
-        await self.event_bus_service.release_subscriber(pipe.bus.id, pipe.task_id)
-        
-        del self.pipe_runtime[pipe_id]
-        self.logger.info(f"Pipe '{pipe_id}' stopped and resources released")
+        """Delegated to PipeManager now."""
+        await self.pipe_manager.stop_one(pipe_id)
     
     async def shutdown(self):
         """Gracefully shutdown all pipes."""
         self.logger.info("Shutting down application...")
         
-        for pipe_id in list(self.pipe_runtime.keys()):
-            try:
-                await self._stop_pipe(pipe_id)
-            except Exception as e:
-                self.logger.error(f"Error stopping pipe '{pipe_id}': {e}")
+        if self.pipe_manager:
+            await self.pipe_manager.stop_all()
         
-        await self.event_bus_service.release_all_unused_buses()
+        await self.event_bus_manager.release_all_unused_buses()
         await self._save_state()
         self.logger.info("Application shutdown complete")
 

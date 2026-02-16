@@ -17,7 +17,7 @@ def test_sensord_config_load_fs_scan_workers(tmp_path):
     assert loader.fs_scan_workers == 8
 
 def test_injection_logic():
-    # Simulate the logic in PipeInstanceService
+    # Simulate the logic in PipeManager
     from sensord.config.unified import sensord_config
     sensord_config.fs_scan_workers = 6
     

@@ -5,7 +5,7 @@ from typing import Dict, Optional, TypeVar, Generic, Any
 from sensord import get_app_config
 from sensord_core.models.config import AppConfig
 from ..common import config_lock
-from sensord.stability.pipe_manager import PipeInstanceService
+from sensord.stability.pipe_manager import PipeManager
 from sensord_core.models.states import PipeState
 from sensord_core.exceptions import ConfigError, NotFoundError, ConflictError
 from sensord_sdk.interfaces import BaseConfigService # Import the interface
@@ -21,7 +21,7 @@ class BaseConfigService(Generic[T], BaseConfigService[T]): # Inherit from the in
     def __init__(
         self,
         app_config: AppConfig,
-        pipe_instance_service: Optional[PipeInstanceService],
+        pipe_instance_service: Optional[PipeManager],
         config_type: str
     ):
         """

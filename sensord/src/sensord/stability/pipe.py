@@ -13,7 +13,7 @@ from sensord_core.models.states import PipeInstanceDTO
 
 if TYPE_CHECKING:
     from sensord_core.pipe import PipeContext
-    from sensord.stability.bus_manager import EventBusInstanceRuntime
+    from sensord.domain.event_bus import EventBusInstanceRuntime
 
 from .mixins.lifecycle import PipeLifecycleMixin
 from .mixins.leader import PipeLeaderMixin
@@ -45,7 +45,7 @@ class SensordPipe(
         source_handler: SourceHandler,
         sender_handler: SenderHandler,
         event_bus: Optional["EventBusInstanceRuntime"] = None,
-        bus_service: Any = None,
+        bus_manager: Any = None,
         context: Optional["PipeContext"] = None
     ):
         super().__init__(pipe_id, config, context)
@@ -54,7 +54,7 @@ class SensordPipe(
         self.source_handler = source_handler
         self.sender_handler = sender_handler
         self._bus = event_bus
-        self._bus_service = bus_service
+        self._bus_manager = bus_manager
         
         if self._bus is None:
             logger.warning(f"Pipe {pipe_id}: Initialized without a bus.")

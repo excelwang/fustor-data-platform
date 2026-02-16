@@ -9,7 +9,7 @@ import logging
 from typing import Dict, Optional, List
 
 from sensord_core.models.config import AppConfig, SenderConfig
-from sensord.stability.pipe_manager import PipeInstanceService
+from sensord.stability.pipe_manager import PipeManager
 from ..common import config_lock
 from .base import BaseConfigService
 from sensord_sdk.interfaces import SenderConfigServiceInterface
@@ -28,11 +28,31 @@ class SenderConfigService(BaseConfigService[SenderConfig], SenderConfigServiceIn
     def __init__(self, app_config: AppConfig):
         # Still use 'sender' internally for config file compatibility
         super().__init__(app_config, None, 'sender')
-        self.pipe_instance_service: Optional[PipeInstanceService] = None
+        self.pipe_instance_service: Optional[PipeManager] = None
 
-    def set_dependencies(self, pipe_instance_service: PipeInstanceService):
-        """Injects the PipeInstanceService for dependency management."""
+    def set_dependencies(self, pipe_instance_service: PipeManager):
+        """Injects the PipeManager for dependency management."""
         self.pipe_instance_service = pipe_instance_service
+
+    def list_configs(self) -> Dict[str, SenderConfig]:
+        """List all configs from YAML."""
+        from sensord.config.unified import sensord_config
+        return sensord_config.get_all_senders()
+
+    def get_config(self, id: str) -> Optional[SenderConfig]:
+        """Get config by ID from YAML."""
+        from sensord.config.unified import sensord_config
+        return sensord_config.get_sender(id)
+
+    def _add_config_to_app(self, id: str, config: SenderConfig):
+        from sensord.config.unified import sensord_config
+        sensord_config.add_sender(id, config)
+
+    def _delete_config_from_app(self, id: str) -> SenderConfig:
+        from sensord.config.unified import sensord_config
+        conf = sensord_config.get_sender(id)
+        sensord_config.delete_sender(id)
+        return conf
 
     async def cleanup_obsolete_configs(self) -> List[str]:
         """
