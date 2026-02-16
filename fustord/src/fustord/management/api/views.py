@@ -10,7 +10,7 @@ from typing import Callable, Any, Optional, Dict
 from fastapi import APIRouter, HTTPException, Depends, status
 from importlib.metadata import entry_points
 
-from fustord.management.auth.dependencies import get_view_id_from_api_key
+from fustord.management.auth.dependencies import get_view_id_from_auth
 from fustord.domain.view_manager.manager import get_cached_view_manager
 from fustord.config.unified import fustord_config
 from fustord.stability import runtime_objects
@@ -129,7 +129,7 @@ class FallbackDriverWrapper:
 
 def make_metadata_limit_checker(view_name: str) -> Callable:
     """Creates a dependency that ensures a request doesn't exceed metadata limits."""
-    async def check_limit(view_id: str = Depends(get_view_id_from_api_key)):
+    async def check_limit(view_id: str = Depends(get_view_id_from_auth)):
         # Ensure latest config is loaded (with TTL caching)
         _reload_config_if_stale()
         # Get view config
@@ -173,7 +173,7 @@ def make_metadata_limit_checker(view_name: str) -> Callable:
 
 def make_readiness_checker(view_name: str) -> Callable:
     """Creates a dependency that ensures a view is ready before allowing API access."""
-    async def check_ready(authorized_identity: str = Depends(get_view_id_from_api_key)):
+    async def check_ready(authorized_identity: str = Depends(get_view_id_from_auth)):
         # authorized_identity is the pipe_id (from API key) or view_id (if dedicated view key).
         # For view readiness checks, we use view_name (from closure) which is the actual view ID from URL path.
         manager = await get_cached_view_manager(view_name)
@@ -291,7 +291,7 @@ def setup_view_routers():
                     router = create_func(
                         get_driver_func=get_driver_instance_for_instance,
                         check_snapshot_func=checker,
-                        get_view_id_dep=get_view_id_from_api_key,
+                        get_view_id_dep=get_view_id_from_auth,
                         check_metadata_limit_func=limit_checker
                     )
                     
@@ -320,7 +320,7 @@ def setup_view_routers():
                 router = create_func(
                     get_driver_func=get_driver_instance_fallback,
                     check_snapshot_func=checker,
-                    get_view_id_dep=get_view_id_from_api_key,
+                    get_view_id_dep=get_view_id_from_auth,
                     check_metadata_limit_func=limit_checker
                 )
                 
@@ -355,7 +355,7 @@ def setup_view_routers():
 
 
 
-async def list_view_jobs(view_id: str, authorized_view_id: str = Depends(get_view_id_from_api_key)):
+async def list_view_jobs(view_id: str, authorized_view_id: str = Depends(get_view_id_from_auth)):
     """List sensord jobs for a specific view."""
     if authorized_view_id != view_id:
         raise HTTPException(
@@ -367,7 +367,7 @@ async def list_view_jobs(view_id: str, authorized_view_id: str = Depends(get_vie
     return {"jobs": jobs}
 
 
-async def get_view_job_status(view_id: str, job_id: str, authorized_view_id: str = Depends(get_view_id_from_api_key)):
+async def get_view_job_status(view_id: str, job_id: str, authorized_view_id: str = Depends(get_view_id_from_auth)):
     """Get status of a specific sensord job in a view."""
     if authorized_view_id != view_id:
         raise HTTPException(
@@ -387,7 +387,7 @@ async def get_view_job_status(view_id: str, job_id: str, authorized_view_id: str
     return job
 
 
-async def list_view_sessions(view_id: str, authorized_view_id: str = Depends(get_view_id_from_api_key)):
+async def list_view_sessions(view_id: str, authorized_view_id: str = Depends(get_view_id_from_auth)):
     """List active sessions for a specific view."""
     if authorized_view_id != view_id:
         raise HTTPException(

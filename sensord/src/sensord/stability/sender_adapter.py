@@ -109,13 +109,9 @@ class SenderHandlerAdapter(SenderHandler):
             **kwargs
         )
         
-        # Handle both dict return and tuple return (for compatibility)
-        if isinstance(result, tuple):
-            session_id, session_data = result
-        else:
-            # Sender returns dict directly
-            session_data = result
-            session_id = session_data.get("session_id", f"sess-{task_id}")
+        
+        session_data = result
+        session_id = session_data.get("session_id", f"sess-{task_id}")
 
         metadata = {
             "role": session_data.get("role", "follower"),

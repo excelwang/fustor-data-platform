@@ -74,11 +74,11 @@ import pytest_asyncio
 @pytest_asyncio.fixture
 async def fustord_pipe(mock_view_handler, pipe_config):
     from fustord.domain.view_state_manager import view_state_manager
-    from fustord.stability.session_manager import session_manager
+    # from fustord.stability.session_manager import session_manager
     
     # 清理旧状态
     await view_state_manager.clear_state("mock-view")
-    await session_manager.clear_all_sessions("mock-view")
+    # await session_manager.clear_all_sessions("mock-view")
     
     p = FustordPipe(
         pipe_id="test-pipe",

@@ -15,7 +15,7 @@ from pydantic import BaseModel
 from typing import List, Dict, Any, Optional
 from fustord.stability import runtime_objects
 from fustord.config.unified import fustord_config
-from fustord.management.auth.dependencies import get_view_id_from_api_key
+from fustord.management.auth.dependencies import get_view_id_from_auth
 
 logger = logging.getLogger(__name__)
 

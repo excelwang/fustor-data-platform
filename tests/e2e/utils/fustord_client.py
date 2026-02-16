@@ -210,7 +210,7 @@ class fustordClient:
 
     def get_blind_spot_list(self) -> list[dict]:
         """
-        Get blind-spot list as a list of dictionaries (for compatibility with existing tests).
+        Get blind-spot list as a list of dictionaries (flat format for testing).
         Returns a unified list of files and deletions.
         """
         data = self.get_blind_spots()

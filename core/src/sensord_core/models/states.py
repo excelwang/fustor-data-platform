@@ -55,7 +55,7 @@ class SessionInfo:
     """
     Information about an active session between sensord and fustord.
     
-    Using dataclass for monorepo-wide backward compatibility with positional arguments.
+
     """
     session_id: str
     task_id: str

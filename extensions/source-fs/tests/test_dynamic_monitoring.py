@@ -206,7 +206,7 @@ def test_eviction_log_shows_correct_age(fs_config: SourceConfig, tmp_path: Path,
         watch_manager.min_monitoring_window_days = 0
         watch_manager.start()
 
-        # Use monotonic-compatible values. Let's assume current time is 1000000.
+        # Use large values to simulate monotonic time. Let's assume current time is 1000000.
         current_monotonic = 1000000.0
         five_days_seconds = 5 * 86400
         

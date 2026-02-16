@@ -91,7 +91,7 @@ class HTTPSender(Sender):
                     f"Role: {session_data.get('role')}, "
                     f"Timeout: {session_data.get('session_timeout_seconds')}s"
                 )
-                return session_id, session_data
+                return session_data
             else:
                 # Should not happen if client raises exception on error, but handling just in case
                 self.logger.error("Failed to create session: Empty response.")

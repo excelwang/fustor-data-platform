@@ -20,7 +20,6 @@ class MockEvent:
     def __init__(self, event_type, rows, source=MessageSource.REALTIME, index=0):
         self.event_type = event_type
         self.rows = [MockRow(**row) if isinstance(row, dict) else row for row in rows]
-        # Allow string source for compatibility testing
         self.message_source = source
         self.index = index
 

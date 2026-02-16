@@ -1,7 +1,7 @@
 import pytest
 from fastapi import HTTPException
 from unittest.mock import MagicMock, patch, AsyncMock, Mock
-from fustord.management.auth.dependencies import get_view_id_from_api_key
+from fustord.management.auth.dependencies import get_view_id_from_auth
 from fustord.config.unified import ViewConfig, ReceiverConfig, APIKeyConfig
 
 @pytest.mark.asyncio
@@ -14,7 +14,7 @@ async def test_auth_via_dedicated_view_key():
         mock_config.get_all_views.return_value = {"view-1": mock_view}
         mock_config.get_all_receivers.return_value = {}
         
-        view_id = await get_view_id_from_api_key("view-query-key-123")
+        view_id = await get_view_id_from_auth("view-query-key-123")
         assert view_id == "view-1"
 
 @pytest.mark.asyncio
@@ -28,7 +28,7 @@ async def test_auth_via_receiver_key_fallback():
         mock_config.get_all_views.return_value = {"view-1": ViewConfig()}
         mock_config.get_all_receivers.return_value = {"receiver-1": mock_receiver}
         
-        view_id = await get_view_id_from_api_key("receiver-key-456")
+        view_id = await get_view_id_from_auth("receiver-key-456")
         assert view_id == "view-2"
 
 @pytest.mark.asyncio
@@ -39,7 +39,7 @@ async def test_auth_invalid_key_raises_401():
         mock_config.get_all_receivers.return_value = {}
         
         with pytest.raises(HTTPException) as excinfo:
-            await get_view_id_from_api_key("invalid-key")
+            await get_view_id_from_auth("invalid-key")
         
         assert excinfo.value.status_code == 401
         assert excinfo.value.detail == "Invalid or inactive X-API-Key"
@@ -52,7 +52,7 @@ async def test_auth_missing_key_raises_401():
     # The "missing" check is done by _get_api_key dependency which is 
     # bypassed when calling the function directly.
     with pytest.raises(HTTPException) as excinfo:
-        await get_view_id_from_api_key(None)
+        await get_view_id_from_auth(None)
     
     assert excinfo.value.status_code == 401
     assert "invalid" in excinfo.value.detail.lower()
@@ -70,8 +70,8 @@ async def test_auth_multiple_views_dedicated_keys():
         }
         mock_config.get_all_receivers.return_value = {}
         
-        assert await get_view_id_from_api_key("key1") == "view-1"
-        assert await get_view_id_from_api_key("key2") == "view-2"
+        assert await get_view_id_from_auth("key1") == "view-1"
+        assert await get_view_id_from_auth("key2") == "view-2"
 
 def test_view_config_parsing(tmp_path):
     """验证从 YAML 文件中正确解析 View 的 api_keys。"""

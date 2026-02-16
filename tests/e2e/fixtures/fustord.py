@@ -28,8 +28,7 @@ def test_view() -> dict:
         "name": TEST_VIEW_ID
     }
 
-# Backward compatibility alias
-test_view = test_view
+
 
 
 @pytest.fixture(scope="session")

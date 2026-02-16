@@ -84,11 +84,8 @@ class SourceHandlerAdapter(SourceHandler):
     async def initialize(self) -> None:
         """Initialize the handler."""
         if not self._initialized:
-            # Try both initialize and connect for maximum compatibility
             if hasattr(self._driver, 'initialize'):
                 await self._driver.initialize()
-            elif hasattr(self._driver, 'connect'):
-                await self._driver.connect()
             
             # Perform Schema Discovery if required by the driver (V2 Reliability)
             # This ensures we have a valid connection and matching schema before pipestarts

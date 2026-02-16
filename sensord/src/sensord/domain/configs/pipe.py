@@ -94,6 +94,3 @@ class PipeConfigService(BaseConfigService[PipeConfig], PipeConfigServiceInterfac
         logger.info(f"Pipe config '{id}' enabled successfully and its dependencies are active.")
         
 
-
-# Backward compatibility alias
-PipeConfigService = PipeConfigService

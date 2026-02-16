@@ -36,9 +36,8 @@ class SenderDriverService(SenderDriverServiceInterface):
         """
         discovered = {}
         
-        # Try various entry point groups for compatibility
+        # Standard entry point group
         groups = [
-            "sensord.senders",
             "sensord.drivers.senders"
         ]
         for group in groups:

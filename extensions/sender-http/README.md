@@ -40,8 +40,7 @@ await sender.close()
 ## Entry Points
 
 This package registers itself as:
-- `fustor.senders:http` - New sender registry
-- `sensord.drivers.senders:fustord` - Legacy sender registry (backward compat)
+- `sensord.drivers.senders:fustord` - Standard sender registry
 
 ## Migration from fustor-sender-fustord
 
@@ -49,4 +48,4 @@ The `fustor-sender-fustord` package is deprecated. To migrate:
 
 1. Replace `from fustor_sender_fustord import fustordDriver` with `from fustor_sender_http import HTTPSender`
 2. Update configuration to use `sender` instead of `sender` terminology
-3. The `HTTPSender` class implements the new `Sender` interface but maintains API compatibility
+3. The `HTTPSender` strictly implements the `Sender` interface (v2).

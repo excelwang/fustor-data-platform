@@ -22,13 +22,13 @@ class TestLogicalClockBasic:
     def test_initial_value_custom(self):
         """Clock should accept custom initial value."""
         with patch('time.time', return_value=1000.0):
-            clock = LogicalClock(initial_time=1000.0)
+            clock = LogicalClock()
             assert clock.now() == 1000.0
     
     def test_update_advances_clock(self):
         """Update should advance clock when mtime is newer."""
         with patch('time.time', return_value=200.0):
-            clock = LogicalClock(initial_time=100.0)
+            clock = LogicalClock()
             result = clock.update(200.0)
             assert result == 200.0
             assert clock.now() == 200.0
@@ -39,7 +39,7 @@ class TestLogicalClockBasic:
         New behavior: Watermark = time.time() - skew, mtime doesn't directly affect value.
         """
         with patch('time.time', return_value=200.0):
-            clock = LogicalClock(initial_time=200.0)
+            clock = LogicalClock()
             result = clock.update(100.0)  # skew = 200 - 100 = 100
             # Watermark = 200 - 100 = 100
             assert result == 100.0
@@ -48,7 +48,7 @@ class TestLogicalClockBasic:
     def test_update_ignores_equal_time(self):
         """Update with equal time should not change clock."""
         with patch('time.time', return_value=150.0):
-            clock = LogicalClock(initial_time=150.0)
+            clock = LogicalClock()
             result = clock.update(150.0)
             assert result == 150.0
             assert clock.now() == 150.0
@@ -56,7 +56,7 @@ class TestLogicalClockBasic:
     def test_update_handles_none(self):
         """Update should handle None gracefully (returns current watermark)."""
         with patch('time.time', return_value=100.0):
-            clock = LogicalClock(initial_time=100.0)
+            clock = LogicalClock()
             result = clock.update(None)
             # No skew samples yet, so watermark = time.time() = 100.0
             assert result == 100.0
@@ -66,7 +66,7 @@ class TestLogicalClockReset:
     
     def test_reset_to_zero(self):
         """Reset should set clock to 0 by default (triggering fallback)."""
-        clock = LogicalClock(initial_time=500.0)
+        clock = LogicalClock()
         clock.reset()
         # Reset to 0.0 -> Fallback to time.time()
         now = time.time()
@@ -75,7 +75,7 @@ class TestLogicalClockReset:
     def test_reset_to_value(self):
         """Reset should set clock to specified value."""
         with patch('time.time', return_value=100.0):
-            clock = LogicalClock(initial_time=500.0)
+            clock = LogicalClock()
             clock.reset(100.0)
             assert clock.now() == 100.0
 
@@ -88,7 +88,7 @@ class TestLogicalClockThreadSafety:
         # Use patched time to control BaseLine
         with patch('time.time', return_value=9100.0):
             # Initialize with a fixed small value to ensure updates (0 to 9099) advance it
-            clock = LogicalClock(initial_time=0.001)
+            clock = LogicalClock()
             errors = []
             
             def worker(start_value: int, count: int):
@@ -115,7 +115,7 @@ class TestLogicalClockThreadSafety:
     
     def test_concurrent_read_write(self):
         """Concurrent reads and writes should be safe."""
-        clock = LogicalClock(initial_time=100.0)
+        clock = LogicalClock()
         errors = []
         reads = []
         
@@ -179,7 +179,7 @@ class TestLogicalClockThreadSafety:
         # Expected Skew = 10500 - 10400 = 100s
         
         with patch('time.time', return_value=t_fustord):
-            clock = LogicalClock(initial_time=0.001)
+            clock = LogicalClock()
             
             # Inject some samples to stabilize Mode
             for _ in range(5):
@@ -200,7 +200,7 @@ class TestLogicalClockThreadSafety:
         t_fustord = 2000.0
         
         with patch('time.time', return_value=t_fustord):
-            clock = LogicalClock(initial_time=0.001)
+            clock = LogicalClock()
 
             # 1. Majority of samples establish a Skew of 100
             # Formula: Diff = fustordTime - mtime = 2000 - 1900 = 100

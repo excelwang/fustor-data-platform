@@ -5,7 +5,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 # Assuming your main app structure
 from fustord.main import app
-from fustord.management.auth.dependencies import get_view_id_from_api_key
+from fustord.management.auth.dependencies import get_view_id_from_auth
 from fustord.domain.view_manager.manager import ViewManager
 from fustord.management.api.pipe import setup_pipe_routers
 from fustord import runtime_objects
@@ -30,7 +30,7 @@ def client(mock_view_manager):
         setup_pipe_routers()
         
         # Override auth dependency
-        app.dependency_overrides[get_view_id_from_api_key] = lambda: "1"
+        app.dependency_overrides[get_view_id_from_auth] = lambda: "1"
         
         with TestClient(app, headers={"X-API-Key": "test"}) as c:
             yield c

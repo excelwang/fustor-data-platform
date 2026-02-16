@@ -33,11 +33,11 @@ class MinimalHandler(ViewHandler):
 @pytest_asyncio.fixture
 async def pipe_with_bridge():
     from fustord.domain.view_state_manager import view_state_manager
-    from fustord.stability.session_manager import session_manager
+    # from fustord.stability.session_manager import session_manager
     
     # 清理
     await view_state_manager.clear_state("bv1")
-    await session_manager.clear_all_sessions("bv1")
+    # await session_manager.clear_all_sessions("bv1")
 
     handler = MinimalHandler(hid="bv1")
     pipe = FustordPipe(

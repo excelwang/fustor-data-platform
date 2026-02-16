@@ -22,7 +22,6 @@ class ServiceManager:
         
         self.fustord_process = None
         self.sensord_process = None
-        self.processes = [] # Backwards compatibility for stop_all fallback
 
     def setup_env(self):
         # Safety Check: Only allow operations in directories ending with 'fustor-benchmark-run'
@@ -279,13 +278,14 @@ class ServiceManager:
 
     def stop_all(self):
         click.echo("Stopping all benchmark services...")
-        # No more global pkill!
         
-        for p in self.processes:
+        self.stop_sensord()
+        
+        if self.fustord_process:
             try:
-                p.terminate()
-                p.wait(timeout=2)
+                self.fustord_process.terminate()
+                self.fustord_process.wait(timeout=2)
             except Exception:
-                p.kill()
-        self.processes = []
+                self.fustord_process.kill()
+            self.fustord_process = None
 

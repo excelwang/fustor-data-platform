@@ -12,8 +12,8 @@ async def mock_get_view_id():
 @pytest_asyncio.fixture
 async def client():
     # 覆盖认证依赖
-    from fustord.management.auth.dependencies import get_view_id_from_api_key
-    app.dependency_overrides[get_view_id_from_api_key] = lambda: "test"
+    from fustord.management.auth.dependencies import get_view_id_from_auth
+    app.dependency_overrides[get_view_id_from_auth] = lambda: "test"
     
     async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as c:
         c.headers["X-API-Key"] = "test-key"

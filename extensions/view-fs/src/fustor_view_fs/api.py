@@ -194,9 +194,4 @@ def create_fs_router(get_driver_func, check_snapshot_func, get_view_id_dep, chec
     return router
 
 
-def get_router():
-    """
-    Returns a placeholder router. The actual router should be created via create_fs_router().
-    This is for compatibility with entry point discovery.
-    """
-    return fs_router
+

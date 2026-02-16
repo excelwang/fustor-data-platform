@@ -23,8 +23,8 @@ class SourceDriverService(SourceDriverServiceInterface): # Inherit from the inte
         Scans for installed packages that register under the source entry points.
         """
         discovered = {}
-        # Try various entry point groups for compatibility
-        groups = ["sensord.sources", "sensord.drivers.sources"]
+        # Standard entry point group
+        groups = ["sensord.drivers.sources"]
         for group in groups:
             try:
                 eps = entry_points(group=group)

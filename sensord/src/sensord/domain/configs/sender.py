@@ -26,7 +26,6 @@ class SenderConfigService(BaseConfigService[SenderConfig], SenderConfigServiceIn
     """
     
     def __init__(self, app_config: AppConfig):
-        # Still use 'sender' internally for config file compatibility
         super().__init__(app_config, None, 'sender')
         self.pipe_instance_service: Optional[PipeManager] = None
 

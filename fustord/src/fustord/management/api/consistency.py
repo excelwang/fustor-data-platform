@@ -8,7 +8,7 @@ import asyncio
 import time
 from typing import Dict, Any, List
 
-from fustord.management.auth.dependencies import get_view_id_from_api_key
+from fustord.management.auth.dependencies import get_view_id_from_auth
 from fustord.domain.view_manager.manager import get_cached_view_manager
 from fustord.stability import runtime_objects
 
@@ -19,7 +19,7 @@ consistency_router = APIRouter(tags=["Consistency Management"], prefix="/consist
 
 @consistency_router.post("/audit/start", summary="Signal start of an audit cycle")
 async def signal_audit_start(
-    view_id: str = Depends(get_view_id_from_api_key)
+    view_id: str = Depends(get_view_id_from_auth)
 ):
     """
     Explicitly signal the start of an audit cycle.
@@ -52,7 +52,7 @@ async def signal_audit_start(
 
 @consistency_router.post("/audit/end", summary="Signal end of an audit cycle")
 async def signal_audit_end(
-    view_id: str = Depends(get_view_id_from_api_key)
+    view_id: str = Depends(get_view_id_from_auth)
 ):
     """
     Signal the completion of an audit cycle.
@@ -107,7 +107,7 @@ async def signal_audit_end(
 
 @consistency_router.get("/sentinel/tasks", summary="Get sentinel check tasks")
 async def get_sentinel_tasks(
-    view_id: str = Depends(get_view_id_from_api_key)
+    view_id: str = Depends(get_view_id_from_auth)
 ) -> Dict[str, Any]:
     """
     Get generic sentinel check tasks.
@@ -143,7 +143,7 @@ async def get_sentinel_tasks(
 @consistency_router.post("/sentinel/feedback", summary="Submit sentinel check feedback")
 async def submit_sentinel_feedback(
     feedback: Dict[str, Any],
-    view_id: str = Depends(get_view_id_from_api_key)
+    view_id: str = Depends(get_view_id_from_auth)
 ):
     """
     Submit feedback from sentinel checks.

@@ -21,12 +21,9 @@ class LogicalClock:
     - Completely immune to mtime manipulation (touch -d future)
     """
     
-    def __init__(self, initial_time: float = 0.0):
+    def __init__(self):
         """
         Initialize the logical clock.
-        
-        Args:
-            initial_time: Unused, kept for backward compatibility.
         """
         # Note: threading.RLock is used because this class serves both
         # sensord-side (multi-threaded scanning) and fustord-side (asyncio) contexts.
