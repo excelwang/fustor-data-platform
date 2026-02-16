@@ -74,7 +74,7 @@ DatacastPipe-G/H/I ─(fustord_pipe_id=C)─┘                    └─ Tree C
 
 ## [definition] Forest_Configuration_Structure_Definition
 
-**Rationale**: Allow binding multiple datacaststs to a single forest view through pipe mapping.
+**Rationale**: Allow binding multiple datacasts to a single forest view through pipe mapping.
 
 ### 3.1 fustord 配置
 
@@ -119,7 +119,7 @@ pipes:
 
 ```yaml
 # Datacast-A (部署在 NFS-A 服务器上)
-datacastst_id: "Datacast-nfs-a"  # <--- 必须配置且唯一
+datacast_id: "Datacast-nfs-a"  # <--- 必须配置且唯一
 
 sources:
   nfs-a-src:

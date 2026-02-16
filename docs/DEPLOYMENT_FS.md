@@ -5,7 +5,7 @@
 ## ⚠️ 1. 环境准备 (Linux)
 
 ### 1.1 增加 inotify 监听上限
-datacastst 监控大量文件需要提高内核配额。请将其提升至 **1000 万**：
+datacast 监控大量文件需要提高内核配额。请将其提升至 **1000 万**：
 ```bash
 sudo sysctl fs.inotify.max_user_watches=10000000
 echo "fs.inotify.max_user_watches=10000000" | sudo tee -a /etc/sysctl.conf
@@ -14,7 +14,7 @@ sudo sysctl -p
 
 ### 1.2 创建配置目录
 ```bash
-mkdir -p ~/.fustor/fustord-config ~/.fustor/datacastst-config ~/.fustor/logs
+mkdir -p ~/.fustor/fustord-config ~/.fustor/datacast-config ~/.fustor/logs
 ```
 
 ---
@@ -42,10 +42,10 @@ pip install fustord fustor-view-fs fustor-receiver-http
 ### 采集端 (Source Node)
 ```bash
 # 推荐使用 uv
-uv pip install datacastst fustor-source-fs fustor-sender-http
+uv pip install datacast fustor-source-fs fustor-sender-http
 
 # 或使用 pip
-pip install datacastst fustor-source-fs fustor-sender-http
+pip install datacast fustor-source-fs fustor-sender-http
 ```
 
 ---
@@ -61,9 +61,9 @@ receivers:
     driver: http
     port: 18888
     api_keys:
-      - key: "datacastst-1-push-key"
+      - key: "datacast-1-push-key"
         pipe_id: "pipe-1"
-      - key: "datacastst-2-push-key"
+      - key: "datacast-2-push-key"
         pipe_id: "pipe-2"
 
 views:
@@ -85,8 +85,8 @@ pipes:
     audit_interval_sec: 43200 # 12 hours
 ```
 
-### 3.2 采集端 (datacastst)
-配置文件: `~/.fustor/datacastst-config/default.yaml`
+### 3.2 采集端 (datacast)
+配置文件: `~/.fustor/datacast-config/default.yaml`
 
 ```yaml
 sources:
@@ -97,7 +97,7 @@ senders:
   fustord-main:
     driver: fustord
     uri: "http://<FUSION_IP>:18888"
-    credential: { key: "datacastst-1-push-key" }
+    credential: { key: "datacast-1-push-key" }
 pipes:
   sync-job: { source: nfs-source, sender: fustord-main }
 ```
@@ -118,13 +118,13 @@ fustord start
 fustord start -D
 ```
 
-### 3.2 启动 datacastst
+### 3.2 启动 datacast
 ```bash
 # 前台启动
-datacastst start
+datacast start
 
 # 后台启动
-datacastst start -D
+datacast start -D
 ```
 
 ---
@@ -133,21 +133,21 @@ datacastst start -D
 
 在生产环境中，建议使用 `systemd` 管理 Fustor 进程，确保服务在意外崩溃后能够自动重启（Self-Healing）。
 
-### 4.1 Fustor datacastst Service
+### 4.1 Fustor datacast Service
 
-创建 `/etc/systemd/system/datacastst.service`：
+创建 `/etc/systemd/system/datacast.service`：
 
 ```ini
 [Unit]
-Description=Fustor datacastst Service
+Description=Fustor datacast Service
 After=network.target
 
 [Service]
 Type=simple
 User=<USER>
 Group=<USER>
-# 确保 path 指向正确的 datacastst 可执行文件 (如 uv venv)
-ExecStart=/path/to/venv/bin/datacastst start
+# 确保 path 指向正确的 datacast 可执行文件 (如 uv venv)
+ExecStart=/path/to/venv/bin/datacast start
 WorkingDirectory=/home/<USER>
 
 # 关键: 自动重启策略
@@ -158,7 +158,7 @@ StartLimitInterval=0
 # 环境配置
 Environment=PYTHONUNBUFFERED=1
 # 如有需要，可指定配置文件路径
-# Environment=FUSTOR_CONFIG=/home/<USER>/.fustor/datacastst-config/default.yaml
+# Environment=FUSTOR_CONFIG=/home/<USER>/.fustor/datacast-config/default.yaml
 
 [Install]
 WantedBy=multi-user.target
@@ -199,10 +199,10 @@ sudo systemctl daemon-reload
 
 # 启用开机自启并立即启动
 sudo systemctl enable --now fustord
-sudo systemctl enable --now datacastst
+sudo systemctl enable --now datacast
 
 # 查看状态
-sudo systemctl status datacastst
+sudo systemctl status datacast
 ```
 
 ---
@@ -217,7 +217,7 @@ curl -H "X-API-Key: external-read-only-key" \
 ```
 响应字段说明：
 *   **job_id**: 该查找任务的唯一标识。
-*   **find_pending**: 如果为 `true`，表示指令已发送给 datacastst，正在异步执行。
+*   **find_pending**: 如果为 `true`，表示指令已发送给 datacast，正在异步执行。
 
 ### 5.2 任务追踪
 通过管理 API 追踪实时查找任务的完成状态：
@@ -238,5 +238,5 @@ curl http://localhost:8101/api/v1/management/jobs/<job_id>
 
 ## 6. 故障排查
 *   `401 Unauthorized`: 检查 `X-API-Key` 是否与 `default.yaml` 中的配置匹配。
-*   `503 Service Unavailable`: 视图正在进行初始快照同步，或 datacastst 尚未建立 Leader 角色。若是由datacastcast 初始化耗时过长或其他异常导致服务不可用，建议使用 **On-Demand Scan** (参见 §5.1) 针对急需访问的目录提交定点扫描任务。
+*   `503 Service Unavailable`: 视图正在进行初始快照同步，或 datacast 尚未建立 Leader 角色。若是由datacastcast 初始化耗时过长或其他异常导致服务不可用，建议使用 **On-Demand Scan** (参见 §5.1) 针对急需访问的目录提交定点扫描任务。
 *   **文件不更新**: 检查 Linux 内核 `inotify` 配额是否已提升。

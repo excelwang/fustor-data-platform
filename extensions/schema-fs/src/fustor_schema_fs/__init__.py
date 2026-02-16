@@ -2,7 +2,7 @@
 Fustor Schema: File System (FS)
 
 This package defines the schema contract for file system data synchronization.
-It is used by both datacastst-side source drivers and fustord-side view handlers.
+It is used by both datacast-side source drivers and fustord-side view handlers.
 
 Schema Version: 1.0
 

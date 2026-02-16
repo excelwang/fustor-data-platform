@@ -4,7 +4,7 @@ Tests for SessionBridge — session lifecycle and leader promotion.
 import pytest
 import pytest_asyncio
 import asyncio
-from datacastst_core.pipe.handler import ViewHandler
+from datacast_core.pipe.handler import ViewHandler
 from fustord.stability import FustordPipe
 from fustord.stability.session_bridge import create_session_bridge
 
@@ -56,7 +56,7 @@ async def pipe_with_bridge():
 async def test_bridge_create_session(pipe_with_bridge):
     """Basic session create via bridge makes first session the leader."""
     pipe, bridge = pipe_with_bridge
-    await bridge.create_session(task_id="datacastst:pipe", session_id="s1")
+    await bridge.create_session(task_id="datacast:pipe", session_id="s1")
     
     role = await pipe.get_session_role("s1")
     assert role == "leader"
@@ -66,7 +66,7 @@ async def test_bridge_create_session(pipe_with_bridge):
 async def test_bridge_close_session(pipe_with_bridge):
     """Closing session via bridge works without errors."""
     pipe, bridge = pipe_with_bridge
-    await bridge.create_session(task_id="datacastst:pipe", session_id="s1")
+    await bridge.create_session(task_id="datacast:pipe", session_id="s1")
     result = await bridge.close_session("s1")
     assert result is True
 

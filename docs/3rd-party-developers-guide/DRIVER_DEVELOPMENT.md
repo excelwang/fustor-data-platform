@@ -1,14 +1,14 @@
-# datacastst 驱动开发指南
+# datacast 驱动开发指南
 
-本文档提供了为 Fustor datacastst 开发自定义驱动（Source 和 Pusher）的完整指南。
+本文档提供了为 Fustor datacast 开发自定义驱动（Source 和 Pusher）的完整指南。
 
 ## 1. 驱动开发契约 (Driver Contract)
 
 所有驱动都遵循统一的开发契约。一个合格的驱动是一个独立的 Python 包，其中包含一个**必须继承**自 `SourceDriver` 或 `PusherDriver` 抽象基类（ABC）的**驱动类**。开发者必须实现该基类定义的所有抽象方法。
 
 -   **核心基类**:
-    -   `datacastst_core.drivers.SourceDriver`
-    -   `datacastst_core.drivers.PusherDriver`
+    -   `datacast_core.drivers.SourceDriver`
+    -   `datacast_core.drivers.PusherDriver`
 -   **核心数据模型**:
     -   `fustor_event_model.models.EventBase`
 
@@ -55,7 +55,7 @@ def get_audit_iterator(self, **kwargs) -> Iterator[EventBase]:
 
 ## 3. 作为贡献者在本仓库中添加驱动
 
-此流程适用于希望为 Fustor datacastst 官方仓库贡献新驱动的开发者。
+此流程适用于希望为 Fustor datacast 官方仓库贡献新驱动的开发者。
 
 1.  **创建插件包结构**: 在 `extensions/` 目录下为新驱动创建一个符合 `[type]-[name]` 命名规范的目录。
     ```bash
@@ -91,7 +91,7 @@ def get_audit_iterator(self, **kwargs) -> Iterator[EventBase]:
     [project]
     name = "my-fustor-driver"
     dependencies = [
-        "datacastst-core",
+        "datacast-core",
         "fustor-event-model",
     ]
 
@@ -104,9 +104,9 @@ def get_audit_iterator(self, **kwargs) -> Iterator[EventBase]:
 4.  **本地测试**:
     ```bash
     uv venv .venv
-    pip install datacastst
+    pip install datacast
     pip install -e .
-    datacastst start
+    datacast start
     ```
 
 5.  **发布 (可选)**: 您可以将您的包构建并发布到 PyPI。

@@ -26,15 +26,15 @@
     uv sync --extra dev
     ```
 
-4.  **启动开发服务器 (示例: datacastst 服务)**
+4.  **启动开发服务器 (示例: datacast 服务)**
     ```bash
-    uvicorn datacastst.srdatacastcast.app:app --reload --port 8100
+    uvicorn datacast.srdatacastcast.app:app --reload --port 8100
     ```
-    *   要启动其他服务（如 fustord），请替换 `datacastst.srdatacastcast.app:app` 为对应服务的入口点。
+    *   要启动其他服务（如 fustord），请替换 `datacast.srdatacastcast.app:app` 为对应服务的入口点。
 
 ## 2. 技术栈
 - **核心框架**: FastAPI, SQLAlchemy 2.0 (Async), Pydantic v2
-- **数据库**: PostgreSQL 15+ (fustord), JSON File State (datacastst)
+- **数据库**: PostgreSQL 15+ (fustord), JSON File State (datacast)
 - **包管理**: uv
 
 ## 3. 测试
@@ -53,5 +53,5 @@
 ## 5. 深度文档链接
 
 *   **[核心架构设计 (ARCHITECTURE.md)](./ARCHITECTURE.md)**: 了解 Fustor 的顶层设计和服务交互。
-*   **[驱动开发指南 (DRIVER_DEVELOPMENT.md)](./DRIVER_DEVELOPMENT.md)**: 学习如何为 datacastst 编写新的 Source 和 Pusher 插件。
-*   **[datacastst 内部机制 (AGENT_INTERNALS.md)](./AGENT_INTERNALS.md)**: 深入了datacastcast 的状态管理、缓存和调试方法。
+*   **[驱动开发指南 (DRIVER_DEVELOPMENT.md)](./DRIVER_DEVELOPMENT.md)**: 学习如何为 datacast 编写新的 Source 和 Pusher 插件。
+*   **[datacast 内部机制 (AGENT_INTERNALS.md)](./AGENT_INTERNALS.md)**: 深入了datacastcast 的状态管理、缓存和调试方法。

@@ -1,12 +1,12 @@
 import unittest
 import asyncio
 from unittest.mock import MagicMock, AsyncMock, patch
-from datacastst_core.utils import verify_spec
+from datacast_core.utils import verify_spec
 from fustord.stability.pipe import FustordPipe
-from datacastst_core.event import EventBase
+from datacast_core.event import EventBase
 
-from datacastst_core.pipe import DatacastPipe, PipeState
-from datacastst_core.event import EventBase
+from datacast_core.pipe import DatacastPipe, PipeState
+from datacast_core.event import EventBase
 
 class TestFustordContracts(unittest.TestCase):
     """
@@ -28,7 +28,7 @@ class TestFustordContracts(unittest.TestCase):
         pipe._handlers_ready.set()
         
         event_dict = {
-            "source": "datacastst1",
+            "source": "datacast1",
             "type": "UPDATE",
             "path": "/a/b",
             "data": {"val": 1},
@@ -111,7 +111,7 @@ class TestFustordContracts(unittest.TestCase):
         pipe._handlers_ready.set()
         
         event_dict = {
-            "source": "datacastst1",
+            "source": "datacast1",
             "type": "UPDATE",
             "path": "/x",
             "data": {"v": 1},

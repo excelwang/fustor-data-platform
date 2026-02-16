@@ -1,7 +1,7 @@
 import pytest
 import asyncio
 from fustor_source_fs.driver import FSDriver
-from datacastst_core.models.config import SourceConfig
+from datacast_core.models.config import SourceConfig
 
 class TestFSDriverReload:
     """

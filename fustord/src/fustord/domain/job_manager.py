@@ -20,7 +20,7 @@ class DatacastJob:
 
 class JobManager:
     """
-    Manages tracking of asynchronous jobs (e.g. scans) sent to datacaststs.
+    Manages tracking of asynchronous jobs (e.g. scans) sent to datacasts.
     """
     def __init__(self):
         self._jobs: Dict[str, DatacastJob] = {}

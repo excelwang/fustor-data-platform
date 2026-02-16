@@ -1,38 +1,38 @@
-# datacastst 内部机制与维护
+# datacast 内部机制与维护
 
-本文档解释了 Fustor datacastst 的一些核心内部工作机制，以及如何在生产环境中进行维护和故障排查。
+本文档解释了 Fustor datacast 的一些核心内部工作机制，以及如何在生产环境中进行维护和故障排查。
 
-Fustor datacastst 使用统一的 **Fustor 主目录** 存放所有持久化数据。
+Fustor datacast 使用统一的 **Fustor 主目录** 存放所有持久化数据。
 *   **默认路径**: `~/.fustor/`
 *   **自定义路径**: 设置 `FUSTOR_HOME` 环境变量。
 
 ## 1. Schema 缓存
 
 ### 机制
-为了优化性能和减少对源数据库的重复请求，Fustor datacastst 会在第一次成功连接并发现数据源的字段后，将这些信息缓存到本地文件系统。
+为了优化性能和减少对源数据库的重复请求，Fustor datacast 会在第一次成功连接并发现数据源的字段后，将这些信息缓存到本地文件系统。
 
 *   **缓存位置**: Fustor 主目录下的 `schema_cache/`
 
 ### 维护
-*   **手动触发**: 您可以通过命令行 `datacastst discover-schema --source-id <your-source-id>` 来手动触发特定数据源的 schema 发现与缓存。
+*   **手动触发**: 您可以通过命令行 `datacast discover-schema --source-id <your-source-id>` 来手动触发特定数据源的 schema 发现与缓存。
 *   **自动禁用**: 如果应用启动时发现某个已启用的同步任务其数据源缺少 schema 缓存，该任务将被**自动禁用**，以防止启动失败。您需要通过 Web UI 的配置向导或上述命令行重新生成缓存来恢复它。
 
 ## 2. 运行时状态持久化
 
 ### 机制
-Fustor datacastst 将所有正在运行的任务实例（包括同步任务和事件总线）的状态实时保存在一个 JSON 文件中。
+Fustor datacast 将所有正在运行的任务实例（包括同步任务和事件总线）的状态实时保存在一个 JSON 文件中。
 
-*   **文件位置**: Fustor 主目录下的 `datacastst-state.json`
+*   **文件位置**: Fustor 主目录下的 `datacast-state.json`
 *   **崩溃恢复**: 此文件是实现崩溃恢复的关键。当应用重启时，它会读取此文件，尝试恢复并重启之前正在运行的任务。
 
 ### 维护
 *   **状态重置**: 如果您需要完全重置所有任务的运行时状态（例如，在调试或遇到无法恢复的错误时），最直接的方法是：
-    1.  **停止 Fustor datacastst 服务** datacastcast stop`)。
-    2.  **删除 `datacastst-state.json` 文件**。
-    3.  **重新启动 datacastst 服务** datacastcast start -D`)。
+    1.  **停止 Fustor datacast 服务** datacastcast stop`)。
+    2.  **删除 `datacast-state.json` 文件**。
+    3.  **重新启动 datacast 服务** datacastcast start -D`)。
 
 ## 3. 调试与日志
 
-*   **日志路径**: 默认日志文件位于 Fustor 主目录下的 `datacastst.log`。您可以通过 `FUSTOR_HOME` 环境变量修改配置和日志的根目录。
-*   **结构化查询**: datacastst 提供了强大的结构化日志 API，支持按日志级别、组件名称进行筛选和分页查询，极大地简化了问题排查和日常监控。
+*   **日志路径**: 默认日志文件位于 Fustor 主目录下的 `datacast.log`。您可以通过 `FUSTOR_HOME` 环境变量修改配置和日志的根目录。
+*   **结构化查询**: datacast 提供了强大的结构化日志 API，支持按日志级别、组件名称进行筛选和分页查询，极大地简化了问题排查和日常监控。
 *   **Prometheus 指标**: 内置 `/metrics` 端点，以 Prometheus 格式导出核心性能指标，如事件生产/消费速率、事件总线队列大小、推送延迟等，方便接入现有的监控告警体系。

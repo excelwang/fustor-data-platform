@@ -1,7 +1,7 @@
 import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
 from fustord.stability.pipe import FustordPipe
-from datacastst_core.event import EventBase
+from datacast_core.event import EventBase
 from fustord_sdk.interfaces import SessionInfo
 
 @pytest.mark.asyncio
@@ -24,7 +24,7 @@ async def test_lineage_injection_flow():
     
     # 2. Setup a session with lineage info
     sid = "sess-abc"
-    tid = "datacastst-XYZ:task-1"
+    tid = "datacast-XYZ:task-1"
     uri = "nfs://server/share"
     
     # Create session via bridge so lineage is recorded in pipe's store
@@ -55,7 +55,7 @@ async def test_lineage_injection_flow():
     assert mock_handler.process_event.called
     processed_event = mock_handler.process_event.call_args[0][0]
     
-    assert processed_event.metadata["datacastst_id"] ==datacastcast-XYZ"
+    assert processed_event.metadata["datacast_id"] ==datacastcast-XYZ"
     assert processed_event.metadata["source_uri"] == "nfs://server/share"
     
     await pipe.stop()

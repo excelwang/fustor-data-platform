@@ -9,7 +9,7 @@ import logging
 from typing import Any, Dict, List, Optional, TYPE_CHECKING
 
 from .base_view import ViewHandler, ViewDriver
-from datacastst_core.event import EventBase
+from datacast_core.event import EventBase
 
 if TYPE_CHECKING:
     from fustord.domain.view_manager.manager import ViewManager
@@ -22,8 +22,8 @@ class ViewDriverAdapter(ViewHandler):
     Adapts a single ViewDriver to the ViewHandler interface.
     
     This adapter bridges the gap between:
-    - datacastst_core.drivers.ViewDriver (driver layer)
-    - datacastst_core.pipe.handler.ViewHandler (pipe/handler layer)
+    - datacast_core.drivers.ViewDriver (driver layer)
+    - datacast_core.pipe.handler.ViewHandler (pipe/handler layer)
     
     Example usage:
         from fustor_view_fs import FSViewDriver

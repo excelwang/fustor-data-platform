@@ -52,7 +52,7 @@ class TestDiscoveryAndConcurrency:
         
         payload1 = {
             "task_id": "task-1",
-            "client_info": {"datacastst_id":datacastcast-1"}
+            "client_info": {"datacast_id":datacastcast-1"}
         }
         
         
@@ -69,7 +69,7 @@ class TestDiscoveryAndConcurrency:
         # 2. 尝试创建第二个会话（不同 task_id，但 view 被第一个锁定了）
         payload2 = {
             "task_id": "task-2",
-            "client_info": {"datacastst_id":datacastcast-2"}
+            "client_info": {"datacast_id":datacastcast-2"}
         }
         
         resp2 = fustord_client.api_request(

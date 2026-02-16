@@ -28,7 +28,7 @@ class TestBlindSpotListPersistence:
         self,
         docker_env,
         fustord_client,
-        setup_datacaststs,
+        setup_datacasts,
         clean_shared_dir,
         wait_for_audit
     ):
@@ -111,12 +111,12 @@ class TestBlindSpotListPersistence:
         self,
         docker_env,
         fustord_client,
-        setup_datacaststs,
+        setup_datacasts,
         clean_shared_dir,
         wait_for_audit
     ):
         """
-        场景: 盲区文件被 datacastst 客户端重新 touch，Datacast_missing 标记应被清除
+        场景: 盲区文件被 datacast 客户端重新 touch，Datacast_missing 标记应被清除
         参考: CONSISTENCY_DESIGN.md - Section 5.1 (Realtime 从 Blind-spot List 移除)
         """
         from ..conftest import CONTAINER_CLIENT_A
@@ -141,7 +141,7 @@ class TestBlindSpotListPersistence:
         assert fustord_client.wait_for_flag(test_file_rel, "Datacast_missing", True, timeout=SHORT_TIMEOUT), \
             "File should eventually be marked Datacast_missing"
         
-        # Touch file from datacastst client (triggers realtime update)
+        # Touch file from datacast client (triggers realtime update)
         # Use append to ensure content modification event (IN_MODIFY) is triggered, simpler than relying on ATTRIB
         docker_manager.exec_in_container(
             CONTAINER_CLIENT_A, 

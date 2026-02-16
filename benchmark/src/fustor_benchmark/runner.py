@@ -181,7 +181,7 @@ class BenchmarkRunner:
                 self.services.setup_env()
                 api_key = self.services.configure_system()
                 self.services.start_fustord()
-                self.services.start_datacastst(api_key)
+                self.services.start_datacast(api_key)
                 time.sleep(2)
             self.wait_for_sync(api_key)
             targets = self._discover_leaf_targets_via_api(api_key, target_depth)
@@ -240,22 +240,22 @@ class BenchmarkRunner:
             api_key = self.services.configure_system()
             self.services.start_fustord()
             
-            # Start datacastst once and keep it running
+            # Start datacast once and keep it running
             start_time = time.time()
-            self.services.start_datacastst(api_key, audit_interval=0, sentinel_interval=0)
+            self.services.start_datacast(api_key, audit_interval=0, sentinel_interval=0)
             
             # 1. Measure Pre-scan Time
             prescan_match = self.services.wait_for_log(
-                self.services.get_datacastst_log_path(), 
+                self.services.get_datacast_log_path(), 
                 r"Pre-scan completed: processed (\d+) entries", 
                 timeout=300
             )
             prescan_time = time.time()
             prescan_duration = prescan_time - start_time
             if prescan_match:
-                click.echo(f"  [datacastst] Pre-scan completed in {prescan_duration:.2f}s (Processed {prescan_match.group(1)} entries).")
+                click.echo(f"  [datacast] Pre-scan completed in {prescan_duration:.2f}s (Processed {prescan_match.group(1)} entries).")
             else:
-                click.echo("  [datacastst] Pre-scan log not found (Timeout).")
+                click.echo("  [datacast] Pre-scan log not found (Timeout).")
                 prescan_duration = None
 
             # 2. Measure Total Ingestion Time (fustord Ready)
@@ -274,7 +274,7 @@ class BenchmarkRunner:
             
             # MUST ensure we are Leader before proceeding to Phase 2/3
             if not self.services.wait_for_leader():
-                click.echo("  [datacaststdatacastcast failed to become LEADER. Cannot proceed with Audit/Sentinel.")
+                click.echo("  [datacastatacastcast failed to become LEADER. Cannot proceed with Audit/Sentinel.")
                 return results
 
             # --- Phase 2: Audit Performance ---
@@ -283,24 +283,24 @@ class BenchmarkRunner:
             click.echo("="*80)
             
             # Capture log offset before triggering
-            log_offset = self.services.get_log_size(self.services.get_datacastst_log_path())
+            log_offset = self.services.get_log_size(self.services.get_datacast_log_path())
             click.echo("Triggering Audit cycle manually...")
             # Trigger via API (no restart)
-            self.services.trigger_datacastst_audit()
+            self.services.trigger_datacast_audit()
             
             # Wait for Audit Start
             audit_start_match = self.services.wait_for_log(
-                self.services.get_datacastst_log_path(), 
+                self.services.get_datacast_log_path(), 
                 r"Audit phase started", 
                 start_offset=log_offset, timeout=60
             )
             audit_start_time = time.time()
             
             if audit_start_match:
-                click.echo("  [datacastst] Audit started.")
+                click.echo("  [datacast] Audit started.")
                 # Wait for Audit End
                 audit_end_match = self.services.wait_for_log(
-                    self.services.get_datacastst_log_path(), 
+                    self.services.get_datacast_log_path(), 
                     r"Audit phase completed", 
                     start_offset=log_offset, timeout=120
                 )
@@ -308,13 +308,13 @@ class BenchmarkRunner:
                 
                 if audit_end_match:
                     audit_duration = audit_end_time - audit_start_time
-                    click.echo(f"  [datacastst] Audit cycle completed in ~{audit_duration:.2f}s.")
+                    click.echo(f"  [datacast] Audit cycle completed in ~{audit_duration:.2f}s.")
                     results["audit"] = {"duration": audit_duration}
                 else:
-                    click.echo("  [datacastst] Audit completion log not found (Timeout).")
+                    click.echo("  [datacast] Audit completion log not found (Timeout).")
                     results["audit"] = {"status": "completion_timeout"}
             else:
-                 click.echo("  [datacastst] Audit start log not found (Timeout).")
+                 click.echo("  [datacast] Audit start log not found (Timeout).")
                  results["audit"] = {"status": "start_timeout"}
 
             # --- Phase 3: Sentinel Performance ---
@@ -323,23 +323,23 @@ class BenchmarkRunner:
             click.echo("="*80)
             
             # Capture log offset before triggering
-            log_offset = self.services.get_log_size(self.services.get_datacastst_log_path())
+            log_offset = self.services.get_log_size(self.services.get_datacast_log_path())
             click.echo("Triggering Sentinel cycle manually...")
             # Trigger via API (no restart)
-            self.services.trigger_datacastst_sentinel()
+            self.services.trigger_datacast_sentinel()
             
             # Wait for Sentinel Check Completed
             sentinel_end_match = self.services.wait_for_log(
-                self.services.get_datacastst_log_path(),
+                self.services.get_datacast_log_path(),
                 r"Sentinel check completed",
                 start_offset=log_offset, timeout=120
             )
             
             if sentinel_end_match:
-                 click.echo(f"  [datacastst] Sentinel check completed.")
+                 click.echo(f"  [datacast] Sentinel check completed.")
                  results["sentinel"] = {"status": "completed"}
             else:
-                 click.echo("  [datacastst] Sentinel check log not found (Maybe no tasks?).")
+                 click.echo("  [datacast] Sentinel check log not found (Maybe no tasks?).")
                  results["sentinel"] = {"status": "skipped_or_timeout"}
 
             # Save Results

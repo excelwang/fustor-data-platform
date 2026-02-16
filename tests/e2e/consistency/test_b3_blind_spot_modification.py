@@ -1,7 +1,7 @@
 """
 Test B3: Blind-spot file modification detected by Audit.
 
-验证无 datacastst 客户端修改文件时，Audit 通过 mtime 仲裁更新内存树。
+验证无 datacast 客户端修改文件时，Audit 通过 mtime 仲裁更新内存树。
 参考文档: CONSISTENCY_DESIGN.md - Section 5.3 场景 1 (Audit 报告存在文件 X)
 """
 import pytest
@@ -22,20 +22,20 @@ logger = logging.getLogger("fustor_test")
 
 
 class TestBlindSpotFileModification:
-    """Test detection of file modifications by client without datacastst."""
+    """Test detection of file modifications by client without datacast."""
 
     def test_blind_spot_modification_updates_mtime(
         self,
         docker_env,
         fustord_client,
-        setup_datacaststs,
+        setup_datacasts,
         clean_shared_dir,
         wait_for_audit
     ):
         """场景: 盲区修改更新 mtime"""
         test_file = f"{MOUNT_POINT}/blind_modify_test_{int(time.time()*1000)}.txt"
         
-        # Step 1: Create file from datacastst client
+        # Step 1: Create file from datacast client
         docker_manager.create_file_in_container(
             CONTAINER_CLIENT_A,
             test_file,
@@ -104,7 +104,7 @@ class TestBlindSpotFileModification:
         self,
         docker_env,
         fustord_client,
-        setup_datacaststs,
+        setup_datacasts,
         clean_shared_dir,
         wait_for_audit
     ):
@@ -114,7 +114,7 @@ class TestBlindSpotFileModification:
 
         test_file = f"{MOUNT_POINT}/blind_modify_flag_test_{int(time.time()*1000)}.txt"
         
-        # Create from datacastst, modify from blind-spot
+        # Create from datacast, modify from blind-spot
         docker_manager.create_file_in_container(
             CONTAINER_CLIENT_A,
             test_file,
@@ -126,7 +126,7 @@ class TestBlindSpotFileModification:
         # Initial file check
         flags_initial = fustord_client.check_file_flags(test_file_rel)
         if flags_initial["Datacast_missing"]:
-            logger.warning("Filesystem creation missed by datacastst A (flaky inotify). Injecting manual event to establish baseline.")
+            logger.warning("Filesystem creation missed by datacast A (flaky inotify). Injecting manual event to establish baseline.")
             # Inject manual creation event to clear Datacast_missing
             session = fustord_client.get_leader_session()
             if session:

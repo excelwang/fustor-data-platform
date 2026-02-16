@@ -13,7 +13,7 @@ class SessionEntry:
     client_ip: Optional[str] = None
     source_uri: Optional[str] = None
     can_realtime: bool = False
-    datacastst_status: Optional[Dict[str, Any]] = None
+    datacast_status: Optional[Dict[str, Any]] = None
     pending_commands: List[Dict[str, Any]] = field(default_factory=list)
 
 class PipeSessionStore:
@@ -70,14 +70,14 @@ class PipeSessionStore:
         return self.sessions.copy()
 
     def record_heartbeat(self, session_id: str, can_realtime: bool = False, 
-                         datacastst_status: Optional[Dict[str, Any]] = None) -> int:
+                         datacast_status: Optional[Dict[str, Any]] = None) -> int:
         """Update activity and return heartbeat count."""
         entry = self.sessions.get(session_id)
         if entry:
             entry.last_activity = time.monotonic()
             entry.can_realtime = can_realtime
-            if datacastst_status:
-                entry.datacastst_status datacastcast_status
+            if datacast_status:
+                entry.datacast_status datacastcast_status
             
             count = self.heartbeat_count.get(session_id, 0) + 1
             self.heartbeat_count[session_id] = count
@@ -117,8 +117,8 @@ class PipeSessionStore:
         if not entry:
             return {}
             
-        datacastst_id = entry.task_id.split(':')[0] if ':' in entry.task_id else "unknown"
+        datacast_id = entry.task_id.split(':')[0] if ':' in entry.task_id else "unknown"
         return {
-            "datacastst_id"datacastcast_id,
+            "datacast_id"datacastcast_id,
             "source_uri": entry.source_uri or ""
         }

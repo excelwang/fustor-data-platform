@@ -19,7 +19,7 @@ uv sync --package fustord-sdk
 
 ### 1. Reliable Event Ingestion (V2 Pipe API)
 
-The V2 API uses the `/api/v1/pipe` endpoint and is the recommended way for datacaststs to interact with fustord.
+The V2 API uses the `/api/v1/pipe` endpoint and is the recommended way for datacasts to interact with fustord.
 
 ```python
 import asyncio
@@ -28,7 +28,7 @@ from fustord_sdk.client import fustordClient
 async def ingest_demo():
     async with fustordClient(base_url="http://fustord:8102", api_key="secret") as client:
         # Create a session (Leader/Follower role is assigned by fustord)
-        session = await client.create_session(task_id="datacastst-001")
+        session = await client.create_session(task_id="datacast-001")
         session_id = session["session_id"]
         
         # Ingest events
@@ -63,5 +63,5 @@ If you need custom path sanitization, you can pass a `sanitizer` function to the
 
 ## Dependencies
 
-*   `datacastst-core`: Shared models and event definitions.
+*   `datacast-core`: Shared models and event definitions.
 *   `httpx`: Asynchronous HTTP client.

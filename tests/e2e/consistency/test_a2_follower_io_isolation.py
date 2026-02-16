@@ -1,7 +1,7 @@
 """
-Test A2: Second datacastst becomes Follower with IO isolation.
+Test A2: Second datacast becomes Follower with IO isolation.
 
-验证第二个 datacastst 成为 Follower，且不执行 Snapshot/Audit IO 操作。
+验证第二个 datacast 成为 Follower，且不执行 Snapshot/Audit IO 操作。
 参考文档: CONSISTENCY_DESIGN.md - Section 3 (Leader/Follower 选举)
 """
 import pytest
@@ -20,22 +20,22 @@ from ..fixtures.constants import (
 
 
 class TestFollowerIOIsolation:
-    """Test that the follower datacastst does not perform snapshot/audit."""
+    """Test that the follower datacast does not perform snapshot/audit."""
 
-    def test_second_datacastst_becomes_follower(
+    def test_second_datacast_becomes_follower(
         self,
         docker_env,
         fustord_client,
-        setup_datacaststs,
+        setup_datacasts,
         clean_shared_dir
     ):
         """
-        场景: datacastst A 已经是 Leadedatacastcast B 连接到 fustord
-        预期: datacastst B 被标记为 Follower
-        验证方法: 查询 Sessions，确认 datacastst B 的 role 为 "follower"
+        场景: datacast A 已经是 Leadedatacastcast B 连接到 fustord
+        预期: datacast B 被标记为 Follower
+        验证方法: 查询 Sessions，确认 datacast B 的 role 为 "follower"
         """
-        # Wait for datacaststs to establish sessions and view to be ready
-        assert fustord_client.wait_for_view_ready(timeout=VIEW_READY_TIMEOUT), "View did not become ready for datacastst A"
+        # Wait for datacasts to establish sessions and view to be ready
+        assert fustord_client.wait_for_view_ready(timeout=VIEW_READY_TIMEOUT), "View did not become ready for datacast A"
         
         # Get all sessions
         sessions = fustord_client.get_sessions()
@@ -43,7 +43,7 @@ class TestFollowerIOIsolation:
         # Find follower session
         follower_session = None
         for session in sessions:
-            if session.get("datacastst_id", "").startswith("client-b"):
+            if session.get("datacast_id", "").startswith("client-b"):
                 follower_session = session
                 break
         
@@ -51,7 +51,7 @@ class TestFollowerIOIsolation:
             import logging
             logging.getLogger(__name__).debug(f"All sessions found: {sessions}")
         
-        assert follower_session is not None, "datacastst B session not found"
+        assert follower_session is not None, "datacast B session not found"
         assert follower_session.get("role") == "follower", \
             f"Expected client-b to be follower, got {follower_session.get('role')}"
         
@@ -69,11 +69,11 @@ class TestFollowerIOIsolation:
         self,
         docker_env,
         fustord_client,
-        setup_datacaststs,
+        setup_datacasts,
         clean_shared_dir
     ):
         """
-        场景: Follower datacastst 检测到文件变更
+        场景: Follower datacast 检测到文件变更
         预期: Follower 只发送 realtime 事件，不发送 snapshot/audit 事件
         验证方法: 创建文件，检查事件类型
         """
@@ -82,14 +82,14 @@ class TestFollowerIOIsolation:
         
         test_file = f"{MOUNT_POINT}/test_follower_realtime_{int(time.time()*1000)}.txt"
         
-        # Wait for datacastst B to be registered and ready (post-prescan)
-        if not fustord_client.wait_for_datacastst_ready("client-b", timeout=AGENT_B_READY_TIMEOUT):
-             pytest.fail(f"datacastst B did not become ready (can_realtime=True) within {AGENT_B_READY_TIMEOUT}s")
+        # Wait for datacast B to be registered and ready (post-prescan)
+        if not fustord_client.wait_for_datacast_ready("client-b", timeout=AGENT_B_READY_TIMEOUT):
+             pytest.fail(f"datacast B did not become ready (can_realtime=True) within {AGENT_B_READY_TIMEOUT}s")
         
         # Get session info to verify it's a follower
         sessions = fustord_client.get_sessions()
-        follower_session = next((s for s in sessions if "client-b" in s.get("datacastst_id", "")), None)
-        assert follower_session is not None, "datacastst B session not found"
+        follower_session = next((s for s in sessions if "client-b" in s.get("datacast_id", "")), None)
+        assert follower_session is not None, "datacast B session not found"
         assert follower_session.get("role") == "follower", \
             f"Expected client-b to be follower, got {follower_session.get('role')}"
 
@@ -101,7 +101,7 @@ class TestFollowerIOIsolation:
         # Check against relative path since Source-FS emits relative keys
         warmup_rel = "/" + os.path.relpath(warmup_file, MOUNT_POINT)
         if not fustord_client.wait_for_file_in_tree(warmup_rel, timeout=SHORT_TIMEOUT):
-            pytest.fail("Follower datacastst B failed to detect warmup file. FS Driver might not be ready.")
+            pytest.fail("Follower datacast B failed to detect warmup file. FS Driver might not be ready.")
         
         # Create file on follower's mount
         docker_manager.create_file_in_container(

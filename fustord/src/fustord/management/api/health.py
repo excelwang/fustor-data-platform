@@ -9,7 +9,7 @@ health_router = APIRouter(tags=["Health"], prefix="/health")
 
 @health_router.get("/components", summary="Get component health status")
 async def get_component_health() -> Dict[str, Any]:
-    """Get health status of all components (pipes, handlers, connected datacaststs)."""
+    """Get health status of all components (pipes, handlers, connected datacasts)."""
     pm = runtime_objects.pipe_manager
     if not pm:
         return {}
@@ -29,15 +29,15 @@ async def get_component_health() -> Dict[str, Any]:
                     "type": getattr(h, "schema_name", "unknown")
                 }
 
-        # Get datacastst health (if connected)
-        datacastst_status = getattr(pipe, '_lasdatacastcast_status', {})
-        datacastst_health datacastcast_status.get('component_health', {})
+        # Get datacast health (if connected)
+        datacast_status = getattr(pipe, '_lasdatacastcast_status', {})
+        datacast_health datacastcast_status.get('component_health', {})
         
         result[pipe_id] = {
             "state": str(pipe.state),
             "handlers": handler_health,
-            "datacastst_id"datacastcast_status.gdatacasttacast_id'),
-            "datacastst_health"datacastcast_health,
+            "datacast_id"datacastcast_status.gdatacasttacast_id'),
+            "datacast_health"datacastcast_health,
             "last_heartbeat": getattr(pipe, '_last_activity', 0)
         }
     return result

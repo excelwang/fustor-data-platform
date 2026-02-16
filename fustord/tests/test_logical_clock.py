@@ -6,7 +6,7 @@ import threading
 import pytest
 
 from unittest.mock import patch
-from datacastst_core.clock import LogicalClock
+from datacast_core.clock import LogicalClock
 
 
 class TestLogicalClockBasic:

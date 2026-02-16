@@ -1,7 +1,7 @@
 
 """
 Integration tests for advanced deployment scenarios.
-- Fan-Out (1 datacastst -> Multi Views)
+- Fan-Out (1 datacast -> Multi Views)
 - Aggregation (Multi Pipes -> Single View)
 - HA Dynamic Adjustment (Config Reload)
 """
@@ -22,7 +22,7 @@ logger = logging.getLogger("fustor_test")
 
 # Paths inside containers (processed config, NOT templates)
 FUSION_PROCESSED_CONFIG_DIR = "/root/.fustor/fustord-config"
-AGENT_PROCESSED_CONFIG_DIR = "/root/.fustor/datacastst-config"
+AGENT_PROCESSED_CONFIG_DIR = "/root/.fustor/datacast-config"
 
 
 @pytest.fixture
@@ -68,16 +68,16 @@ def extra_fustord_config():
 
 
 @pytest.fixture
-def extra_datacaststConfig():
-    """Create extra YAML config files in datacastst's processed config directory.
+def extra_datacastConfig():
+    """Create extra YAML config files in datacast's processed config directory.
     
-    Similar to extra_fustord_config but targets datacastst containers.
+    Similar to extra_fustord_config but targets datacast containers.
     Cleans up on teardown.
     """
     created_files = []  # list of (container, container_path) tuples
     
     def _create(container_name, filename, content):
-        """Create a YAML config file directly in datacastst container.
+        """Create a YAML config file directly in datacast container.
         
         Args:
             container_name: Container name
@@ -92,7 +92,7 @@ def extra_datacaststConfig():
             "docker", "exec", container_name,
             "sh", "-c", f"cat > {container_path} << 'YAML_EOF'\n{yaml_str}\nYAML_EOF"
         ])
-        logger.info(f"Created datacastst extra config in {container_name}: {container_path}")
+        logger.info(f"Created datacast extra config in {container_name}: {container_path}")
         created_files.append((container_name, container_path))
     
     yield _create
@@ -101,7 +101,7 @@ def extra_datacaststConfig():
     for container, path in created_files:
         try:
             subprocess.call(["docker", "exec", container, "rm", "-f", path])
-            logger.info(f"Removed datacastst extra config {path} from {container}")
+            logger.info(f"Removed datacast extra config {path} from {container}")
         except Exception as e:
             logger.warning(f"Could not remove {path} from {container}: {e}")
 
@@ -109,10 +109,10 @@ def extra_datacaststConfig():
 class TestAdvancedDeployments:
 
     def test_fan_out_deployment(
-        self, docker_env, setup_datacaststs, fustord_client, extra_fustord_config
+        self, docker_env, setup_datacasts, fustord_client, extra_fustord_config
     ):
         """
-        Test Scenario: Fan-Out (One datacastst -> Multiple Views)
+        Test Scenario: Fan-Out (One datacast -> Multiple Views)
         
         The default config already defines the 'archive-fanout' view.
         This test overrides the pipe config to fan-out events to BOTH views.
@@ -144,7 +144,7 @@ class TestAdvancedDeployments:
             "fustord did not become ready after restart with fan-out config"
         
         # Write data via leader
-        containers = setup_datacaststs["containers"]
+        containers = setup_datacasts["containers"]
         leader = containers["leader"]
         timestamp = int(time.time())
         filename = f"fanout_{timestamp}.txt"
@@ -166,14 +166,14 @@ class TestAdvancedDeployments:
             fustord_client.view_id = original_view
 
     def test_aggregation_deployment(
-        self, docker_env, setup_datacaststs, fustord_client, 
-        extra_fustord_config, extra_datacaststConfig
+        self, docker_env, setup_datacasts, fustord_client, 
+        extra_fustord_config, extra_datacastConfig
     ):
         """
         Test Scenario: Aggregation (Multiple Pipes -> Single View)
         
         Create a second pipe (pipe-agg) that feeds into the same view.
-        datacastst monitors a separate directory via this second pipe.
+        datacast monitors a separate directory via this second pipe.
         """
         view_id = os.environ.get("TEST_VIEW_ID", "integration-test-ds")
         agg_pipe_id = "pipe-agg"
@@ -192,11 +192,11 @@ class TestAdvancedDeployments:
             }
         })
         
-        # 2. Add new source + pipe to datacastst (leader)
-        containers = setup_datacaststs["containers"]
+        # 2. Add new source + pipe to datacast (leader)
+        containers = setup_datacasts["containers"]
         leader = containers["leader"]
         
-        extra_datacaststConfig(leader, "extra_agg.yaml", {
+        extra_datacastConfig(leader, "extra_agg.yaml", {
             "sources": {
                 agg_source_id: {
                     "driver": "fs",
@@ -214,16 +214,16 @@ class TestAdvancedDeployments:
         # 3. Create the aggregated directory
         docker_env.exec_in_container(leader, ["mkdir", "-p", "/mnt/shared/aggregated"])
         
-        # 4. Restart fustord and reload datacastst
+        # 4. Restart fustord and reload datacast
         subprocess.check_call(["docker", "restart", CONTAINER_FUSION])
         logger.info("Waiting for fustord to reload with aggregation config...")
         assert fustord_client.wait_for_view_ready(timeout=EXTREME_TIMEOUT), \
             "fustord did not become ready after restart with aggregation config"
         
-        # Reload datacastst config via SIGHUP
-        docker_env.exec_in_container(leader, ["pkill", "-HUP", "-f", "datacastst"])
-        logger.info("Sent SIGHUP to datacastst for config reload. Waiting...")
-        time.sleep(10)  # Give datacastst time to reload config and reconnect
+        # Reload datacast config via SIGHUP
+        docker_env.exec_in_container(leader, ["pkill", "-HUP", "-f", "datacast"])
+        logger.info("Sent SIGHUP to datacast for config reload. Waiting...")
+        time.sleep(10)  # Give datacast time to reload config and reconnect
         
         # 5. Write to aggregated source directory
         timestamp = int(time.time())
@@ -238,7 +238,7 @@ class TestAdvancedDeployments:
             f"Aggregated file not found in view {view_id}"
 
     def test_ha_dynamic_adjustment(
-        self, docker_env, setup_datacaststs, fustord_client, extra_fustord_config
+        self, docker_env, setup_datacasts, fustord_client, extra_fustord_config
     ):
         """
         Test Scenario: HA Cluster Configuration Reload

@@ -14,19 +14,19 @@ from fixtures.constants import (
 logger = logging.getLogger("fustor_test")
 
 @pytest.mark.asyncio
-async def test_i8_hot_reload_add_source(reset_fustord_state, setup_datacaststs, fustord_client):
+async def test_i8_hot_reload_add_source(reset_fustord_state, setup_datacasts, fustord_client):
     """
     Test the Dynamic Scaling / Hot Reload workflow:
-    1. Start with standard datacastst A (Source 1) -> fustord (View 1).
+    1. Start with standard datacast A (Source 1) -> fustord (View 1).
     2. Hot-add a Multi-FS view aggregating [View 1].
-    3. Hot-add a new Source 2 on datacastst A.
+    3. Hot-add a new Source 2 on datacast A.
     4. Hot-add View 2 (for Source 2) on fustord and add to Multi-FS view.
     5. Verify Source 2 data appears in Multi-FS view.
     """
-    env = setup_datacaststs
+    env = setup_datacasts
     api_key_base = env["api_key"]
     
-    # 0. Prepare new source directory on datacastst A
+    # 0. Prepare new source directory on datacast A
     new_mount_point = "/tmp/extra_source"
     docker_manager.exec_in_container(CONTAINER_CLIENT_A, ["mkdir", "-p", new_mount_point])
     new_file_path = f"{new_mount_point}/new_file.txt"
@@ -135,14 +135,14 @@ async def test_i8_hot_reload_add_source(reset_fustord_state, setup_datacaststs, 
         
         time.sleep(5) # Extra buffer for startup
         
-        logger.info("=== Step 3: Modifying datacastst Config ===")
-        # datacastst config modification worked previously, so we keep targeting runtime config or verify?
-        # datacastst restart logic worked, implying config persisted or wasn't overwritten.
-        # But to be safe, let's target /config/datacastst-config/default.yaml if possible?
+        logger.info("=== Step 3: Modifying datacast Config ===")
+        # datacast config modification worked previously, so we keep targeting runtime config or verify?
+        # datacast restart logic worked, implying config persisted or wasn't overwritten.
+        # But to be safe, let's target /config/datacast-config/default.yaml if possible?
         # Entrypoint check showed it runs conditionally. Assuming previous logic was OK.
-        # Actually, let's stick to previous logic for datacastst as it worked.
+        # Actually, let's stick to previous logic for datacast as it worked.
         
-        def update_datacastst(data):
+        def update_datacast(data):
             # 1. New Source
             data.setdefault("sources", {})
             data["sources"]["source-extra"] = {
@@ -168,19 +168,19 @@ async def test_i8_hot_reload_add_source(reset_fustord_state, setup_datacaststs, 
                 "audit_interval_sec": 5, # Fast audit for test
             }
             
-        update_yaml_in_container(CONTAINER_CLIENT_A, "/root/.fustor/datacastst-config/default.yaml", updatdatacastcast)
+        update_yaml_in_container(CONTAINER_CLIENT_A, "/root/.fustor/datacast-config/default.yaml", updatdatacastcast)
         
-        logger.info("=== Step 4: Reloading datacastst (SIGHUP) ===")
+        logger.info("=== Step 4: Reloading datacast (SIGHUP) ===")
         # Attempt SIGHUP reload using CLI
-        res = docker_manager.exec_in_container(CONTAINER_CLIENT_A, ["datacastst", "reload"])
+        res = docker_manager.exec_in_container(CONTAINER_CLIENT_A, ["datacast", "reload"])
         logger.info(f"Reload Output: {res.stdout.strip()}")
         if res.returncode != 0:
              logger.warning(f"Reload CLI failed: {res.stderr.strip()}. Tying pkill...")
-             docker_manager.exec_in_container(CONTAINER_CLIENT_A, ["pkill", "-HUP", "-f", "datacastst"])
+             docker_manager.exec_in_container(CONTAINER_CLIENT_A, ["pkill", "-HUP", "-f", "datacast"])
 
         time.sleep(2) # Wait for reload processing
         
-        # Wait for datacastst to connect and push data
+        # Wait for datacast to connect and push data
         time.sleep(5)
         
         logger.info("=== Step 5: Verification ===")

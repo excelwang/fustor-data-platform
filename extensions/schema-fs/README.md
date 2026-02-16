@@ -1,6 +1,6 @@
 # fustor-schema-fs
 
-File System Schema for Fustor - defines the data contract between `fustor-source-fs` (datacastst) and `fustor-view-fs` (fustord).
+File System Schema for Fustor - defines the data contract between `fustor-source-fs` (datacast) and `fustor-view-fs` (fustord).
 
 ## Overview
 

@@ -50,7 +50,7 @@ def calculate_global_watermark(samples: List[Sample]) -> Watermark:
 
 ## [algorithm] Skew_Sampling_Algorithm
 
-**Rationale**: Collect samples of physical vs. logical time offset across all connected datacaststs.
+**Rationale**: Collect samples of physical vs. logical time offset across all connected datacasts.
 
 ```python
 if mtime and can_sample_skew:

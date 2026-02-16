@@ -3,8 +3,8 @@ import asyncio
 import logging
 import time
 from typing import Any, Dict, List, Optional
-from datacastst_core.event import EventBase
-from datacastst_core.common.metrics import get_metrics
+from datacast_core.event import EventBase
+from datacast_core.common.metrics import get_metrics
 
 from fustord.domain.view_state_manager import view_state_manager
 
@@ -24,7 +24,7 @@ class IngestionMixin:
         **kwargs
     ) -> Dict[str, Any]:
         """
-        Process a batch of events from an datacastst.
+        Process a batch of events from an datacast.
         """
         if not self.is_running():
             return {"success": False, "error": "Pipe not running"}

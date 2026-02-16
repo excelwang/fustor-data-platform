@@ -8,8 +8,8 @@ U3: ViewHandler 永久降级不可恢复。
 """
 import pytest
 import asyncio
-from datacastst_core.event import EventBase
-from datacastst_core.event.types import EventType
+from datacast_core.event import EventBase
+from datacast_core.event.types import EventType
 from fustord.stability import FustordPipe
 
 

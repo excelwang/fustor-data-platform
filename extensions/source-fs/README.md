@@ -1,6 +1,6 @@
 # fustor-source-fs
 
-This package provides a `SourceDriver` implementation for the Fustor datacastst service, enabling it to monitor and extract data from local file systems. It employs a "Smart Dynamic Monitoring" strategy to efficiently handle large directory structures, supporting both snapshot (initial scan) and real-time (event-driven) synchronization of file changes.
+This package provides a `SourceDriver` implementation for the Fustor datacast service, enabling it to monitor and extract data from local file systems. It employs a "Smart Dynamic Monitoring" strategy to efficiently handle large directory structures, supporting both snapshot (initial scan) and real-time (event-driven) synchronization of file changes.
 
 ## Features
 
@@ -37,11 +37,11 @@ This package provides a `SourceDriver` implementation for the Fustor datacastst 
 
 ### 4. 哨兵巡检 (Sentinel Sweep)
 
-*   **触发者**：Leader datacastst
+*   **触发者**：Leader datacast
 *   **频率**：2 分钟/次
 *   **目的**：更新 Suspect List 中文件的 mtime
 *   **API**：`GET/PUT /api/view/fs/suspect-list`
 *   **消息格式**：打上 `message_source='snapshot'` 标签
 
 ## 责任界定
-Source FS 承诺：推送到 fustord 的每一个字节都必须是"逻辑完备"的。Leader datacastst 对数据视图的完整性负有实时存续责任。
+Source FS 承诺：推送到 fustord 的每一个字节都必须是"逻辑完备"的。Leader datacast 对数据视图的完整性负有实时存续责任。

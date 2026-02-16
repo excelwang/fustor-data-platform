@@ -9,7 +9,7 @@ FustordPipe Architecture:
 
 ┌─────────────────────────────────────────────────────────────┐
 │                    FustordPipe                           │
-│  (receives events from datacaststs)                              │
+│  (receives events from datacasts)                              │
 └────────────────────────┬────────────────────────────────────┘
                          │
                          ▼
@@ -35,7 +35,7 @@ Example Usage:
     # Start processing
     await pipe.start()
 
-    # Process incoming events from datacastst
+    # Process incoming events from datacast
     await pipe.process_events(events, session_id="sess-123")
 
     # Query views

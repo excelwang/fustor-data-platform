@@ -1,13 +1,13 @@
 """
 Base abstractions for Views in fustord.
-Relocated from datacastst_core to keep cordatacastcast-centric.
+Relocated from datacast_core to keep cordatacastcast-centric.
 """
 from abc import ABC, abstractmethod
 from typing import Any, Dict, List, Optional, Iterator
 import logging
 
-# Note: EventBase will still come from datacastst_core (soon to bdatacastcast_core)
-from datacastst_core.event import EventBase
+# Note: EventBase will still come from datacast_core (soon to bdatacastcast_core)
+from datacast_core.event import EventBase
 
 logger = logging.getLogger(__name__)
 

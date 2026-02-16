@@ -28,7 +28,7 @@ class FSRow(BaseModel):
     A file system row representing a file or directory.
     
     This is the standard data format for FS events exchanged between
-    datacastst source drivers and fustord view handlers.
+    datacast source drivers and fustord view handlers.
     """
     
     # Required fields
@@ -97,8 +97,8 @@ class FSDeleteRow(BaseModel):
 # --- Event Models ---
 
 from typing import List, Union
-from datacastst_core.event import EventBase, EventType
-from datacastst_core.event.types import MessageSource
+from datacast_core.event import EventBase, EventType
+from datacast_core.event.types import MessageSource
 
 class FSEventBase(EventBase):
     """Base class for FS-specific events."""

@@ -25,8 +25,8 @@ async def test_get_component_health(client):
         # default disabled handlers to empty
         mock_pipe._disabled_handlers = []
         
-        mock_pipe._last_datacastst_status = {
-            "datacastst_id": "tesdatacastcast",
+        mock_pipe._last_datacast_status = {
+            "datacast_id": "tesdatacastcast",
             "component_health": {
                 "source": {"status": "ok"},
                 "sender": {"status": "ok"},
@@ -43,8 +43,8 @@ async def test_get_component_health(client):
         assert "pipe-1" in data
         p_data = data["pipe-1"]
         assert p_data["state"] == "RUNNING"
-        assert p_data["datacastst_id"] == "tesdatacastcast"
-        assert p_data["datacastst_health"]["source"]["status"] == "ok"
+        assert p_data["datacast_id"] == "tesdatacastcast"
+        assert p_data["datacast_health"]["source"]["status"] == "ok"
         assert p_data["handlers"]["h1"]["enabled"] is True
         assert p_data["handlers"]["h1"]["type"] == "view_fs"
 

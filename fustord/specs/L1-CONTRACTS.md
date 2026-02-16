@@ -19,7 +19,7 @@ invariants:
 
 ## CONTRACTS.PROTOCOL (SCP & SDP Interface)
 
-- **IDEMPOTENT_INGESTION**: fustord MUST ensure SDP event ingestion is idempotent. Duplicate batches from datacaststs MUST NOT create duplicate tree entries.
+- **IDEMPOTENT_INGESTION**: fustord MUST ensure SDP event ingestion is idempotent. Duplicate batches from datacasts MUST NOT create duplicate tree entries.
   > Responsibility: Correctness.
   > Verification: Sending the same event batch twice results in a single state change.
 
@@ -50,7 +50,7 @@ invariants:
 
 - **INV_API_NEVER_503**: The `/fs/tree` API endpoint MUST always return a valid response, never 503.
   > Responsibility: Availability — "Presence is Service".
-  > Verification: API returns data (even if marked as blind-spot) during network partitions or datacastst downtime.
+  > Verification: API returns data (even if marked as blind-spot) during network partitions or datacast downtime.
 
 - **ON_COMMAND_FALLBACK**: fustord MUST trigger an on-demand SCP `scan` command if a query hits a path while the memory tree is still being built.
   > Responsibility: Correctness.
@@ -65,7 +65,7 @@ invariants:
 
 ## CONTRACTS.LIFECYCLE (Orchestration)
 
-- **TARGETED_UPGRADE**: fustord MUST be able to target a specific `datacastst_id` for upgrade commands via SCP unicast.
+- **TARGETED_UPGRADE**: fustord MUST be able to target a specific `datacast_id` for upgrade commands via SCP unicast.
   > Responsibility: Operations.
 
 - **ZOMBIE_DETECTION**: fustord MUST detect Datacast nodes that maintain SCP heartbeats but fail to send SDP data events for a configured threshold period.

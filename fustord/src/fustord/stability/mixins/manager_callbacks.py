@@ -2,7 +2,7 @@
 import logging
 import time
 from typing import Optional, TYPE_CHECKING
-from datacastst_core.models.states import SessionInfo
+from datacast_core.models.states import SessionInfo
 from fustord.config.unified import fustord_config
 
 if TYPE_CHECKING:
@@ -63,11 +63,11 @@ class ManagerCallbacksMixin:
                 return res.get("success", False)
         raise ValueError(f"Session {session_id} not found or expired")
 
-    async def _on_heartbeat(self: "FustordPipeManager", session_id, can_realtime=bool, datacastst_status=None):
+    async def _on_heartbeat(self: "FustordPipeManager", session_id, can_realtime=bool, datacast_status=None):
         pipe_id = self._session_to_pipe.get(session_id)
         if pipe_id:
             bridge = self._bridges.get(pipe_id)
-            if bridge: return await bridge.keep_alive(session_id, can_realtime=can_realtime, datacastst_statudatacastcast_status)
+            if bridge: return await bridge.keep_alive(session_id, can_realtime=can_realtime, datacast_statudatacastcast_status)
         return {"status": "error"}
 
     async def _on_session_closed(self: "FustordPipeManager", session_id):

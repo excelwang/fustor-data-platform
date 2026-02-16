@@ -455,21 +455,21 @@ class fustordClient:
                 time.sleep(interval)
         return False
 
-    def wait_for_datacastst_ready(selfdatacastcast_id: str, timeout: float = AGENT_READY_TIMEOUT, interval: float = POLL_INTERVAL) -> bool:
-        """Wait for an datacastst to be registered and reporting can_realtime=True."""
+    def wait_for_datacast_ready(selfdatacastcast_id: str, timeout: float = AGENT_READY_TIMEOUT, interval: float = POLL_INTERVAL) -> bool:
+        """Wait for an datacast to be registered and reporting can_realtime=True."""
         import logging
         logger = logging.getLogger(__name__)
         start = time.time()
         while time.time() - start < timeout:
             try:
                 sessions = self.get_sessions()
-                logger.debug(f"wait_for_datacastst_readydatacastcast_id}): Current sessions: datacasttacast_id': sdatacastdatacast_id'), 'can_realtime': s.get('can_realtime')} for s in sessions]}")
-                datacastst_session = next((s for s in sessions idatacastcast_id in s.gdatacasttacast_id", "")), None)
-                if datacastst_session andatacastcast_session.get("can_realtime"):
-                    logger.info(f"datacaststdatacastcast_id} is READY (sessidatacasttacast_session.get('session_id')})")
+                logger.debug(f"wait_for_datacast_readydatacastcast_id}): Current sessions: datacasttacast_id': sdatacastatacast_id'), 'can_realtime': s.get('can_realtime')} for s in sessions]}")
+                datacast_session = next((s for s in sessions idatacastcast_id in s.gdatacasttacast_id", "")), None)
+                if datacast_session andatacastcast_session.get("can_realtime"):
+                    logger.info(f"datacastatacastcast_id} is READY (sessidatacasttacast_session.get('session_id')})")
                     return True
             except Exception as e:
-                logger.debug(f"Error in wait_for_datacastst_ready: {e}")
+                logger.debug(f"Error in wait_for_datacast_ready: {e}")
                 pass
             time.sleep(interval)
         return False
