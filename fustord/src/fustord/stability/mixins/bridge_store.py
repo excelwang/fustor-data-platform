@@ -77,7 +77,7 @@ class PipeSessionStore:
             entry.last_activity = time.monotonic()
             entry.can_realtime = can_realtime
             if datacast_status:
-                entry.datacast_status datacastcast_status
+                entry.datacast_status = datacast_status
             
             count = self.heartbeat_count.get(session_id, 0) + 1
             self.heartbeat_count[session_id] = count
@@ -119,6 +119,6 @@ class PipeSessionStore:
             
         datacast_id = entry.task_id.split(':')[0] if ':' in entry.task_id else "unknown"
         return {
-            "datacast_id"datacastcast_id,
+            "datacast_id": datacast_id,
             "source_uri": entry.source_uri or ""
         }

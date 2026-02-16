@@ -93,20 +93,20 @@ class fustordClient:
     async def get_datacastConfig(self,datacastast_id: str, trigger: bool = False, filename: str = "default.yaml") -> Dict[str, Any]:
         """Get the cached configuration of an datacast."""
         params = {"trigger": str(trigger).lower(), "filename": filename}
-        response = await self.client.get(f"{self._management_path}/datacastsdatacastcast_id}/config", params=params)
+        response = await self.client.get(f"{self._management_path}/datacasts/{datacast_id}/config", params=params)
         response.raise_for_status()
         return response.json()
 
     async def update_datacastConfig_structured(self,datacastast_id: str, config: Dict[str, Any], filename: str = "default.yaml") -> Dict[str, Any]:
         """Update datacast config via structured JSON."""
         payload = {**config, "filename": filename}
-        response = await self.client.post(f"{self._management_path}/datacastsdatacastcast_id}/config/structured", json=payload)
+        response = await self.client.post(f"{self._management_path}/datacasts/{datacast_id}/config/structured", json=payload)
         response.raise_for_status()
         return response.json()
 
-    async def send_datacast_command(selfdatacastcast_id: str, command: Dict[str, Any]) -> Dict[str, Any]:
+    async def send_datacast_command(self, datacast_id: str, command: Dict[str, Any]) -> Dict[str, Any]:
         """Queue a command for a specific datacast."""
-        response = await self.client.post(f"{self._management_path}/datacastsdatacastcast_id}/command", json=command)
+        response = await self.client.post(f"{self._management_path}/datacasts/{datacast_id}/command", json=command)
         response.raise_for_status()
         return response.json()
 
@@ -204,7 +204,7 @@ class fustordClient:
         try:
             params = {"can_realtime": can_realtime}
             if datacast_status:
-                params["datacast_status"] datacastcast_status
+                params["datacast_status"] = datacast_status
             response = await self.client.post(f"{self._session_path}/{session_id}/heartbeat", json=params)
             response.raise_for_status()
             return response.json()

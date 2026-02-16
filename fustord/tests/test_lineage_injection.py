@@ -55,7 +55,7 @@ async def test_lineage_injection_flow():
     assert mock_handler.process_event.called
     processed_event = mock_handler.process_event.call_args[0][0]
     
-    assert processed_event.metadata["datacast_id"] ==datacastcast-XYZ"
+    assert processed_event.metadata["datacast_id"] == "datacast-XYZ"
     assert processed_event.metadata["source_uri"] == "nfs://server/share"
     
     await pipe.stop()

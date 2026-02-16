@@ -50,4 +50,5 @@ async def get_pipe_id_from_auth(x_api_key: str = Depends(_get_api_key)) -> str:
     )
 
 # All APIs must use get_view_id_from_auth.
+get_view_id_from_api_key = get_view_id_from_auth
 

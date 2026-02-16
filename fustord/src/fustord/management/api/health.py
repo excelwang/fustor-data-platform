@@ -30,14 +30,14 @@ async def get_component_health() -> Dict[str, Any]:
                 }
 
         # Get datacast health (if connected)
-        datacast_status = getattr(pipe, '_lasdatacastcast_status', {})
-        datacast_health datacastcast_status.get('component_health', {})
+        datacast_status = getattr(pipe, '_last_datacast_status', {})
+        datacast_health = datacast_status.get('component_health', {})
         
         result[pipe_id] = {
             "state": str(pipe.state),
             "handlers": handler_health,
-            "datacast_id"datacastcast_status.gdatacasttacast_id'),
-            "datacast_health"datacastcast_health,
+            "datacast_id": datacast_status.get('datacast_id'),
+            "datacast_health": datacast_health,
             "last_heartbeat": getattr(pipe, '_last_activity', 0)
         }
     return result

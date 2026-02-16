@@ -67,7 +67,7 @@ class ManagerCallbacksMixin:
         pipe_id = self._session_to_pipe.get(session_id)
         if pipe_id:
             bridge = self._bridges.get(pipe_id)
-            if bridge: return await bridge.keep_alive(session_id, can_realtime=can_realtime, datacast_statudatacastcast_status)
+            if bridge: return await bridge.keep_alive(session_id, can_realtime=can_realtime, datacast_status=datacast_status)
         return {"status": "error"}
 
     async def _on_session_closed(self: "FustordPipeManager", session_id):

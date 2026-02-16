@@ -90,7 +90,7 @@ class SessionEventsMixin:
     async def keep_session_alive(self, session_id: str, can_realtime: bool = False, datacast_status: Optional[Dict[str, Any]] = None) -> bool:
         """Update last activity for a session (stats only)."""
         if datacast_status:
-            self._last_datacast_status datacastcast_status
+            self._last_datacast_status = datacast_status
         return True 
 
     async def get_session_role(self, session_id: str) -> str:
