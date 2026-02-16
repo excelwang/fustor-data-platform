@@ -13,7 +13,7 @@ version: 1.0.0
 
 | 挑战 | 描述 | 影响 |
 | :--- | :--- | :--- |
-| **Clock Skew** | 不同 Agent 服务器与 NFS Server 之间存在时钟偏差 | 基于 mtime 的 Age 计算错误 |
+| **Clock Skew** | 不同 sensord 服务器与 NFS Server 之间存在时钟偏差 | 基于 mtime 的 Age 计算错误 |
 | **Clock Drift** | 物理时钟随温度、负载产生微小漂移 | 静态 Offset 校验失效 |
 | **Future Timestamp** | 用户 `touch` 或程序写入未来时间的文件 | **灾难性**：传统 `Max(mtime)` 逻辑时钟会被瞬间"撑大"，导致所有正常时间的新文件被误判为"旧数据" |
 | **Stagnation** | 系统无写入（静默）时，被动时钟停止更新 | Suspect 文件永远无法过期 |
@@ -26,18 +26,18 @@ Fustor 严格区分"数据一致性时间"与"系统运行时间"，并在架构
 
 | 层面 | 组件 | 核心逻辑 | 目的 |
 | :--- | :--- | :--- | :--- |
-| **Agent 层** | **Source FS Clock** | **影子参考系 (Shadow Reference Frame)** | 保护本地 LRU 和扫描频率，防止受 NFS 时间跳变干扰 |
+| **sensord 层** | **Source FS Clock** | **影子参考系 (Shadow Reference Frame)** | 保护本地 LRU 和扫描频率，防止受 NFS 时间跳变干扰 |
 | **Fusion 层** | **View FS Clock** | **统计逻辑水位线 (Watermark)** | 驱动全局一致性判定 (Suspect/Tombstone)，提供真实 Age |
 
 ---
 
-## 3. Agent 侧：Source FS 时钟 (本地保护)
+## 3. sensord 侧：Source FS 时钟 (本地保护)
 
-Agent 负责监控 NFS 变化。NFS 服务器的时钟跳变（例如被 `ntpdate` 强制同步）不应干扰 Agent 本身的扫描任务调度和内存淘汰逻辑。
+sensord 负责监控 NFS 变化。NFS 服务器的时钟跳变（例如被 `ntpdate` 强制同步）不应干扰 sensord 本身的扫描任务调度和内存淘汰逻辑。
 
 ### 3.1 影子参考系 (Shadow Reference Frame)
 
-Agent 在 Pre-scan 阶段计算 NFS 时钟与本地时钟的漂移量，此后的所有事件生成和 LRU 调度都使用补偿后的时间。
+sensord 在 Pre-scan 阶段计算 NFS 时钟与本地时钟的漂移量，此后的所有事件生成和 LRU 调度都使用补偿后的时间。
 
 **实现** (`source-fs/driver.py`):
 
@@ -56,11 +56,11 @@ lru_timestamp = server_mtime - drift_from_nfs
 self.watch_manager.schedule(path, lru_timestamp)
 ```
 
-**效果**：即使 NFS 上某个孤岛文件跳变到 2050 年，该文件在 Agent 内部也只会自保（计算出的归一化年龄依然是正常的），而不会导致全树的归一化年龄被拉大而导致其他文件被提前踢出缓存。
+**效果**：即使 NFS 上某个孤岛文件跳变到 2050 年，该文件在 sensord 内部也只会自保（计算出的归一化年龄依然是正常的），而不会导致全树的归一化年龄被拉大而导致其他文件被提前踢出缓存。
 
 ### 3.2 统一时间参考要求 (Unified Time Reference Requirement)
 
-**CRITICAL**: Agent 内部的 **所有** 事件生成组件必须统一使用漂移补偿后的 `Time + Drift` 作为事件 `index`。
+**CRITICAL**: sensord 内部的 **所有** 事件生成组件必须统一使用漂移补偿后的 `Time + Drift` 作为事件 `index`。
 
 **当前实现状态** (全部已统一 ✅)：
 
@@ -73,13 +73,13 @@ self.watch_manager.schedule(path, lru_timestamp)
 
 **禁止行为 (Split-Brain Timer)**:
 - 禁止任何组件使用未补偿的 `time.time()` 生成 `index`
-- **违反的后果**: 如果 Agent 时钟滞后于 NFS (`Drift > 0`)，未补偿的时间戳会导致 EventBus 检测到 Index Regression，根据单调递增原则**丢弃**合法的实时事件
+- **违反的后果**: 如果 sensord 时钟滞后于 NFS (`Drift > 0`)，未补偿的时间戳会导致 EventBus 检测到 Index Regression，根据单调递增原则**丢弃**合法的实时事件
 
 ### 3.3 职责限制
 
-Agent 侧的时钟逻辑主要用于本地资源管理 (LRU) 和 **维持内部事件单调性**，但也通过 `index` 字段将校准后的时间传递给 Fusion。时间异常的最终裁决仍由 Fusion 侧的 LogicalClock 负责。
+sensord 侧的时钟逻辑主要用于本地资源管理 (LRU) 和 **维持内部事件单调性**，但也通过 `index` 字段将校准后的时间传递给 Fusion。时间异常的最终裁决仍由 Fusion 侧的 LogicalClock 负责。
 
-Agent 发送的消息携带：
+sensord 发送的消息携带：
 - 原始 `mtime` (NFS 及其逻辑时间)
 - 校准后的 `index` (Shadow Reference Time，毫秒级)
 
@@ -87,7 +87,7 @@ Agent 发送的消息携带：
 
 ## 4. Fusion 侧：View FS 时钟 (全局裁决)
 
-Fusion 侧的逻辑时钟（Watermark）是系统的"真相之钟"，它决定了如何合并来自不同 Agent 的消息。
+Fusion 侧的逻辑时钟（Watermark）是系统的"真相之钟"，它决定了如何合并来自不同 sensord 的消息。
 
 ### 4.1 简化逻辑时钟算法 (Simplified Logical Clock)
 
@@ -113,7 +113,7 @@ if mtime and can_sample_skew:
     self._global_histogram[diff] += 1
 ```
 
-- **免疫力**: 使用 Fusion Local Time 作为参考系，免疫 Agent 时钟偏差
+- **免疫力**: 使用 Fusion Local Time 作为参考系，免疫 sensord 时钟偏差
 
 #### B. Mode Skew 选举
 
@@ -144,7 +144,7 @@ class LogicalClock:
     def update(self, mtime: Optional[float], can_sample_skew: bool = True) -> float:
         """更新时钟状态，返回当前水位线
         
-        注：始终使用 Fusion Local Time 作为物理参考，免疫 Agent 时钟偏差
+        注：始终使用 Fusion Local Time 作为物理参考，免疫 sensord 时钟偏差
         """
     
     def get_watermark(self) -> float:
@@ -184,14 +184,14 @@ def get_watermark(self) -> float:
 - 这确保了 Age 不会为负值，但可能导致冷启动时的 Suspect 判定偏宽松
 
 **建议处理方式**：
-- 在生产环境中，Agent 应优先建立 Realtime 连接，使 Fusion 有机会在 Snapshot 前校准 Skew
+- 在生产环境中，sensord 应优先建立 Realtime 连接，使 Fusion 有机会在 Snapshot 前校准 Skew
 - 对于关键场景，可在配置中增加 `initial_suspect_window` 参数，冷启动期间采用更宽松的 Suspect 阈值
 
 ---
 
 ## 6. 处理策略对照表
 
-| 场景 | Agent (Source FS) 行为 | Fusion (View FS) 行为 |
+| 场景 | sensord (Source FS) 行为 | Fusion (View FS) 行为 |
 | :--- | :--- | :--- |
 | **正常流逝** | 顺延 P99 校准，LRU 保持稳定 | Watermark 随流逝时间稳健推进 |
 | **mtime 跳向未来** | 归一化时间保持稳定 | **拒绝推进水位线**；标记该文件为 `integrity_suspect` |
@@ -210,14 +210,14 @@ def get_watermark(self) -> float:
 | **墓碑 TTL 清理** | Physical Time | `time.time() - tombstone[1]` (物理时间戳) | 清理超过 1 小时的墓碑 |
 | **陈旧证据保护** | Physical Time | `node.last_updated_at` vs `audit_start` | 保护审计后有实时更新的节点 |
 | **Suspect TTL 过期** | Monotonic Time | `time.monotonic()` vs `suspect_heap[0][0]` | 稳定的过期判定，不受系统时钟调整影响 |
-| **事件索引 (Index)** | Shadow Reference Time | `int((time.time() + drift_from_nfs) * 1000)` | Agent 漂移补偿后的毫秒级时间戳 |
+| **事件索引 (Index)** | Shadow Reference Time | `int((time.time() + drift_from_nfs) * 1000)` | sensord 漂移补偿后的毫秒级时间戳 |
 
 ---
 
 ## 8. 优势总结
 
-1.  **层级隔离**: Agent 保护本地资源，Fusion 保护全局一致性
-2.  **免疫单点故障**: 即使某个 Agent 时钟彻底错乱，Fusion 通过全局 Mode 选举将其样本识别为异常并剔除
+1.  **层级隔离**: sensord 保护本地资源，Fusion 保护全局一致性
+2.  **免疫单点故障**: 即使某个 sensord 时钟彻底错乱，Fusion 通过全局 Mode 选举将其样本识别为异常并剔除
 3.  **高精度与强健性**: 兼顾了实时快进的高精度和基准线流逝的强健性
 4.  **自愈能力**: 长期无写入时，Watermark 随物理时间自动推进，避免 Suspect 永久滞留
 5.  **可观测性**: 通过 `logical_clock.hybrid_now()` 可获取当前混合时间，便于监控和调试

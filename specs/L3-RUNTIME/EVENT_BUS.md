@@ -9,7 +9,7 @@ version: 1.0.0
 
 ## 1. 概述
 
-`MemoryEventBus` 是 Agent 内部的高吞吐、低延迟消息同步核心。它通过生产者-消费者模型实现数据读取 (Source) 与数据推送 (Sender) 的解耦。
+`MemoryEventBus` 是 sensord 内部的高吞吐、低延迟消息同步核心。它通过生产者-消费者模型实现数据读取 (Source) 与数据推送 (Sender) 的解耦。
 
 ## 2. 核心机制
 

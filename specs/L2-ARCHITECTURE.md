@@ -6,7 +6,7 @@ version: 1.0.0
 
 > This document defines the high-level component structure.
 > **Subject**: Role (Active) | Component (Passive)
-> - Role: Observes / Decides / Acts (Agent-driven)
+> - Role: Observes / Decides / Acts (sensord-driven)
 > - Component: Input / Output (System)
 
 ---
@@ -19,25 +19,25 @@ version: 1.0.0
 graph TD
     subgraph "Management Layer (运维层/可选)"
         L3_Fusion["fustor-view-mgmt (Orchestration/UI)"]
-        L3_Agent["fustor-source-mgmt (Command Support)"]
+        L3_sensord["fustor-source-mgmt (Command Support)"]
     end
 
     subgraph "Domain Layer (数据层/核心)"
         L2_Fusion["View Drivers (Arbitration/Merge)"]
-        L2_Agent["Source Drivers (FS/SQL/etc.)"]
+        L2_sensord["Source Drivers (FS/SQL/etc.)"]
     end
 
     subgraph "Stability Layer (稳定性层/基础)"
         L1_Session["SessionManager (Presence Tracking)"]
-        L1_AgentPipe["AgentPipe (Heartbeat/Umbilical Cord)"]
+        L1_sensordPipe["sensordPipe (Heartbeat/Umbilical Cord)"]
         L1_Transport["Sender/Receiver Drivers"]
     end
 
     %% Dependencies
     L3_Fusion -.->|Injects Admin Cmd| L1_Session
-    L1_AgentPipe <==>|Stability Heartbeat Tunnel| L1_Session
-    L1_AgentPipe ---|Spawns/Monitors| L2_Agent
-    L2_Agent ---|Produces Events| L1_AgentPipe
+    L1_sensordPipe <==>|Stability Heartbeat Tunnel| L1_Session
+    L1_sensordPipe ---|Spawns/Monitors| L2_sensord
+    L2_sensord ---|Produces Events| L1_sensordPipe
     L2_Fusion ---|Queries/Updates| L1_Session
 ```
 
@@ -48,16 +48,16 @@ graph TD
 
 ### 术语对称表
 
-| Agent 概念 | 职责 | Fusion 对应 | 职责 |
+| sensord 概念 | 职责 | Fusion 对应 | 职责 |
 |-----------|------|------------|------|
 | **Source** | 数据读取实现 | **View** | 数据处理实现 |
 | **Sender** | 传输通道（协议+凭证） | **Receiver** | 传输通道（协议+凭证） |
-| **AgentPipe** | 运行时绑定 (Source→Sender) | **FusionPipe** | 运行时绑定 (Receiver→View) |
+| **sensordPipe** | 运行时绑定 (Source→Sender) | **FusionPipe** | 运行时绑定 (Receiver→View) |
 
 ### 设计原则
 
-1. **完全松耦合**: Agent 和 Fusion 完全独立，第三方可单独使用任一端
-2. **对称架构**: Agent 与 Fusion 的概念一一对应
+1. **完全松耦合**: sensord 和 Fusion 完全独立，第三方可单独使用任一端
+2. **对称架构**: sensord 与 Fusion 的概念一一对应
 3. **分层清晰**: 参考 Netty 架构，职责分离
 4. **可扩展**: 支持多协议、多 Schema
 
@@ -98,7 +98,7 @@ extensions/
 │       │   └── models.py
 │       └── exceptions.py
 │
-├── fustor-agent-sdk/                # Agent 开发 SDK
+├── fustor-sensor-sdk/                # sensord 开发 SDK
 ├── fustor-fusion-sdk/               # Fusion 开发 SDK
 ```
 
@@ -165,18 +165,18 @@ fusion/                              # fustor-fusion
 
 ### COMPONENTS.TOPOLOGY.AGENT
 
-#### Agent 侧关系
+#### sensord 侧关系
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────────────┐
 │                                                                                      │
-│   Agent 侧                                                                           │
+│   sensord 侧                                                                           │
 │   ─────────                                                                          │
 │                                                                                      │
-│   Source ──┬── AgentPipe ──┬── Sender                                          │
+│   Source ──┬── sensordPipe ──┬── Sender                                          │
 │   Source ──┘               └── Sender                                          │
 │                                                                                      │
-│   约束: <source, sender> 组合唯一 (同一组合只能启动一个 AgentPipe)                 │
+│   约束: <source, sender> 组合唯一 (同一组合只能启动一个 sensordPipe)                 │
 │                                                                                      │
 └─────────────────────────────────────────────────────────────────────────────────────┘
 ```
@@ -208,17 +208,17 @@ fusion/                              # fustor-fusion
 
 ### COMPONENTS.TOPOLOGY.MESSAGE_SYNC
 
-#### Agent 消息同步架构
+#### sensord 消息同步架构
 
 **Component**: EventBus-based message synchronization.
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────────────┐
-│                              Agent 消息同步架构                                       │
+│                              sensord 消息同步架构                                       │
 ├─────────────────────────────────────────────────────────────────────────────────────┤
 │                                                                                      │
 │   ┌──────────────┐         ┌─────────────────┐         ┌──────────────┐             │
-│   │  FS Watch    │────────▶│    EventBus     │────────▶│  AgentPipe   │──▶ Fusion   │
+│   │  FS Watch    │────────▶│    EventBus     │────────▶│  sensordPipe   │──▶ Fusion   │
 │   │   Thread     │  put()  │   (MemoryBus)   │get()    │  Consumer    │             │
 │   └──────────────┘         └─────────────────┘         └──────────────┘             │
 │         │                         │                                                  │
@@ -231,7 +231,7 @@ fusion/                              # fustor-fusion
 │   1. 生产者-消费者完全解耦 (Source 产生事件不被推送阻塞)                                │
 │   2. 200ms 轮询超时 (低负载时延迟 ~0ms, 最坏 200ms)                                   │
 │   3. 批量获取已有事件 (有多少取多少, 不等待凑满 batch)                                  │
-│   4. 同源 AgentPipe 共享 Bus (节省资源, 减少重复读取)                                  │
+│   4. 同源 sensordPipe 共享 Bus (节省资源, 减少重复读取)                                  │
 │   5. 反向命令通道: Fusion 通过 Heartbeat 响应下发指令 (如 Real-Time Scan)                │
 │                                                                                      │
 └─────────────────────────────────────────────────────────────────────────────────────┘
@@ -240,7 +240,7 @@ fusion/                              # fustor-fusion
 
 #### EventBus 共享机制
 
-同源的多个 AgentPipe 可共享同一个 EventBus：
+同源的多个 sensordPipe 可共享同一个 EventBus：
 
 ```
 Source Signature = (driver, uri, credential)
@@ -262,7 +262,7 @@ Pipe-C (source=fs-archive)  ────▶ EventBus-2 (signature=fs:/data/archi
 
 ### Session 定义
 
-Session 是 **AgentPipe** 和 **FusionPipe** 之间的业务会话。
+Session 是 **sensordPipe** 和 **FusionPipe** 之间的业务会话。
 
 ### Session 数据结构
 
@@ -270,7 +270,7 @@ Session 是 **AgentPipe** 和 **FusionPipe** 之间的业务会话。
 @dataclass
 class Session:
     session_id: str                    # 唯一会话 ID
-    agent_task_id: str                 # AgentPipe 的 task_id
+    agent_task_id: str                 # sensordPipe 的 task_id
     fusion_pipe_id: str                # FusionPipe ID
     
     # 生命周期
@@ -289,7 +289,7 @@ class Session:
 ### Session 生命周期
 
 ```
-AgentPipe 启动
+sensordPipe 启动
     │
     ├── Sender.connect() ────────────────────▶ Receiver 验证 API Key
     │   POST /api/v1/pipe/sessions/              │
@@ -335,13 +335,13 @@ Pipe 停止 或 网络断开                     Session 超时检测
 
 ## COMPONENTS.CONFIG
 
-### Agent 配置结构
+### sensord 配置结构
 
 ```
 $FUSTOR_AGENT_HOME/
 ├── sources-config.yaml              # Source 定义
 ├── senders-config.yaml              # Sender 定义 (原 pushers-config.yaml)
-└── agent-pipes-config/              # AgentPipe 定义
+└── agent-pipes-config/              # sensordPipe 定义
     └── pipe-*.yaml
 ```
 
@@ -445,7 +445,7 @@ session_timeout_seconds: 30
 }
 ```
 
-Agent 收到响应后，设置心跳间隔为 `timeout_seconds / 2`。
+sensord 收到响应后，设置心跳间隔为 `timeout_seconds / 2`。
 
 ---
 
@@ -458,7 +458,7 @@ Agent 收到响应后，设置心跳间隔为 `timeout_seconds / 2`。
                     ┌────────────────┼────────────────┐
                     │                │                │
                     ▼                ▼                ▼
-           fustor-agent-sdk   fustor-schema-*   fustor-fusion-sdk
+           fustor-sensor-sdk   fustor-schema-*   fustor-fusion-sdk
                     │                │                │
           ┌─────────┼────────────────┼────────────────┼─────────┐
           │         │                │                │         │
@@ -476,9 +476,9 @@ Agent 收到响应后，设置心跳间隔为 `timeout_seconds / 2`。
 
 ### Peer-to-Peer 自主模型
 
-Fustor 将 Agent 和 Fusion 视为 Stability Layer 的 **平等租户 (Peer Tenants)**，而非主从关系：
+Fustor 将 sensord 和 Fusion 视为 Stability Layer 的 **平等租户 (Peer Tenants)**，而非主从关系：
 
-*   **主动感知 (Proactive)**: Agent 拥有原生的领域冲动 (Domain Layer)，会根据配置自主启动监听并租用 Stability 管道推送数据。不需要 Fusion 的"启动命令"。
+*   **主动感知 (Proactive)**: sensord 拥有原生的领域冲动 (Domain Layer)，会根据配置自主启动监听并租用 Stability 管道推送数据。不需要 Fusion 的"启动命令"。
 *   **对等对称**: 双方使用相同的 Stability 原语进行通信。区别仅在于 Domain 驱动的类型：一端是 **感知源 (Source)**，另一端是 **聚合视图 (View)**。
 *   **生存隔离**: 管理行为 (Management Layer) 的失效不应影响数据面 (Domain Layer) 的自主同步与生命体征 (Stability Layer)。
 
@@ -528,7 +528,7 @@ Domain/Management 服务不再拥有专用命令通道，而是统一作为 Clie
 #### 配置格式
 
 ```yaml
-# Agent 端配置示例
+# sensord 端配置示例
 pipes:
   my-agent-pipe:
     source: shared-fs

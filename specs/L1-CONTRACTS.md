@@ -2,7 +2,7 @@
 version: 1.0.0
 invariants:
   - id: INV_CONTROL_SURVIVES_DATA
-    statement: "The Control Plane must survive the Data Plane. Business logic errors must never terminate the Agent or Fusion process."
+    statement: "The Control Plane must survive the Data Plane. Business logic errors must never terminate the sensord or Fusion process."
   - id: INV_API_NEVER_503
     statement: "The /fs/tree API endpoint must always return a valid response, never 503."
   - id: INV_LAYER_ORDER
@@ -11,7 +11,7 @@ invariants:
 
 # L1: Fustor Contracts
 
-> **Subject**: Agent | System. Pattern: `[Agent|System] MUST [action]`
+> **Subject**: sensord | System. Pattern: `[sensord|System] MUST [action]`
 > - Responsibility: WHO is accountable
 > - Verification: HOW to measure compliance
 
@@ -28,7 +28,7 @@ invariants:
 
 - **NEVER_STOP_RETRY**: System MUST NOT stop retrying after reaching the alert threshold; it MUST continue retrying at max interval indefinitely.
   > Responsibility: Survival — ensure upstream recovery triggers automatic reconnection.
-  > Verification: AgentPipe remains in RECONNECTING state and retries persist beyond alert threshold.
+  > Verification: sensordPipe remains in RECONNECTING state and retries persist beyond alert threshold.
 
 ### Exception Isolation
 
@@ -36,7 +36,7 @@ invariants:
   > Responsibility: Fault isolation — prevent individual file errors from cascading.
   > Verification: `PermissionError`, `FileNotFoundError` are logged and skipped; subsequent files continue processing.
 
-- **NO_CRASH_PRINCIPLE**: System MUST NOT crash on any exception. Agent and Fusion MUST log errors and continue operation.
+- **NO_CRASH_PRINCIPLE**: System MUST NOT crash on any exception. sensord and Fusion MUST log errors and continue operation.
   > Responsibility: Indestructibility — maintain process uptime.
   > Verification: Zero process terminations due to business logic exceptions in production.
 
@@ -70,6 +70,48 @@ invariants:
 - **EVENTBUS_RING_BUFFER**: System MUST use a bounded ring buffer for EventBus, with automatic fast/slow consumer splitting triggered at high capacity usage.
   > Responsibility: Memory safety — prevent OOM and head-of-line blocking.
   > Verification: EventBus never exceeds configured buffer size; splitting occurs when lag exceeds threshold.
+
+---
+
+## CONTRACTS.LIFECYCLE
+
+### Hot Upgrade & Config
+
+- **HOT_UPGRADE_ATOMICITY**: sensord MUST guarantee atomic, in-place replacement of the sensord process logic.
+  > Responsibility: Survival — Ensure zero downtime during upgrades.
+  > Verification: Process PID may change, but pipe connections MUST remain active or reconnect within 1 retry interval.
+
+- **TARGETED_DELIVERY**: Fusion MUST be able to target a specific sensord instance for upgrade, ignoring others sharing the same Session.
+  > Responsibility: Operations — Canary deployments.
+  > Verification: Only the targeted sensordID receives the upgrade command.
+
+- **CONFIG_RELOAD_ATOMICITY**: Configuration changes MUST apply to the entire sensord process state atomically.
+  > Responsibility: Consistency — No partial configuration states (e.g., half-old, half-new).
+  > Verification: All components switch to new config revision effectively simultaneously.
+
+### Health & Remediation
+
+- **ZOMBIE_DETECTION**: Fusion MUST detect sensords that maintain Heartbeat but fail to send Data events for > `threshold` period.
+  > Responsibility: Health — Detect "brain-dead" sensors.
+  > Verification: Alert triggered when heartbeat ok but data flow zero for X minutes.
+
+- **REMOTE_REMEDIATION**: Fusion MUST be able to push a "Kill & Restart" or "Clean Slate Config" command to a Zombie sensord.
+  > Responsibility: Survival — Remote fix for non-responsive data planes.
+  > Verification: Zombie sensor receives command, terminates, restarts, and resumes normal operation.
+
+## CONTRACTS.AUTONOMY
+
+### Intrinsic Drive
+
+- **INTRINSIC_DRIVE**: sensord Domain Layer MUST initiate data scanning and synchronization based on local configuration, WITHOUT waiting for Fusion commands.
+  > Responsibility: Autonomy — sensord is a proactive sensor, not a passive remote hook.
+  > Verification: sensord starts scanning immediately upon boot/config load, even if Fusion is unreachable.
+
+### Multi-Target Renting
+
+- **MULTI_TARGET_RENTING**: sensord Domain Layer MUST be able to push data to multiple independent Receivers (Fusion, Local-Log, 3rd-Party) simultaneously using the same Stability primitives.
+  > Responsibility: Decoupling — Data ownership belongs to sensord, not Fusion.
+  > Verification: One source event replicated to multiple configured pipes/senders.
 
 ---
 
@@ -171,7 +213,7 @@ invariants:
 
 > Source: STABILITY_NEUTRALITY, 2026-02-16T0220-neutral-addressing-primitives.md
 
-- **ADDRESSING_ONLY**: Every packet sent from Fusion to Agent MUST be either `unicast(target_id)` or `broadcast(view_id)`.
+- **ADDRESSING_ONLY**: Every packet sent from Fusion to sensord MUST be either `unicast(target_id)` or `broadcast(view_id)`.
   > Responsibility: Routing — purely mechanical packet delivery.
   > Verification: Stability Layer code contains only `dispatch(header, payload)`.
 
@@ -185,7 +227,7 @@ invariants:
 
 - **AUTO_RECONNECT**: All remote operations (even destructive ones like restart) MUST be auto-recovered by Domain heartbeat reconnection.
   > Responsibility: Resilience — umbilical cord stays ready when physically reachable.
-  > Verification: Agent reconnects within 2× backoff interval after process restart.
+  > Verification: sensord reconnects within 2× backoff interval after process restart.
 
 ---
 

@@ -25,10 +25,10 @@ class TaskOrchestrator:
         """
         pass
 
-    async def agent_targeted_dispatch(self, agent_id: str, cmd: Dict) -> Dict:
+    async def sensord_targeted_dispatch(self, sensord_id: str, cmd: Dict) -> Dict:
         """
         精准选路逻辑：用于升级/停止。
-        1. 确定 AgentID 关联的 Session (优先 Leader)
+        1. 确定 sensordID 关联的 Session (优先 Leader)
         2. Stability.unicast()
         """
         pass
@@ -42,6 +42,6 @@ class TaskOrchestrator:
 - **场景**: 数据补全 (Scan), 配置推送 (Reload)
 
 ### 3.2 单播 (Unicast)
-- **目标**: Agent ID
-- **原语**: `Stability.unicast(agent_id)`
+- **目标**: sensord ID
+- **原语**: `Stability.unicast(sensord_id)`
 - **场景**: 进程管控 (Upgrade, Stop, Restart)

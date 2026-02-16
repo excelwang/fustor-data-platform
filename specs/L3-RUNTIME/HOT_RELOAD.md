@@ -14,7 +14,7 @@ version: 1.0.0
 
 ## 1. 概述
 
-Fustor 的 Agent 和 Fusion 均支持 **基于 SIGHUP 信号的配置热重载**，允许在不停止服务的情况下动态增减管道（Pipe）。
+Fustor 的 sensord 和 Fusion 均支持 **基于 SIGHUP 信号的配置热重载**，允许在不停止服务的情况下动态增减管道（Pipe）。
 
 > [!IMPORTANT]
 > **设计硬约束**：热重载**禁止修改**任何已运行组件（不局限于 Pipe）的配置。只能**增加或删除**组件。
@@ -24,11 +24,11 @@ Fustor 的 Agent 和 Fusion 均支持 **基于 SIGHUP 信号的配置热重载**
 
 ## 2. 使用方式
 
-### 2.1 Agent
+### 2.1 sensord
 
 ```bash
 # 修改 YAML 配置后，执行：
-fustor-agent reload
+fustor-sensord reload
 ```
 
 ### 2.2 Fusion
@@ -44,20 +44,20 @@ fustor-fusion reload
 
 ## 3. 内部执行流程
 
-### 3.1 Agent 热重载
+### 3.1 sensord 热重载
 
 ```mermaid
 sequenceDiagram
     participant User
-    participant CLI as fustor-agent reload
-    participant Daemon as Agent Daemon
+    participant CLI as fustor-sensord reload
+    participant Daemon as sensord Daemon
     participant App as App.reload_config()
-    participant Config as AgentConfigLoader
+    participant Config as sensordConfigLoader
 
-    User->>CLI: fustor-agent reload
+    User->>CLI: fustor-sensord reload
     CLI->>Daemon: os.kill(pid, SIGHUP)
     Daemon->>App: handle_reload → create_task(reload_config())
-    App->>Config: agent_config.reload()
+    App->>Config: sensord_config.reload()
     Config-->>App: 重新读取所有 YAML 文件
     App->>App: get_diff(current_running_ids)
     App->>App: 停止 removed pipes
@@ -68,7 +68,7 @@ sequenceDiagram
 **关键代码路径**：
 - CLI 入口: `cli.py` → `reload()` → 发送 SIGHUP
 - 信号处理: `runner.py` → `handle_reload()` → `app.reload_config()`
-- Diff 逻辑: `app.py` → `reload_config()` → `agent_config.get_diff()`
+- Diff 逻辑: `app.py` → `reload_config()` → `sensord_config.get_diff()`
 
 ### 3.2 Fusion 热重载
 
@@ -138,12 +138,12 @@ pipes:
         source: ["path:string"]
 ```
 
-然后执行 `fustor-agent reload`。Diff 会检测到 `removed={my-pipe}, added={my-pipe-v2}`。
+然后执行 `fustor-sensord reload`。Diff 会检测到 `removed={my-pipe}, added={my-pipe-v2}`。
 
 ### 方式二：重启
 
 ```bash
-fustor-agent stop && fustor-agent start -D
+fustor-sensord stop && fustor-sensord start -D
 ```
 
 ---

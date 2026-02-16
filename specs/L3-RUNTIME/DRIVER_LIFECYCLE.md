@@ -23,7 +23,7 @@ signature = f"{uri}#{hash(credential)}"
 
 ### 2.2 行为特征
 
--   **共享实例**: 不同 AgentPipe 配置若指向同一 URI 且凭证相同，将共享同一个 Driver 实例。
+-   **共享实例**: 不同 sensordPipe 配置若指向同一 URI 且凭证相同，将共享同一个 Driver 实例。
 -   **资源互斥**: 共享实例意味着共享底层的 WatchManager 和 EventQueue (EventBus)。
 
 ### 2.3 生命周期约束
