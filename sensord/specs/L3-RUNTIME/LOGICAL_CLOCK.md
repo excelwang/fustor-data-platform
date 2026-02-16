@@ -57,9 +57,11 @@ self.watch_manager.schedule(path, lru_timestamp)
 | **Realtime Handler** | `int((time.time() + drift) * 1000)` | 实时发生的补偿时间戳（对齐存储面） |
 | **Scanner (Snapshot/Audit)** | `int((time.time() + drift) * 1000)` | 扫描发现时的补偿时间戳 |
 
-**设计意义**：
-- **单调性**: 即使本机时钟大幅落后于存储服务器，通过补偿后的 `index` 也能确保事件在 **Consumer** 侧不会被误判为“过期数据”而丢弃。
 - **有序性**: 确保 `realtime` 消息与 `audit` 补偿消息在同一逻辑时间轨道上竞争。
+
+**禁止行为 (Split-Brain Timer)**:
+- 禁止任何组件使用未补偿的 `time.time()` 生成 `index`
+- **违反的后果**: 如果 sensord 时钟滞后于 NFS (`Drift > 0`)，未补偿的时间戳会导致 EventBus 检测到 Index Regression，根据单调递增原则**丢弃**合法的实时事件
 
 ---
 

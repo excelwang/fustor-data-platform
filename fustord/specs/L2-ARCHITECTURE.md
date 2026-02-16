@@ -3,6 +3,33 @@
 > Type: architecture | structure
 > Layer: L2
 
+---
+
+## 0. Ecosystem Algebra (The Universal Laws)
+
+> **Binding**: All components (Sensord, Fustord, SDKs).
+
+### 0.1 The Relational Pair (Duality)
+The Fustor ecosystem is defined by the mapping between **Sources** and **Views**.
+$$ \text{Sensord(Source)} \xrightarrow{SDP \mid SCP} \text{Fustord(View)} $$
+
+### 0.2 Structural Algebra (n:m Mapping)
+1. **Receiver : Pipe = 1 : N** (Demultiplexing)
+2. **View : Pipe = N : M** (Aggregation)
+
+### 0.3 Layer Algebra (Nested Invariants)
+Every node MUST adhere to the **Stability $\succ$ Domain $\succ$ Management** hierarchy.
+- **Stability (The Shell)**: MUST be neutral, mechanical, and indestructible.
+- **Domain (The Payload)**: MUST be autonomous and logical.
+- **Management (The Plugin)**: MUST be optional and operational.
+
+### 0.4 Protocol Algebra (The Umbilical Cord)
+- **Control Plane (SCP)**: Unicast/Broadcast semantics for Survival & Orchestration.
+- **Data Plane (SDP)**: Idempotent event streams for Consistency.
+- **Survival Rule**: SCP MUST persist even if the Data Plane is crashing or corrupted.
+
+---
+
 ## 1. System Overview
 
 **Fustord** is a centralized aggregator and synchronization engine. It acts as the "Server" in the Fustor peer-to-peer model, responsible for:
@@ -29,6 +56,7 @@ Fustord mirrors Sensord's architecture:
 | **Pipeline** | `SensordPipe` | `FustordPipe` |
 | **Flow** | Source → Sender | Receiver → View |
 | **Stability** | Active Push (Client) | Passive Ingestion (Server) |
+| **Protocol Carrier** | `SenderHandler` (sensord) | `Receiver` (fustord) ([spec]) |
 
 ---
 
@@ -98,7 +126,35 @@ Fustord manages the lifecycle of connected Sensord nodes via `SessionManager`.
 
 ---
 
-## 6. Configuration Structure
+## 6. Unified Renting Model & Orchestration
+
+Domain/Management services utilize the Stability Layer as a generic "renting" platform.
+
+### 6.1 Task Types
+
+#### 1. Broadcast Task (Content Compensation)
+- **Purpose**: Data Compensation (e.g., `scan` / On-Demand Find).
+- **Target**: All active sessions for a specific `View`.
+- **Primitive**: `Stability.broadcast(view_id)`
+- **Success Criteria**: Quorum/Full (Aggregate data from all sources).
+- **Failure**: Partial Data (Blind spots).
+
+#### 2. Targeted Task (State Mutation)
+- **Purpose**: Control & Lifecycle (e.g., `upgrade`, `reload`, `stop`).
+- **Target**: Specific `Sensord` instance (via `task_id`).
+- **Primitive**: `Stability.unicast(sensord_id)`
+- **Success Criteria**: Ack from target.
+- **Failure**: Control Loss.
+
+### 6.2 TaskOrchestrator
+A dedicated service (`TaskOrchestrator`) isolates dispatch complexity:
+- **Input**: High-level Intent (`scan view:research`)
+- **Resolution**: Resolves `view_id` to list of active `session_ids`.
+- **Dispatch**: Uses `SessionManager` to push commands via Heartbeat response.
+
+---
+
+## 7. Configuration Structure
 
 Settings are loaded from `$FUSTORD_HOME`.
 
@@ -123,13 +179,14 @@ pipe-1:
 
 ---
 
-## 7. API Surface
+## 8. API Surface
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| PUT | `/api/v1/pipe/session` | Create/Renew Session |
-| POST | `/api/v1/pipe/{sess_id}/events` | Ingest Event Batch |
-| POST | `/api/v1/pipe/{sess_id}/heartbeat` | Keep-Alive & Get Commands |
-| DELETE | `/api/v1/pipe/{sess_id}` | Close Session |
+| PUT | `/api/v1/pipe/session` | Create/Renew Session (SCP) |
+| POST | `/api/v1/pipe/{sess_id}/events` | Ingest Event Batch (SDP) |
+| POST | `/api/v1/pipe/{sess_id}/heartbeat` | Keep-Alive & Get Commands (SCP) |
+| DELETE | `/api/v1/pipe/{sess_id}` | Close Session (SCP) |
 | GET | `/api/v1/views/{view_id}/stats` | Query View Statistics |
 | GET | `/api/v1/views/{view_id}/tree` | Browse View Directory Tree |
+

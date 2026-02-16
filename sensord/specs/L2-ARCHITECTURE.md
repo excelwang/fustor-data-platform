@@ -301,3 +301,17 @@ sensord 采用 **Peer-to-Peer** 协作模型，而非简单的 Agent 模型：
 *   **租用模型 (Renting)**: sensord 视外部系统为“信道提供方”。当需要发布数据时，通过 SCP 启动一个租约进程（Session）。
 *   **生存隔离**: 底层 `Stability Layer` 必须在逻辑上隔离各 Session。
 *   **控制与数据解耦**: SCP 维持生存，SDP 维持契约。两者在协议层面互不干扰。
+
+### 9.1 Unified Renting Model (Task Types)
+
+Sensord 作为租户，通过 Stability Layer (SCP) 接收两种类型的任务租约：
+
+#### 1. Broadcast Task (内容补偿)
+- **场景**: `scan` (On-Demand Find)
+- **行为**: Fustord 广播给同一 View 的所有 Sensord。
+- **Sensord 职责**: 执行只读扫描，通过 SDP 回传数据。
+
+#### 2. Targeted Task (状态变更)
+- **场景**: `upgrade`, `reload`, `stop`
+- **行为**: Fustord 单播给特定 task_id 的 Sensord。
+- **Sensord 职责**: 执行自身状态变更或重启。

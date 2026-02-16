@@ -25,7 +25,33 @@ version: 1.0.0
 
 ---
 
-## 2. 搭载模型 (Piggyback)
+## 2. 接口定义 (Interface Definition)
+
+建议封装通用的 `TaskOrchestrator` 服务，隔离分发细节：
+
+```python
+class TaskOrchestrator:
+    async def view_broadcast(self, view_id: str, cmd: Dict) -> List[Dict]:
+        """
+        全量广播逻辑：用于回退扫描。
+        1. 确定 ViewID 关联的所有 Session
+        2. Stability.broadcast()
+        3. 汇聚结果
+        """
+        pass
+
+    async def sensord_targeted_dispatch(self, sensord_id: str, cmd: Dict) -> Dict:
+        """
+        精准选路逻辑：用于升级/停止。
+        1. 确定 sensordID 关联的 Session (优先 Leader)
+        2. Stability.unicast()
+        """
+        pass
+```
+
+---
+
+## 3. 搭载模型 (Piggyback)
 
 由于 **Sensord** 与 **fustord** 之间通常是基于 HTTP 的 Pull 模型（心跳由 Sensord 发起），指令分发采用 **搭载响应模式**：
 1. `SessionManager` 将待发指令存入目标 Session 的指令队列。

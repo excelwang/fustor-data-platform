@@ -2,9 +2,10 @@
 version: 1.0.0
 ---
 
-# L3: [workflow] Fustor 运行时行为与生命周期 (Runtime Behavior)
+# L3: [workflow] [fustord] Peer Session & Fault Tolerance
 
 > Type: workflow | decision
+> Layer: Stability Layer (SCP Handling)
 > Layer: Domain Layer
 
 > 版本: 1.0.0

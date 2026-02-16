@@ -2,7 +2,7 @@
 version: 1.0.0
 ---
 
-# L3: [algorithm] [Fustord] View FS Logical Clock (Watermark)
+# L3: [algorithm] [fustord] View FS Logical Clock (Watermark)
 
 > Type: algorithm
 > Layer: Domain Layer (Global Consistency)
@@ -43,13 +43,40 @@ fustord 采用 **Mode Skew (众数偏斜)** 算法来计算全局水位线。
 - **`fustord_local_time`**: fustord 本机物理时间 (Trust Anchor)。
 - **`event.mtime`**: 来自不同 Sensord 的原始文件时间。
 
-### 3.2 算法逻辑
-1. **Sampling**: 对每个 Realtime 事件，计算 `diff = fustord_time - event.mtime`。
-2. **Voting**: 统计 `diff` 的直方图，选取出现频率最高的值 (Mode) 作为 **Global Skew**。
-3. **Calculation**:
-   ```python
-   Watermark = fustord_Physical_Time - Global_Skew
-   ```
+### 3.2 算法实现 (Implementation Details)
+
+#### A. Skew 采样 (Sampling)
+
+对于每个 Realtime 事件，计算 fustord 本地时间与 mtime 的差异：
+
+```python
+if mtime and can_sample_skew:
+    reference_time = time.time()  # fustord Local Time
+    diff = int(reference_time - mtime)
+    self._global_buffer.append(diff)
+    self._global_histogram[diff] += 1
+```
+
+- **免疫力**: 使用 fustord Local Time 作为参考系，免疫 sensord 时钟偏差
+
+#### B. Mode Skew 选举 (Voting)
+
+```python
+def _get_global_skew_locked(self) -> float:
+    mode_key = self._global_histogram.most_common(1)[0][0]
+    return float(mode_key)
+```
+
+- 选取出现频率最高 (Mode) 的差异值作为权威偏差
+
+#### C. Watermark 计算 (Calculation)
+
+```python
+def get_watermark(self) -> float:
+    baseline = time.time() - self._compute_mode_skew()
+    # 冷启动保护: 即使 _watermark 未被有效推进，也会回退到当前物理时间作为保底
+    return max(self._watermark, baseline)
+```
 
 ### 3.3 免疫特性 (Immunity)
 - **免疫 Future Timestamp**: 即使某个 Sensord 发来 2050 年的 `mtime`，由于它是个例，不会成为 Mode (众数)，因此会被算法忽略。
@@ -63,7 +90,7 @@ fustord 采用 **Mode Skew (众数偏斜)** 算法来计算全局水位线。
 | :--- | :--- |
 | **Normal** | Watermark 随物理时间线性推进。 |
 | **Future Mtime (Abnormal)** | 拒绝推进 Watermark。该异常文件会被标记为 `Suspect` (因 `mtime > watermark` 极大)。 |
-| **Cold Start** | 在收集足够样本前，回退使用物理时间 (Safe Fallback)。可能导致暂时性的 Suspect 判定宽松。 |
+| **Cold Start** | **Safe Fallback**: 在收集足够样本前，回退使用物理时间。可能导致暂时性的 Suspect 判定宽松。 |
 
 ---
 
