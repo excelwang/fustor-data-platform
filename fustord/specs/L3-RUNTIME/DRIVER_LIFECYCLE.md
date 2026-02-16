@@ -24,11 +24,13 @@ version: 1.0.0
 
 ---
 
-## 2. 交互 (Interactions)
-
-View 通过 **SCP** 控制面响应向 **Sensord** 下发 `scan` 或 `audit` 指令。
-
-### 2.3 生命周期约束
+### 1.3 资源管理 (Resource Management)
 
 -   **引用计数**: Driver 内部**不**维护引用计数（简化设计）。
 -   **显式销毁**: 必须调用 `driver.close()` 或 `FSDriver.invalidate(uri, cred)` 才能从缓存中移除。
+
+---
+
+## 2. 交互 (Interactions)
+
+View 通过 **SCP** 控制面响应向 **Sensord** 下发 `scan` 或 `audit` 指令。
