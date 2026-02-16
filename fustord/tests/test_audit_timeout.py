@@ -1,11 +1,11 @@
 import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
 import time
-from fustord.runtime.audit_supervisor import check_audit_timeout
+from fustord.domain.audit_supervisor import check_audit_timeout
 
 @pytest.fixture
 def mock_runtime_objects():
-    with patch("fustord.runtime.audit_supervisor.runtime_objects") as mock_ro:
+    with patch("fustord.domain.audit_supervisor.runtime_objects") as mock_ro:
         mock_pm = MagicMock()
         mock_ro.pipe_manager = mock_pm
         

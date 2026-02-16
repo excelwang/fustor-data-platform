@@ -20,7 +20,7 @@ from .services.drivers.sender_driver import SenderDriverService
 from .services.instances.bus import EventBusService
 from .services.instances.pipe import PipeInstanceService
 from .runtime.sender_handler_adapter import SenderHandlerAdapter
-from .runtime.source_handler_adapter import SourceHandlerAdapter
+from .domain.source_handler_adapter import SourceHandlerAdapter
 
 # State file path
 HOME_FUSTOR_DIR = get_fustor_home_dir()

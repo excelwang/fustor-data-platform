@@ -10,21 +10,21 @@ import sys
 import logging
 
 # --- Configuration and Core Imports ---
-from .config.unified import fustord_config
+from fustord.config.unified import fustord_config
 from fustor_core.common import logging_config
 
 logger = logging.getLogger(__name__)
 
 # --- Ingestor Service Specific Imports ---
-from .core.session_manager import session_manager
-from .view_state_manager import view_state_manager
-from . import runtime_objects
+from fustord.stability.session_manager import session_manager
+from fustord.domain.view_state_manager import view_state_manager
+from fustord.stability import runtime_objects
 from fustor_core.event import EventBase
 
 # --- View Manager Module Imports ---
-from .view_manager.manager import process_event as process_single_event, cleanup_all_expired_suspects
-from .api.views import view_router
-from .runtime.audit_supervisor import check_audit_timeout
+from fustord.domain.view_manager.manager import process_event as process_single_event, cleanup_all_expired_suspects
+from fustord.management.api.views import view_router
+from fustord.domain.audit_supervisor import check_audit_timeout
 
 
 @asynccontextmanager
@@ -32,7 +32,7 @@ async def lifespan(app: FastAPI):
     logger.info("Application startup initiated.")
     
     # Initialize the Pipe Manager
-    from .runtime.pipe_manager import pipe_manager as pm
+    from fustord.stability.pipe_manager import pipe_manager as pm
     runtime_objects.pipe_manager = pm
     
     # 2. Setup Logging from config
@@ -84,7 +84,7 @@ async def lifespan(app: FastAPI):
             receiver.stop = noop
     
     # Setup Pipe API routers
-    from .api.pipe import setup_pipe_routers
+    from fustord.management.api.pipe import setup_pipe_routers
     setup_pipe_routers()
     
     # Start all pipes and receivers
@@ -127,7 +127,7 @@ async def lifespan(app: FastAPI):
             await pm.reload()
             
             # 3. Refresh View API routers
-            from .api.views import setup_view_routers
+            from fustord.management.api.views import setup_view_routers
             setup_view_routers()
             logger.info("Refreshed View API routers")
             logger.info("Hot reload complete")
@@ -186,16 +186,14 @@ def create_app() -> FastAPI:
     fustord_config.ensure_loaded()
 
     # 2. Setup View routers
-    from .api.views import setup_view_routers
+    from fustord.management.api.views import setup_view_routers
     setup_view_routers()
 
     # --- Register Routers ---
-    from .api.pipe import pipe_router
-    from .api.session import session_router
-    from .api.pipe import pipe_router
-    from .api.session import session_router
-    from .api.views import view_router
-    from .api.health import health_router
+    from fustord.management.api.pipe import pipe_router
+    from fustord.management.api.session import session_router
+    from fustord.management.api.views import view_router
+    from fustord.management.api.health import health_router
 
     api_v1 = APIRouter()
     api_v1.include_router(pipe_router, prefix="/pipe")

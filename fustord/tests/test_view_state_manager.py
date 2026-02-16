@@ -1,7 +1,7 @@
 import pytest
 import asyncio
 from datetime import datetime
-from fustord.view_state_manager import ViewStateManager, ViewState
+from fustord.domain.view_state_manager import ViewStateManager, ViewState
 
 @pytest.fixture
 def state_manager():

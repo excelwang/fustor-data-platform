@@ -1,7 +1,7 @@
 import pytest
 import asyncio
 from unittest.mock import AsyncMock, MagicMock
-from sensord.runtime.source_handler_adapter import SourceHandlerAdapter
+from sensord.domain.source_handler_adapter import SourceHandlerAdapter
 from fustor_core.drivers import SourceDriver
 
 class MockDriver:

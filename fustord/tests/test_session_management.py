@@ -10,11 +10,11 @@ from dataclasses import dataclass
 import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from fustord.api.session import create_session
-from fustord.core.session_manager import session_manager
-from fustord.view_state_manager import view_state_manager
-from fustord.runtime.fustord_pipe import FustordPipe
-from fustord.runtime.session_bridge import create_session_bridge
+from fustord.management.api.session import create_session
+from fustord.stability.session_manager import session_manager
+from fustord.domain.view_state_manager import view_state_manager
+from fustord.stability.pipe import FustordPipe
+from fustord.stability.session_bridge import create_session_bridge
 from fustord import runtime_objects
 
 
@@ -35,7 +35,7 @@ def make_session_config(allow_concurrent_push=False, session_timeout_seconds=30)
 async def setup_dummy_pipe(view_id: str, allow_concurrent_push: bool = False):
     """Register a dummy pipe in the global manager for API tests."""
     if not runtime_objects.pipe_manager:
-        from fustord.runtime.pipe_manager import FustordPipeManager
+        from fustord.stability.pipe_manager import FustordPipeManager
         runtime_objects.pipe_manager = FustordPipeManager()
     
     mock_handler = MagicMock()
@@ -70,7 +70,7 @@ async def test_session_creation_multiple_servers():
     
     config = make_session_config(allow_concurrent_push=False, session_timeout_seconds=1)
     
-    with patch('fustord.api.session._get_session_config', return_value=config):
+    with patch('fustord.management.api.session._get_session_config', return_value=config):
         payload1 = type('CreateSessionPayload', (), {})()
         payload1.task_id = "task_server1"
         payload1.session_timeout_seconds = None
@@ -116,7 +116,7 @@ async def test_session_creation_same_task_id():
     
     config = make_session_config(allow_concurrent_push=False, session_timeout_seconds=30)
     
-    with patch('fustord.api.session._get_session_config', return_value=config):
+    with patch('fustord.management.api.session._get_session_config', return_value=config):
         payload1 = type('CreateSessionPayload', (), {})()
         payload1.task_id = "same_task"
         payload1.session_timeout_seconds = None
@@ -156,7 +156,7 @@ async def test_session_creation_different_task_id():
     
     config = make_session_config(allow_concurrent_push=False, session_timeout_seconds=30)
     
-    with patch('fustord.api.session._get_session_config', return_value=config):
+    with patch('fustord.management.api.session._get_session_config', return_value=config):
         payload1 = type('CreateSessionPayload', (), {})()
         payload1.task_id = "different_task_1"
         payload1.session_timeout_seconds = None
@@ -198,7 +198,7 @@ async def test_concurrent_push_allowed():
     
     config = make_session_config(allow_concurrent_push=True, session_timeout_seconds=30)
     
-    with patch('fustord.api.session._get_session_config', return_value=config):
+    with patch('fustord.management.api.session._get_session_config', return_value=config):
         payload1 = type('CreateSessionPayload', (), {})()
         payload1.task_id = "concurrent_task_1"
         payload1.session_timeout_seconds = None
@@ -238,7 +238,7 @@ async def test_same_task_id_with_concurrent_push():
     
     config = make_session_config(allow_concurrent_push=True, session_timeout_seconds=30)
     
-    with patch('fustord.api.session._get_session_config', return_value=config):
+    with patch('fustord.management.api.session._get_session_config', return_value=config):
         payload1 = type('CreateSessionPayload', (), {})()
         payload1.task_id = "repeated_task"
         payload1.session_timeout_seconds = None
@@ -278,7 +278,7 @@ async def test_stale_lock_handling():
     
     config = make_session_config(allow_concurrent_push=False, session_timeout_seconds=30)
     
-    with patch('fustord.api.session._get_session_config', return_value=config):
+    with patch('fustord.management.api.session._get_session_config', return_value=config):
         stale_session_id = str(uuid.uuid4())
         # Set stale lock in VSM
         await view_state_manager.set_state(view_id, "ACTIVE", locked_by_session_id=stale_session_id)

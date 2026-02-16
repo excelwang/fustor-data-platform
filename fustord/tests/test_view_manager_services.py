@@ -1,7 +1,7 @@
 import pytest
 from unittest.mock import AsyncMock, patch
-from fustord.view_manager.services import get_view_status
-from fustord.view_manager.background import task_status, _extract_timestamp
+from fustord.domain.view_manager.services import get_view_status
+from fustord.domain.view_manager.background import task_status, _extract_timestamp
 from datetime import datetime
 
 @pytest.mark.asyncio
@@ -10,7 +10,7 @@ async def test_get_view_status_success():
     mock_manager.get_aggregated_stats.return_value = {"total_volume": 100}
     
     # Correct patching target: where it's used or where it's imported
-    with patch("fustord.view_manager.manager.get_cached_view_manager", return_value=mock_manager):
+    with patch("fustord.domain.view_manager.manager.get_cached_view_manager", return_value=mock_manager):
         status = await get_view_status("v1")
         assert status["view_id"] == "v1"
         assert status["status"] == "active"
@@ -18,7 +18,7 @@ async def test_get_view_status_success():
 
 @pytest.mark.asyncio
 async def test_get_view_status_error():
-    with patch("fustord.view_manager.manager.get_cached_view_manager", side_effect=Exception("Failed")):
+    with patch("fustord.domain.view_manager.manager.get_cached_view_manager", side_effect=Exception("Failed")):
         status = await get_view_status("v1")
         assert status["status"] == "error"
         assert "Failed" in status["error"]

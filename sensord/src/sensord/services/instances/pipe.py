@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from .base import BaseInstanceService
 from fustor_core.models.states import PipeState
 from sensord.runtime import SensordPipe
-from sensord.runtime.source_handler_adapter import SourceHandlerAdapter
+from sensord.domain.source_handler_adapter import SourceHandlerAdapter
 from sensord.runtime.sender_handler_adapter import SenderHandlerAdapter
 from fustor_core.exceptions import NotFoundError
 from sensord_sdk.interfaces import PipeInstanceServiceInterface # Import the interface

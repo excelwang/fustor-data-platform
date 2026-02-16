@@ -55,7 +55,7 @@ class ForestFSViewDriver(ViewDriver):
             # Try to infer or fallback
             return {"role": "follower", "error": "pipe_id required for ForestView session"}
 
-        from fustord.view_state_manager import view_state_manager
+        from fustord.domain.view_state_manager import view_state_manager
         election_id = f"{self.view_id}:{pipe_id}"
             
         # Register session mapping internally
@@ -321,7 +321,7 @@ class ForestFSViewDriver(ViewDriver):
         """Mark scoped view key for this session's sub-tree."""
         pipe_id = (kwargs.get("metadata") or {}).get("pipe_id") or (kwargs.get("metadata") or {}).get("fustord_pipe_id") or self._session_to_pipe.get(session_id)
         if pipe_id:
-            from fustord.view_state_manager import view_state_manager
+            from fustord.domain.view_state_manager import view_state_manager
             scoped_key = f"{self.view_id}:{pipe_id}"
             await view_state_manager.set_snapshot_complete(scoped_key, session_id)
             self.logger.debug(f"ForestView {self.view_id}: Marked scoped tree {scoped_key} snapshot complete")

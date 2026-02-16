@@ -1,7 +1,7 @@
 import pytest
 import asyncio
 from unittest.mock import AsyncMock, MagicMock, patch
-from fustord.api.views import FallbackDriverWrapper
+from fustord.management.api.views import FallbackDriverWrapper
 from fustord import runtime_objects
 
 @pytest.mark.asyncio
@@ -13,7 +13,7 @@ async def test_fallback_driver_wrapper_success():
     wrapper = FallbackDriverWrapper(mock_driver, "test-view")
     
     # Mock readiness check to pass
-    with patch("fustord.runtime.readiness.check_view_readiness", new_callable=AsyncMock):
+    with patch("fustord.stability.readiness.check_view_readiness", new_callable=AsyncMock):
         result = await wrapper.get_data_view(path="/")
     
     assert result == {"status": "ok"}
@@ -34,7 +34,7 @@ async def test_fallback_driver_wrapper_triggers_fallback():
     mock_pm = MagicMock()
     
     # Patch readiness check (assume it passed, but driver failed later)
-    with patch("fustord.runtime.readiness.check_view_readiness", new_callable=AsyncMock), \
+    with patch("fustord.stability.readiness.check_view_readiness", new_callable=AsyncMock), \
          patch.object(runtime_objects, "on_command_fallback", mock_fallback), \
          patch.object(runtime_objects, "pipe_manager", mock_pm):
          
@@ -55,7 +55,7 @@ async def test_fallback_driver_wrapper_no_fallback_configured():
     
     # Ensure no fallback is registered
     # Also patch readiness check
-    with patch("fustord.runtime.readiness.check_view_readiness", new_callable=AsyncMock), \
+    with patch("fustord.stability.readiness.check_view_readiness", new_callable=AsyncMock), \
          patch.object(runtime_objects, "on_command_fallback", None):
         with pytest.raises(ValueError, match="Original error"):
             await wrapper.get_data_view(path="/")

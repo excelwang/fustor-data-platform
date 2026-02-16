@@ -5,11 +5,11 @@ import asyncio
 from unittest.mock import patch, Mock, MagicMock, AsyncMock
 import pytest
 
-from fustord.api.session import create_session
-from fustord.core.session_manager import session_manager
-from fustord.view_state_manager import view_state_manager
-from fustord.runtime.fustord_pipe import FustordPipe
-from fustord.runtime.session_bridge import create_session_bridge
+from fustord.management.api.session import create_session
+from fustord.stability.session_manager import session_manager
+from fustord.domain.view_state_manager import view_state_manager
+from fustord.stability.pipe import FustordPipe
+from fustord.stability.session_bridge import create_session_bridge
 from fustord import runtime_objects
 
 
@@ -22,7 +22,7 @@ class MockRequest:
 async def setup_dummy_pipe(view_id: str, allow_concurrent_push: bool = False):
     """Register a dummy pipe in the global manager for API tests."""
     if not runtime_objects.pipe_manager:
-        from fustord.runtime.pipe_manager import FustordPipeManager
+        from fustord.stability.pipe_manager import FustordPipeManager
         runtime_objects.pipe_manager = FustordPipeManager()
     
     mock_handler = Mock()
@@ -64,7 +64,7 @@ async def test_clear_all_sessions():
     
     config = make_session_config(allow_concurrent_push=False, session_timeout_seconds=30)
     
-    with patch('fustord.api.session._get_session_config', return_value=config):
+    with patch('fustord.management.api.session._get_session_config', return_value=config):
         # Create a session
         payload = type('CreateSessionPayload', (), {})()
         payload.task_id = "task_to_clear"

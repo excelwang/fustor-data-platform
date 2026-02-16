@@ -45,7 +45,7 @@ async def test_sighup_reload_calls_close_on_managers(mock_runtime):
     # extract the logic since we already reviewed it.
     # To be precise, let's mock the setup_view_routers as it touches FastAPI routes.
     
-    with patch("fustord.api.views.setup_view_routers") as mock_setup:
+    with patch("fustord.management.api.views.setup_view_routers") as mock_setup:
         # We manually trigger the logic that would be inside handle_reload
         # because handle_reload is a closure inside lifespan.
         

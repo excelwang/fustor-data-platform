@@ -4,7 +4,7 @@ Tests for SessionManager.cleanup_expired_sessions.
 import pytest
 import time
 from unittest.mock import patch, AsyncMock
-from fustord.core.session_manager import SessionManager
+from fustord.stability.session_manager import SessionManager
 
 
 @pytest.fixture
@@ -23,7 +23,7 @@ async def test_expired_sessions_are_removed(sm):
     si.last_activity = time.monotonic() - 10  # force expired
 
     # Patch external managers to avoid import issues
-    with patch('fustord.core.session_manager.SessionManager._terminate_session_internal',
+    with patch('fustord.stability.session_manager.SessionManager._terminate_session_internal',
                new_callable=AsyncMock, return_value=True) as mock_terminate:
         await sm.cleanup_expired_sessions()
         mock_terminate.assert_called_once_with("v1", "s1", "expired")
@@ -53,7 +53,7 @@ async def test_cleanup_multiple_views(sm):
         if sid in sessions:
             sessions[sid].last_activity = time.monotonic() - 10
 
-    with patch('fustord.core.session_manager.SessionManager._terminate_session_internal',
+    with patch('fustord.stability.session_manager.SessionManager._terminate_session_internal',
                new_callable=AsyncMock, return_value=True) as mock_terminate:
         await sm.cleanup_expired_sessions()
         assert mock_terminate.call_count == 2

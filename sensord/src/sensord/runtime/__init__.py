@@ -60,7 +60,7 @@ Example Usage:
 
 from .sensord_pipe import SensordPipe
 
-from .source_handler_adapter import (
+from sensord.domain.source_handler_adapter import (
     SourceHandlerAdapter,
     SourceHandlerFactory,
     create_source_handler_from_config,

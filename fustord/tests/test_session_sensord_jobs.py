@@ -3,7 +3,7 @@ Tests for SessionManager sensord job lifecycle.
 """
 import pytest
 import time
-from fustord.core.session_manager import SessionManager
+from fustord.stability.session_manager import SessionManager
 
 
 @pytest.fixture

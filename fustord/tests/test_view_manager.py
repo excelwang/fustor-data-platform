@@ -5,7 +5,7 @@ from typing import Dict, Any, Optional
 from unittest.mock import patch, MagicMock
 
 from fustor_core.drivers import ViewDriver
-from fustord.view_manager.manager import ViewManager
+from fustord.domain.view_manager.manager import ViewManager
 from fustord.config.unified import ViewConfig
 
 class MockViewDriver(ViewDriver):
@@ -34,7 +34,7 @@ async def test_view_manager_initialization():
     )
     
     with patch("fustord.config.unified.fustord_config.get_view", return_value=mock_config), \
-         patch("fustord.view_manager.manager._load_view_drivers", return_value={"mock": MockViewDriver}):
+         patch("fustord.domain.view_manager.manager._load_view_drivers", return_value={"mock": MockViewDriver}):
         
         vm = ViewManager(view_id="1")
         await vm.initialize_driver_instances()

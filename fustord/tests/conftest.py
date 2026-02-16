@@ -5,7 +5,7 @@ from unittest.mock import patch, MagicMock
 import asyncio
 
 from fustord.main import app
-from fustord.auth.dependencies import get_view_id_from_api_key  # Using view_id internally
+from fustord.management.auth.dependencies import get_view_id_from_api_key  # Using view_id internally
 
 @pytest.fixture(scope="session", autouse=True)
 def prevent_logging_reconfiguration():
@@ -15,7 +15,7 @@ def prevent_logging_reconfiguration():
 
 @pytest_asyncio.fixture(scope="function")
 async def async_client() -> AsyncClient:
-    from fustord.auth.dependencies import get_view_id_from_api_key
+    from fustord.management.auth.dependencies import get_view_id_from_api_key
     
     def override_get_view_id():
         return "1" # Mock view_id as string
@@ -32,14 +32,14 @@ async def async_client() -> AsyncClient:
 def register_dummy_route_for_middleware_test():
     """Register a dummy route that uses make_readiness_checker for middleware testing"""
     from fastapi import APIRouter, Depends
-    from fustord.api.views import view_router
-    from fustord.auth.dependencies import get_view_id_from_api_key
+    from fustord.management.api.views import view_router
+    from fustord.management.auth.dependencies import get_view_id_from_api_key
     
     # Define a simple router that explicitly uses the middleware we want to test
     dummy_router = APIRouter()
     
     # Create a specialized checker logic for 'test_driver' using the real factory
-    from fustord.api.views import make_readiness_checker
+    from fustord.management.api.views import make_readiness_checker
     
     # Usage of factory ensures we test the same logic as production
     test_checker = make_readiness_checker("test_driver")

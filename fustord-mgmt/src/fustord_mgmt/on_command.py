@@ -11,7 +11,7 @@ import asyncio
 from typing import Any, Dict, List, Optional
 from fastapi import HTTPException
 
-from fustord.core.session_manager import session_manager
+from fustord.stability.session_manager import session_manager
 
 logger = logging.getLogger("fustord_mgmt.on_command")
 

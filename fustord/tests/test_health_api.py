@@ -10,7 +10,7 @@ def client():
 
 @pytest.mark.asyncio
 async def test_get_component_health(client):
-    with patch("fustord.api.health.runtime_objects.pipe_manager") as mock_pm:
+    with patch("fustord.management.api.health.runtime_objects.pipe_manager") as mock_pm:
         # Mock pipe
         mock_pipe = MagicMock()
         mock_pipe.id = "pipe-1"
@@ -50,7 +50,7 @@ async def test_get_component_health(client):
 
 @pytest.mark.asyncio
 async def test_get_component_health_empty(client):
-    with patch("fustord.api.health.runtime_objects.pipe_manager") as mock_pm:
+    with patch("fustord.management.api.health.runtime_objects.pipe_manager") as mock_pm:
         mock_pm.get_pipes.return_value = {}
         
         response = client.get("/api/v1/health/components")

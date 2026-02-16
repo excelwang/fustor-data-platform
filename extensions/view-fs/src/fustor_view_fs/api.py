@@ -87,7 +87,7 @@ def create_fs_router(get_driver_func, check_snapshot_func, get_view_id_dep, chec
         # Check if there's a pending job for this path
         job_pending = False
         if on_demand_scan:
-            from fustord.core.session_manager import session_manager
+            from fustord.stability.session_manager import session_manager
             job_pending = await session_manager.has_pending_job(view_id, path)
 
         if result is None:
@@ -141,7 +141,7 @@ def create_fs_router(get_driver_func, check_snapshot_func, get_view_id_dep, chec
         """Reset the directory tree structure by clearing all entries for a specific view."""
         # Try global reset first (clears sessions, leadership, and cache)
         try:
-            from fustord.view_manager.manager import reset_views
+            from fustord.domain.view_manager.manager import reset_views
             await reset_views(view_id)
             return
         except (ImportError, Exception):

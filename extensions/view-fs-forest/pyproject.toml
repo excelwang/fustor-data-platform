@@ -12,10 +12,10 @@ dependencies = [
     "fustor-view-fs",
 ]
 
-[project.entry-points."fustor.view_drivers"]
+[project.entry-points."fustord.view_drivers"]
 forest-fs = "fustor_view_fs_forest:ForestFSViewDriver"
 
-[project.entry-points."fustor.view_api"]
+[project.entry-points."fustord.view_api"]
 forest-fs = "fustor_view_fs_forest.api:create_view_router"
 
 [tool.hatch.build.targets.wheel]

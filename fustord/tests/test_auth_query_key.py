@@ -1,7 +1,7 @@
 import pytest
 from fastapi import HTTPException
 from unittest.mock import MagicMock, patch, AsyncMock, Mock
-from fustord.auth.dependencies import get_view_id_from_api_key
+from fustord.management.auth.dependencies import get_view_id_from_api_key
 from fustord.config.unified import ViewConfig, ReceiverConfig, APIKeyConfig
 
 @pytest.mark.asyncio
@@ -10,7 +10,7 @@ async def test_auth_via_dedicated_view_key():
     mock_view = ViewConfig(api_keys=["view-query-key-123"])
     
     # 我们需要 patch dependencies.py 中使用的 fustord_config
-    with patch("fustord.auth.dependencies.fustord_config") as mock_config:
+    with patch("fustord.management.auth.dependencies.fustord_config") as mock_config:
         mock_config.get_all_views.return_value = {"view-1": mock_view}
         mock_config.get_all_receivers.return_value = {}
         
@@ -24,7 +24,7 @@ async def test_auth_via_receiver_key_fallback():
         api_keys=[APIKeyConfig(key="receiver-key-456", pipe_id="view-2")]
     )
     
-    with patch("fustord.auth.dependencies.fustord_config") as mock_config:
+    with patch("fustord.management.auth.dependencies.fustord_config") as mock_config:
         mock_config.get_all_views.return_value = {"view-1": ViewConfig()}
         mock_config.get_all_receivers.return_value = {"receiver-1": mock_receiver}
         
@@ -34,7 +34,7 @@ async def test_auth_via_receiver_key_fallback():
 @pytest.mark.asyncio
 async def test_auth_invalid_key_raises_401():
     """验证无效的 API Key 会抛出 401 异常。"""
-    with patch("fustord.auth.dependencies.fustord_config") as mock_config:
+    with patch("fustord.management.auth.dependencies.fustord_config") as mock_config:
         mock_config.get_all_views.return_value = {"view-1": ViewConfig(api_keys=["valid-key"])}
         mock_config.get_all_receivers.return_value = {}
         
@@ -63,7 +63,7 @@ async def test_auth_multiple_views_dedicated_keys():
     view1 = ViewConfig(api_keys=["key1"])
     view2 = ViewConfig(api_keys=["key2"])
     
-    with patch("fustord.auth.dependencies.fustord_config") as mock_config:
+    with patch("fustord.management.auth.dependencies.fustord_config") as mock_config:
         mock_config.get_all_views.return_value = {
             "view-1": view1,
             "view-2": view2
@@ -122,7 +122,7 @@ async def test_auth_dependency_integration():
         api_keys=[APIKeyConfig(key="integration-test-key", pipe_id="test-pipe")]
     )
     
-    with patch("fustord.auth.dependencies.fustord_config") as mock_config:
+    with patch("fustord.management.auth.dependencies.fustord_config") as mock_config:
         mock_config.get_all_views.return_value = {"test-view": mock_view}
         mock_config.get_all_receivers.return_value = {"test-receiver": mock_receiver}
         
@@ -140,11 +140,11 @@ async def test_auth_dependency_integration():
             assert response.status_code in [401, 403]
             
             # 3. 正确 Key 访问 - 需要 mock PipeManager
-            with patch("fustord.api.session.session_manager", new_callable=MagicMock) as mock_sm:
+            with patch("fustord.management.api.session.session_manager", new_callable=MagicMock) as mock_sm:
                 mock_sm.get_view_sessions = AsyncMock(return_value={})
                 
                 # Also need to mock PipeManager for session creation
-                with patch("fustord.api.session.runtime_objects") as mock_runtime:
+                with patch("fustord.management.api.session.runtime_objects") as mock_runtime:
                     mock_pipe = Mock()
                     mock_pipe.pipe_id = "test-pipe"
                     mock_pipe.view_ids = ["test-view"]

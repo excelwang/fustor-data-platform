@@ -3,7 +3,7 @@ import pytest_asyncio
 from httpx import AsyncClient, ASGITransport
 from unittest.mock import patch, AsyncMock
 from fustord.main import app
-from fustord.view_state_manager import view_state_manager
+from fustord.domain.view_state_manager import view_state_manager
 
 # 模拟 API Key 认证，直接返回 view_id = 1
 async def mock_get_view_id():
@@ -12,7 +12,7 @@ async def mock_get_view_id():
 @pytest_asyncio.fixture
 async def client():
     # 覆盖认证依赖
-    from fustord.auth.dependencies import get_view_id_from_api_key
+    from fustord.management.auth.dependencies import get_view_id_from_api_key
     app.dependency_overrides[get_view_id_from_api_key] = lambda: "test"
     
     async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as c:
@@ -30,7 +30,7 @@ async def mock_view_deps():
     mock_driver.is_ready = True
     mock_vm.driver_instances = {"test_driver": mock_driver}
     
-    with patch("fustord.api.views.get_cached_view_manager", new_callable=AsyncMock) as mock_get:
+    with patch("fustord.management.api.views.get_cached_view_manager", new_callable=AsyncMock) as mock_get:
         mock_get.return_value = mock_vm
         yield mock_vm, mock_driver
 

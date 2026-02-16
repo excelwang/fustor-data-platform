@@ -1,7 +1,7 @@
 import logging
 from fastapi import APIRouter, HTTPException, Depends
 from fustord import runtime_objects
-from fustord.auth.dependencies import get_view_id_from_api_key
+from fustord.management.auth.dependencies import get_view_id_from_api_key
 
 logger = logging.getLogger("fustord_mgmt.monitoring")
 monitoring_router = APIRouter()

@@ -2,7 +2,7 @@ import pytest
 import asyncio
 from unittest.mock import AsyncMock, MagicMock, patch
 from fustord_mgmt.on_command import on_command_fallback
-from fustord.runtime.session_bridge import PipeSessionBridge
+from fustord.stability.session_bridge import PipeSessionBridge
 from fustord import runtime_objects
 from fastapi import HTTPException
 

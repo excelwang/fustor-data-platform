@@ -26,7 +26,7 @@ Homepage = "https://github.com/excelwang/fustor/tree/master/extensions/receiver-
 "Bug Tracker" = "https://github.com/excelwang/fustor/issues"
 
 # Entry point for receiver discovery
-[project.entry-points."fustor.receivers"]
+[project.entry-points."fustord.receivers"]
 http = "fustor_receiver_http:HTTPReceiver"
 
 

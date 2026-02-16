@@ -1,6 +1,6 @@
 import pytest
 import asyncio
-from fustord.view_state_manager import ViewStateManager
+from fustord.domain.view_state_manager import ViewStateManager
 
 @pytest.mark.asyncio
 async def test_atomic_locking():

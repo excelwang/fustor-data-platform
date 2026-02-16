@@ -1,6 +1,6 @@
 import pytest
 from click.testing import CliRunner
-from fustord.cli import cli
+from fustord.management.cli import cli
 from unittest.mock import patch, MagicMock
 
 def test_fustord_cli_list_pipes():
@@ -16,14 +16,14 @@ def test_fustord_cli_list_pipes():
 
 def test_fustord_cli_status_stopped():
     runner = CliRunner()
-    with patch("fustord.cli._is_running", return_value=False):
+    with patch("fustord.management.cli._is_running", return_value=False):
         result = runner.invoke(cli, ["status"])
         assert result.exit_code == 0
         assert "STOPPED" in result.output
 
 def test_fustord_cli_status_running():
     runner = CliRunner()
-    with patch("fustord.cli._is_running", return_value=5678):
+    with patch("fustord.management.cli._is_running", return_value=5678):
         result = runner.invoke(cli, ["status"])
         assert result.exit_code == 0
         assert "RUNNING (PID: 5678)" in result.output

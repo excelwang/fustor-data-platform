@@ -1,7 +1,7 @@
 import pytest
 from unittest.mock import MagicMock, patch, AsyncMock
 from fastapi import HTTPException, status
-from fustord.api.views import make_metadata_limit_checker
+from fustord.management.api.views import make_metadata_limit_checker
 from fustord.config.unified import fustord_config, ViewConfig
 
 @pytest.mark.asyncio
@@ -23,8 +23,8 @@ async def test_metadata_limit_checker_below_limit():
     mock_manager = MagicMock()
     mock_manager.driver_instances = {"fs": mock_driver}
     
-    with patch("fustord.api.views.fustord_config") as mock_config_module, \
-         patch("fustord.api.views.get_cached_view_manager", new_callable=AsyncMock) as mock_get_manager:
+    with patch("fustord.management.api.views.fustord_config") as mock_config_module, \
+         patch("fustord.management.api.views.get_cached_view_manager", new_callable=AsyncMock) as mock_get_manager:
         
         # Setup mocks
         mock_config_module.reload = MagicMock()
@@ -61,8 +61,8 @@ async def test_metadata_limit_checker_exceeds_limit():
     mock_manager = MagicMock()
     mock_manager.driver_instances = {"fs": mock_driver}
     
-    with patch("fustord.api.views.fustord_config") as mock_config_module, \
-         patch("fustord.api.views.get_cached_view_manager", new_callable=AsyncMock) as mock_get_manager:
+    with patch("fustord.management.api.views.fustord_config") as mock_config_module, \
+         patch("fustord.management.api.views.get_cached_view_manager", new_callable=AsyncMock) as mock_get_manager:
         
         # Setup mocks
         mock_config_module.reload = MagicMock()
@@ -91,7 +91,7 @@ async def test_metadata_limit_checker_no_limit_configured():
     mock_view_config_default = MagicMock(spec=ViewConfig)
     mock_view_config_default.driver_params = {} # Empty params
     
-    with patch("fustord.api.views.fustord_config") as mock_config_module:
+    with patch("fustord.management.api.views.fustord_config") as mock_config_module:
         mock_config_module.reload = MagicMock()
         mock_config_module.get_view.return_value = mock_view_config_default
         
@@ -113,7 +113,7 @@ async def test_metadata_limit_checker_view_not_found():
     """Test that checker passes safely if view config is missing (fail open)."""
     view_name = "unknown-view"
     
-    with patch("fustord.api.views.fustord_config") as mock_config_module:
+    with patch("fustord.management.api.views.fustord_config") as mock_config_module:
         mock_config_module.reload = MagicMock()
         mock_config_module.get_view.return_value = None
         

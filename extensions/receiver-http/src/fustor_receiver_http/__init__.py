@@ -20,7 +20,7 @@ from fustor_core.transport import Receiver
 from fustor_core.event import EventBase, EventType, MessageSource
 
 try:
-    from fustord.auth.dependencies import get_view_id_from_api_key
+    from fustord.management.auth.dependencies import get_view_id_from_api_key
 except ImportError:
     # If not in fustord context, provide dummy dependency
     async def get_view_id_from_api_key(): return "unknown"

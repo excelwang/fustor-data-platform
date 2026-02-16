@@ -1,6 +1,6 @@
 import pytest
 from unittest.mock import MagicMock, AsyncMock, patch
-from fustord.runtime.session_bridge import PipeSessionBridge
+from fustord.stability.session_bridge import PipeSessionBridge
 
 @pytest.fixture
 def mock_pipe():
@@ -37,7 +37,7 @@ async def test_create_session_delegation(mock_pipe, mock_session_manager):
         "election_key": "view:pipe-1"
     }
     
-    with patch("fustord.view_state_manager.view_state_manager") as mock_vsm:
+    with patch("fustord.domain.view_state_manager.view_state_manager") as mock_vsm:
         mock_vsm.lock_for_session = AsyncMock(return_value=True)
         mock_vsm.get_locked_session_id = AsyncMock(return_value=None)
         
@@ -64,7 +64,7 @@ async def test_create_session_follower(mock_pipe, mock_session_manager):
         "election_key": "view:pipe-1"
     }
     
-    with patch("fustord.view_state_manager.view_state_manager") as mock_vsm:
+    with patch("fustord.domain.view_state_manager.view_state_manager") as mock_vsm:
         mock_vsm.lock_for_session = AsyncMock()
         mock_vsm.get_locked_session_id = AsyncMock(return_value=None)
         

@@ -5,9 +5,9 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 # Assuming your main app structure
 from fustord.main import app
-from fustord.auth.dependencies import get_view_id_from_api_key
-from fustord.view_manager.manager import ViewManager
-from fustord.api.pipe import setup_pipe_routers
+from fustord.management.auth.dependencies import get_view_id_from_api_key
+from fustord.domain.view_manager.manager import ViewManager
+from fustord.management.api.pipe import setup_pipe_routers
 from fustord import runtime_objects
 
 # Note: No longer setting override here, moving to fixture
@@ -16,7 +16,7 @@ from fustord import runtime_objects
 
 @pytest.fixture
 def mock_view_manager():
-    with patch("fustord.api.consistency.get_cached_view_manager", new_callable=AsyncMock) as mock:
+    with patch("fustord.management.api.consistency.get_cached_view_manager", new_callable=AsyncMock) as mock:
         manager = MagicMock(spec=ViewManager)
         mock.return_value = manager
         yield mock, manager
@@ -24,7 +24,7 @@ def mock_view_manager():
 @pytest.fixture
 def client(mock_view_manager):
     # Setup mock pipe manager to ensure routers are registered
-    with patch("fustord.runtime_objects.pipe_manager") as mock_pm:
+    with patch("fustord.stability_objects.pipe_manager") as mock_pm:
         mock_pm.get_pipes.return_value = {}
         # Force router setup with the mock PM
         setup_pipe_routers()
@@ -69,7 +69,7 @@ async def test_audit_end_endpoint(client, mock_view_manager):
     
     # Patch queue / processing manager to simulate drained queue
     # Patch runtime_objects to simulate drained queue via pipe manager
-    with patch("fustord.api.consistency.runtime_objects") as mock_ro:
+    with patch("fustord.management.api.consistency.runtime_objects") as mock_ro:
         mock_pm = MagicMock()
         mock_ro.pipe_manager = mock_pm
         

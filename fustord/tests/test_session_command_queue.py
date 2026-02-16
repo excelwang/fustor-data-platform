@@ -3,7 +3,7 @@ Tests for SessionManager command queue and keep_session_alive.
 """
 import pytest
 import time
-from fustord.core.session_manager import SessionManager
+from fustord.stability.session_manager import SessionManager
 
 
 @pytest.fixture

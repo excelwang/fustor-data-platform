@@ -2,7 +2,7 @@ import pytest
 import pytest_asyncio
 import asyncio
 from unittest.mock import MagicMock, AsyncMock, patch
-from fustord.runtime.fustord_pipe import FustordPipe
+from fustord.stability.pipe import FustordPipe
 from fustor_core.pipe.handler import ViewHandler
 
 class TestfustordEventFlow:
@@ -40,7 +40,7 @@ class TestfustordEventFlow:
         mock_vsm = AsyncMock()
         mock_vsm.is_leader.return_value = True
         
-        with patch('fustord.runtime.pipe.ingestion.view_state_manager', mock_vsm):
+        with patch('fustord.stability.pipe.ingestion.view_state_manager', mock_vsm):
             # Process Snapshot End
             await pipe.process_events([], session_id, source_type="snapshot", is_end=True)
             
@@ -58,7 +58,7 @@ class TestfustordEventFlow:
         mock_vsm = AsyncMock()
         mock_vsm.is_leader.return_value = False
         
-        with patch('fustord.runtime.pipe.ingestion.view_state_manager', mock_vsm):
+        with patch('fustord.stability.pipe.ingestion.view_state_manager', mock_vsm):
             # Process Snapshot End
             await pipe.process_events([], session_id, source_type="snapshot", is_end=True)
             

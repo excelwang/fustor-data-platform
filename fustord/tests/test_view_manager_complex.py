@@ -1,7 +1,7 @@
 import pytest
 import asyncio
 from unittest.mock import MagicMock, AsyncMock, patch
-from fustord.view_manager.manager import ViewManager, reset_views, get_cached_view_manager
+from fustord.domain.view_manager.manager import ViewManager, reset_views, get_cached_view_manager
 
 @pytest.fixture
 def mock_driver():
@@ -16,8 +16,8 @@ async def test_view_manager_lifecycle(mock_driver):
     config_mock.driver = "fs"
     config_mock.driver_params = {"p1": 1}
     
-    with patch("fustord.view_manager.manager._load_view_drivers", return_value={"fs": MagicMock(return_value=mock_driver)}):
-        with patch("fustord.view_manager.manager.fustord_config.get_view", return_value=config_mock):
+    with patch("fustord.domain.view_manager.manager._load_view_drivers", return_value={"fs": MagicMock(return_value=mock_driver)}):
+        with patch("fustord.domain.view_manager.manager.fustord_config.get_view", return_value=config_mock):
             vm = ViewManager("view1")
             await vm.initialize_driver_instances()
             
@@ -29,7 +29,7 @@ async def test_view_manager_lifecycle(mock_driver):
 @pytest.mark.asyncio
 async def test_reset_views_integration():
     mock_vm = AsyncMock()
-    with patch("fustord.view_manager.manager.runtime_objects.view_managers", {"group1": mock_vm}):
+    with patch("fustord.domain.view_manager.manager.runtime_objects.view_managers", {"group1": mock_vm}):
         await reset_views("group1")
         mock_vm.reset.assert_called_once()
 

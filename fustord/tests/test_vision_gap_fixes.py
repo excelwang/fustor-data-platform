@@ -4,7 +4,7 @@ import asyncio
 from unittest.mock import AsyncMock, MagicMock, patch
 from fastapi import HTTPException, status
 
-from fustord.api.views import FallbackDriverWrapper
+from fustord.management.api.views import FallbackDriverWrapper
 from fustord import runtime_objects
 
 @pytest.mark.asyncio
@@ -23,9 +23,9 @@ async def test_wrapper_centralized_readiness_logic():
     wrapper = FallbackDriverWrapper(mock_driver, "view-1")
     
     # Use standard patch to intercept the import inside the method
-    # "fustord.view_state_manager.view_state_manager" refers to the 'view_state_manager' instance 
-    # inside the 'fustord.view_state_manager' module.
-    with patch("fustord.view_state_manager.view_state_manager") as mock_vsm:
+    # "fustord.domain.view_state_manager.view_state_manager" refers to the 'view_state_manager' instance 
+    # inside the 'fustord.domain.view_state_manager' module.
+    with patch("fustord.domain.view_state_manager.view_state_manager") as mock_vsm:
         # Check snapshot logic
         mock_vsm.is_snapshot_complete = AsyncMock(return_value=False)
         mock_vsm.get_state = AsyncMock(return_value=MagicMock(authoritative_session_id="sess-1"))
