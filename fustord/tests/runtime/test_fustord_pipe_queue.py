@@ -3,7 +3,7 @@ import asyncio
 from unittest.mock import MagicMock, AsyncMock
 from typing import Dict, Any, Optional
 
-from fustord.runtime.fustord_pipe import fustordPipe
+from fustord.runtime.fustord_pipe import FustordPipe
 from fustor_core.pipe.handler import ViewHandler
 from fustor_core.event import EventBase
 
@@ -37,7 +37,7 @@ class MockViewHandler(ViewHandler):
 async def test_fustord_pipe_queue_behavior():
     # Setup
     mock_handler = MockViewHandler("mock-1")
-    pipe = fustordPipe(
+    pipe = FustordPipe(
         pipe_id="test-pipe",
         config={"view_ids": ["test-view"]},
         view_handlers=[mock_handler]
@@ -88,7 +88,7 @@ async def test_fustord_pipe_queue_observability():
     mock_handler = MockViewHandler("mock-slow")
     mock_handler.delay = 0.2 # Slow processing
     
-    pipe = fustordPipe(
+    pipe = FustordPipe(
         pipe_id="test-pipe-slow",
         config={"view_ids": ["test-view-slow"]},
         view_handlers=[mock_handler]

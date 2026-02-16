@@ -1,7 +1,7 @@
 import pytest
 from unittest.mock import MagicMock, patch
 from sensord.config.validator import ConfigValidator
-from sensord.config.unified import sensordConfigLoader, SourceConfig, SenderConfig, sensordPipeConfig # Assuming these models are used internally
+from sensord.config.unified import sensordConfigLoader, SourceConfig, SenderConfig, SensordPipeConfig # Assuming these models are used internally
 
 @pytest.fixture
 def mock_loader():
@@ -17,7 +17,7 @@ def mock_loader():
         "se1": SenderConfig(driver="echo", uri="http://localhost")
     }
     loader.get_all_pipes.return_value = {
-        "p1": sensordPipeConfig(source="s1", sender="se1", id="p1")
+        "p1": SensordPipeConfig(source="s1", sender="se1", id="p1")
     }
     return loader
 
@@ -94,7 +94,7 @@ def test_validate_pipe_unknown_sender(mock_loader):
 
 def test_validate_pipe_redundant_pair(mock_loader):
     """Test validation fails if two pipes use the same source-sender pair."""
-    mock_loader.get_all_pipes.return_value["p2"] = sensordPipeConfig(source="s1", sender="se1", id="p2")
+    mock_loader.get_all_pipes.return_value["p2"] = SensordPipeConfig(source="s1", sender="se1", id="p2")
     validator = ConfigValidator(loader=mock_loader)
     is_valid, errors = validator.validate()
     assert is_valid is False

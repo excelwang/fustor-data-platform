@@ -8,11 +8,11 @@ from fustor_core.exceptions import SessionObsoletedError
 from fustor_core.common.metrics import get_metrics
 
 if TYPE_CHECKING:
-    from ..sensord_pipe import sensordPipe
+    from ..sensord_pipe import SensordPipe
 
 logger = logging.getLogger("sensord.pipe.phases")
 
-async def run_snapshot_sync(pipe: "sensordPipe") -> None:
+async def run_snapshot_sync(pipe: "SensordPipe") -> None:
     """Execute snapshot sync phase for the given pipe."""
     logger.debug(f"Pipe {pipe.id}: Starting snapshot sync phase")
     
@@ -66,7 +66,7 @@ async def run_snapshot_sync(pipe: "sensordPipe") -> None:
 
 
 
-async def run_bus_message_sync(pipe: "sensordPipe") -> None:
+async def run_bus_message_sync(pipe: "SensordPipe") -> None:
     """Execute message sync phase reading from an internal event bus."""
     if not pipe._bus:
         logger.error(f"Pipe {pipe.id}: Cannot run bus message sync phase without a bus")
@@ -131,7 +131,7 @@ async def run_bus_message_sync(pipe: "sensordPipe") -> None:
         logger.error(f"Pipe {pipe.id} bus phase error: {e}", exc_info=True)
         raise
 
-async def run_audit_sync(pipe: "sensordPipe") -> None:
+async def run_audit_sync(pipe: "SensordPipe") -> None:
     """Execute a full audit synchronization."""
     logger.debug(f"Pipe {pipe.id}: Starting audit phase")
     old_state = pipe.state
@@ -207,7 +207,7 @@ async def run_audit_sync(pipe: "sensordPipe") -> None:
         # Clear audit phase flag
         pipe._set_state(old_state & ~PipeState.AUDIT_PHASE)
 
-async def run_sentinel_check(pipe: "sensordPipe") -> None:
+async def run_sentinel_check(pipe: "SensordPipe") -> None:
     """Execute a sentinel check cycle."""
     logger.debug(f"Pipe {pipe.id}: Running sentinel check")
     

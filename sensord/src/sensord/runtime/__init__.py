@@ -4,11 +4,11 @@ Runtime components for Fustor sensord.
 
 This module provides the new Pipe-based architecture for sensord:
 
-sensordPipe Architecture:
+SensordPipe Architecture:
 ===========================
 
 ┌─────────────────────────────────────────────────────────────┐
-│                     sensordPipe                           │
+│                     SensordPipe                           │
 │  (orchestrates Source -> Sender data flow)                  │
 └──────────────┬───────────────────────────┬──────────────────┘
                │                           │
@@ -28,7 +28,7 @@ Example Usage:
 --------------
 
     from sensord.runtime import (
-        sensordPipe,
+        SensordPipe,
         create_source_handler_from_config,
         create_sender_handler_from_config,
     )
@@ -45,7 +45,7 @@ Example Usage:
     )
 
     # Create and start pipe
-    pipe = sensordPipe(
+    pipe = SensordPipe(
         pipe_id="my-pipe",
         task_id="sensord-1:my-pipe",
         config={
@@ -58,7 +58,7 @@ Example Usage:
     await pipe.start()
 """
 
-from .sensord_pipe import sensordPipe
+from .sensord_pipe import SensordPipe
 
 from .source_handler_adapter import (
     SourceHandlerAdapter,
@@ -76,7 +76,7 @@ from .sender_handler_adapter import (
 
 __all__ = [
     # Pipe
-    "sensordPipe",
+    "SensordPipe",
     
     # Source Handler
     "SourceHandlerAdapter",

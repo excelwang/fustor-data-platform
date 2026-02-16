@@ -3,7 +3,7 @@ import pytest
 from unittest.mock import MagicMock, AsyncMock, patch
 from fustor_core.pipe import PipeState
 from fustor_core.exceptions import SessionObsoletedError
-from sensord.runtime.sensord_pipe import sensordPipe
+from sensord.runtime.sensord_pipe import SensordPipe
 
 @pytest.fixture
 def mock_pipe():
@@ -15,7 +15,7 @@ def mock_pipe():
     }
     source_h = MagicMock()
     sender_h = AsyncMock()
-    pipe = sensordPipe("test-pipe", config, source_h, sender_h)
+    pipe = SensordPipe("test-pipe", config, source_h, sender_h)
     pipe.session_id = "s123"
     pipe.state = PipeState.RUNNING
     pipe.current_role = "leader"

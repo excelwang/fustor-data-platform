@@ -1,6 +1,6 @@
 # fustord/tests/runtime/test_fustord_pipe_event_isolation.py
 """
-U2: fustordPipe.process_events 对畸形事件的隔离能力。
+U2: FustordPipe.process_events 对畸形事件的隔离能力。
 Spec: 05-Stability.md §1.2 — 单个事件失败不应中断整个 Batch。
 
 被测代码: fustord/src/fustord/runtime/fustord_pipe.py → process_events()
@@ -10,7 +10,7 @@ Spec: 05-Stability.md §1.2 — 单个事件失败不应中断整个 Batch。
 """
 import pytest
 import asyncio
-from fustord.runtime import fustordPipe
+from fustord.runtime import FustordPipe
 
 
 class MockViewHandler:
@@ -37,7 +37,7 @@ class MockViewHandler:
 @pytest.fixture
 def fustord_pipe_with_handler():
     handler = MockViewHandler()
-    pipe = fustordPipe(
+    pipe = FustordPipe(
         pipe_id="test",
         config={"view_ids": ["1"], "allow_concurrent_push": True},
         view_handlers=[handler]

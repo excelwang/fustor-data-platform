@@ -2,10 +2,10 @@
 import pytest
 import asyncio
 from unittest.mock import AsyncMock
-from sensord.runtime.sensord_pipe import sensordPipe
+from sensord.runtime.sensord_pipe import SensordPipe
 from .mocks import MockSourceHandler, MockSenderHandler
 
-class TestsensordPipeResume:
+class TestSensordPipeResume:
     
     @pytest.fixture
     def mock_sender_with_index(self):
@@ -15,7 +15,7 @@ class TestsensordPipeResume:
 
     @pytest.fixture
     def sensord_pipe(self, mock_source, mock_sender_with_index, pipe_config):
-        return sensordPipe(
+        return SensordPipe(
             pipe_id="test-resume-pipe",
             config=pipe_config,
             source_handler=mock_source,

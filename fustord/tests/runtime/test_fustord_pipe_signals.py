@@ -1,5 +1,5 @@
 """
-Tests for fustordPipe.process_events — snapshot_end and audit_end signal handling.
+Tests for FustordPipe.process_events — snapshot_end and audit_end signal handling.
 """
 import pytest
 import pytest_asyncio
@@ -9,7 +9,7 @@ from typing import Any, Dict, List, Optional
 
 from fustor_core.pipe import PipeState
 from fustor_core.pipe.handler import ViewHandler
-from fustord.runtime import fustordPipe
+from fustord.runtime import FustordPipe
 
 
 class StubViewHandler(ViewHandler):
@@ -62,7 +62,7 @@ def handler():
 
 @pytest_asyncio.fixture
 async def pipe(handler):
-    p = fustordPipe(
+    p = FustordPipe(
         pipe_id="test-pipe",
         config={"view_ids": ["test-view"], "allow_concurrent_push": True},
         view_handlers=[handler]
@@ -127,7 +127,7 @@ async def test_audit_end_triggers_handler(pipe, handler):
 async def test_process_events_not_running():
     """process_events returns error when pipe not running."""
     h = StubViewHandler()
-    p = fustordPipe(
+    p = FustordPipe(
         pipe_id="test-pipe",
         config={"view_ids": ["test-view"]},
         view_handlers=[h]

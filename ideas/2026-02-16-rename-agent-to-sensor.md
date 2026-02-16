@@ -9,7 +9,7 @@ Replace **"sensord"** with **"Sensor"** across all layers (L0-VISION, L1-CONTRAC
 
 - **Concept**: `sensord` → `Sensor`
 - **Binary/Service**: `sensord` → `fustor-sensor` (or `sensord` in context)
-- **Component**: `sensordPipe` → `SensorPipe`
+- **Component**: `SensordPipe` → `SensorPipe`
 - **Config**: `sensordConfig` → `SensorConfig`
 - **Symbology**: "Sovereign Sensor" instead of "Autonomous Sensor".
 

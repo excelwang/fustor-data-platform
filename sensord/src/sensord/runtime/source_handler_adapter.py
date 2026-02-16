@@ -1,6 +1,6 @@
 # sensord/src/sensord/runtime/source_handler_adapter.py
 """
-Adapter to wrap a Source driver as a SourceHandler for use in sensordPipe.
+Adapter to wrap a Source driver as a SourceHandler for use in SensordPipe.
 
 This allows the existing source-fs and other driver implementations
 to be used with the new Pipe-based architecture.
@@ -35,8 +35,8 @@ class SourceHandlerAdapter(SourceHandler):
         driver = FSDriver(id="my-source", config=config)
         handler = SourceHandlerAdapter(driver)
         
-        # Now usable with sensordPipe
-        pipe = sensordPipe(
+        # Now usable with SensordPipe
+        pipe = SensordPipe(
             source_handler=handler,
             sender_handler=sender,
             ...

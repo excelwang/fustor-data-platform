@@ -30,8 +30,8 @@ Fustor is a distributed data synchronization framework that ensures data consist
 
 Fustor 的根本架构目标是 **控制流与数据流的绝对解耦**。
 
-- **AGENT_SURVIVAL**: sensord 进程启动后，**绝不因**业务逻辑错误、数据损坏或插件故障而终止。它本质上是一个不朽守护进程，唯一任务是维持到 fustord 的生命线。
-- **FUSION_SURVIVAL**: fustord 必须保持对心跳和管理指令的响应，不受数据处理管道或视图一致性逻辑状态的影响。
+- **SENSORD_SURVIVAL**: sensord 进程启动后，**绝不因**业务逻辑错误、数据损坏或插件故障而终止。它本质上是一个不朽守护进程，唯一任务是维持到 fustord 的生命线。
+- **FUSTORD_SURVIVAL**: fustord 必须保持对心跳和管理指令的响应，不受数据处理管道或视图一致性逻辑状态的影响。
 - **UMBILICAL_CORD**: 只要控制面（心跳、任务分发、状态上报）保持完整，系统就具备无限的修复潜力：
   1. **自我修复 (Self-Repair)**: 控制面可远程重启、重置或重新配置崩溃的数据面。
   2. **热升级 (Hot Upgrades)**: sensord 接收软件版本更新，实现在线自置换。
@@ -121,7 +121,7 @@ Fustor 拒绝"主从"式命令模型，推崇 **"感知驱动，按需对齐"** 
 | Pipe | sensord/fustord 之间的逻辑数据管道 |
 | Source | 数据产出驱动（sensord 侧） |
 | View | 数据消费/汇聚驱动（fustord 侧） |
-| Session | sensordPipe 与 fustordPipe 之间的业务会话 |
+| Session | SensordPipe 与 FustordPipe 之间的业务会话 |
 | Heartbeat | Stability Layer 的生存检测与指令隧道 |
 | Schema | 数据契约/格式标识（如 `fs`） |
 | Tombstone | 已删除文件的逻辑标记 |

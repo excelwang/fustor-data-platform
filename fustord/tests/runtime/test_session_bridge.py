@@ -7,7 +7,7 @@ import asyncio
 from unittest.mock import MagicMock, AsyncMock, patch
 
 from fustord.runtime import (
-    fustordPipe,
+    FustordPipe,
     PipeSessionBridge,
     create_session_bridge,
 )
@@ -15,8 +15,8 @@ from fustord.runtime import (
 
 @pytest.fixture
 def mock_pipe():
-    """Create a mock fustordPipe."""
-    pipe = MagicMock(spec=fustordPipe)
+    """Create a mock FustordPipe."""
+    pipe = MagicMock(spec=FustordPipe)
     pipe.view_id = "1"
     pipe.view_ids = ["1"]
     pipe._active_sessions = {}

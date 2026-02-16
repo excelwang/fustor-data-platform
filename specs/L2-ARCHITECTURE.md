@@ -18,27 +18,27 @@ version: 1.0.0
 ```mermaid
 graph TD
     subgraph "Management Layer (运维层/可选)"
-        L3_fustord["fustor-view-mgmt (Orchestration/UI)"]
-        L3_sensord["fustor-source-mgmt (Command Support)"]
+        fustord["fustor-view-mgmt (Orchestration/UI)"]
+        sensord["fustor-source-mgmt (Command Support)"]
     end
 
     subgraph "Domain Layer (数据层/核心)"
-        L2_fustord["View Drivers (Arbitration/Merge)"]
-        L2_sensord["Source Drivers (FS/SQL/etc.)"]
+        fustord["View Drivers (Arbitration/Merge)"]
+        sensord["Source Drivers (FS/SQL/etc.)"]
     end
 
     subgraph "Stability Layer (稳定性层/基础)"
-        L1_Session["SessionManager (Presence Tracking)"]
-        L1_sensordPipe["sensordPipe (Heartbeat/Umbilical Cord)"]
-        L1_Transport["Sender/Receiver Drivers"]
+        Session["SessionManager (Presence Tracking)"]
+        SensordPipe["SensordPipe (Heartbeat/Umbilical Cord)"]
+        Transport["Sender/Receiver Drivers"]
     end
 
     %% Dependencies
-    L3_fustord -.->|Injects Admin Cmd| L1_Session
-    L1_sensordPipe <==>|Stability Heartbeat Tunnel| L1_Session
-    L1_sensordPipe ---|Spawns/Monitors| L2_sensord
-    L2_sensord ---|Produces Events| L1_sensordPipe
-    L2_fustord ---|Queries/Updates| L1_Session
+    fustord -.->|Injects Admin Cmd| Session
+    SensordPipe <==>|Stability Heartbeat Tunnel| Session
+    SensordPipe ---|Spawns/Monitors| sensord
+    sensord ---|Produces Events| SensordPipe
+    fustord ---|Queries/Updates| Session
 ```
 
 
@@ -52,7 +52,7 @@ graph TD
 |-----------|------|------------|------|
 | **Source** | 数据读取实现 | **View** | 数据处理实现 |
 | **Sender** | 传输通道（协议+凭证） | **Receiver** | 传输通道（协议+凭证） |
-| **sensordPipe** | 运行时绑定 (Source→Sender) | **fustordPipe** | 运行时绑定 (Receiver→View) |
+| **SensordPipe** | 运行时绑定 (Source→Sender) | **FustordPipe** | 运行时绑定 (Receiver→View) |
 
 ### 设计原则
 
@@ -173,35 +173,36 @@ fustord/                              # fustord
 │   sensord 侧                                                                           │
 │   ─────────                                                                          │
 │                                                                                      │
-│   Source ──┬── sensordPipe ──┬── Sender                                          │
+│   Source ──┬── SensordPipe ──┬── Sender                                          │
 │   Source ──┘               └── Sender                                          │
 │                                                                                      │
-│   约束: <source, sender> 组合唯一 (同一组合只能启动一个 sensordPipe)                 │
+│   约束: <source, sender> 组合唯一 (同一组合只能启动一个 SensordPipe)                 │
 │                                                                                      │
 └─────────────────────────────────────────────────────────────────────────────────────┘
 ```
 
-### COMPONENTS.TOPOLOGY.FUSION
-
+### COMPONENTS.TOPOLOGY.FUSTORD
+- **Scope**: Cluster / Region
+- **Home**: `$FUSTOR_FUSTORD_HOME/` (Config, Logs, State, DB)
 #### fustord 侧关系
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────────────┐
 │                                                                                      │
-│   Receiver : fustordPipe = 1 : N                                                  │
-│   (一个 Receiver 可服务多个 fustordPipe)                                          │
+│   Receiver : FustordPipe = 1 : N                                                  │
+│   (一个 Receiver 可服务多个 FustordPipe)                                          │
 │                                                                                      │
 │   ┌──────────────────┐                                                              │
-│   │ Receiver (HTTP)  │───┬──▶ fustordPipe-A ──▶ View-X                           │
+│   │ Receiver (HTTP)  │───┬──▶ FustordPipe-A ──▶ View-X                           │
 │   │ Port: 8102       │   │                                                          │
-│   │ API Key: fk_xxx  │   └──▶ fustordPipe-B ──┬──▶ View-X                       │
+│   │ API Key: fk_xxx  │   └──▶ FustordPipe-B ──┬──▶ View-X                       │
 │   └──────────────────┘                       └──▶ View-Y                       │
 │                                                                                      │
 │   ─────────────────────────────────────────────────────────────────────────────────  │
 │                                                                                      │
-│   fustordPipe : View = 1 : N                                                      │
+│   FustordPipe : View = 1 : N                                                      │
 │                                                                                      │
-│   View : fustordPipe = N : M                   
+│   View : FustordPipe = N : M                   
 │                                                                                      │
 └─────────────────────────────────────────────────────────────────────────────────────┘
 ```
@@ -218,7 +219,7 @@ fustord/                              # fustord
 ├─────────────────────────────────────────────────────────────────────────────────────┤
 │                                                                                      │
 │   ┌──────────────┐         ┌─────────────────┐         ┌──────────────┐             │
-│   │  FS Watch    │────────▶│    EventBus     │────────▶│  sensordPipe   │──▶ fustord   │
+│   │  FS Watch    │────────▶│    EventBus     │────────▶│  SensordPipe   │──▶ fustord   │
 │   │   Thread     │  put()  │   (MemoryBus)   │get()    │  Consumer    │             │
 │   └──────────────┘         └─────────────────┘         └──────────────┘             │
 │         │                         │                                                  │
@@ -231,7 +232,7 @@ fustord/                              # fustord
 │   1. 生产者-消费者完全解耦 (Source 产生事件不被推送阻塞)                                │
 │   2. 200ms 轮询超时 (低负载时延迟 ~0ms, 最坏 200ms)                                   │
 │   3. 批量获取已有事件 (有多少取多少, 不等待凑满 batch)                                  │
-│   4. 同源 sensordPipe 共享 Bus (节省资源, 减少重复读取)                                  │
+│   4. 同源 SensordPipe 共享 Bus (节省资源, 减少重复读取)                                  │
 │   5. 反向命令通道: fustord 通过 Heartbeat 响应下发指令 (如 Real-Time Scan)                │
 │                                                                                      │
 └─────────────────────────────────────────────────────────────────────────────────────┘
@@ -240,7 +241,7 @@ fustord/                              # fustord
 
 #### EventBus 共享机制
 
-同源的多个 sensordPipe 可共享同一个 EventBus：
+同源的多个 SensordPipe 可共享同一个 EventBus：
 
 ```
 Source Signature = (driver, uri, credential)
@@ -262,7 +263,7 @@ Pipe-C (source=fs-archive)  ────▶ EventBus-2 (signature=fs:/data/archi
 
 ### Session 定义
 
-Session 是 **sensordPipe** 和 **fustordPipe** 之间的业务会话。
+Session 是 **SensordPipe** 和 **FustordPipe** 之间的业务会话。
 
 ### Session 数据结构
 
@@ -270,8 +271,8 @@ Session 是 **sensordPipe** 和 **fustordPipe** 之间的业务会话。
 @dataclass
 class Session:
     session_id: str                    # 唯一会话 ID
-    sensord_task_id: str                 # sensordPipe 的 task_id
-    fustord_pipe_id: str                # fustordPipe ID
+    sensord_task_id: str                 # SensordPipe 的 task_id
+    fustord_pipe_id: str                # FustordPipe ID
     
     # 生命周期
     created_at: datetime
@@ -289,12 +290,12 @@ class Session:
 ### Session 生命周期
 
 ```
-sensordPipe 启动
+SensordPipe 启动
     │
     ├── Sender.connect() ────────────────────▶ Receiver 验证 API Key
     │   POST /api/v1/pipe/sessions/              │
     │   {task_id: "..."}                         ▼
-    │                                       fustordPipe 创建 Session
+    │                                       FustordPipe 创建 Session
     │                                            │
     │◀── 200 {session_id, timeout_seconds} ─────┤
     │                                            │
@@ -338,10 +339,10 @@ Pipe 停止 或 网络断开                     Session 超时检测
 ### sensord 配置结构
 
 ```
-$FUSTOR_AGENT_HOME/
+$FUSTOR_SENSORD_HOME/
 ├── sources-config.yaml              # Source 定义
 ├── senders-config.yaml              # Sender 定义 (原 pushers-config.yaml)
-└── sensord-pipes-config/              # sensordPipe 定义
+└── sensord-pipes-config/              # SensordPipe 定义
     └── pipe-*.yaml
 ```
 
@@ -383,7 +384,7 @@ $FUSTOR_FUSION_HOME/
 ├── receivers-config.yaml            # Receiver 定义
 ├── views-config/                    # View 定义
 │   └── view-*.yaml
-└── fustord-pipes-config/             # fustordPipe 定义
+└── fustord-pipes-config/             # FustordPipe 定义
     └── pipe-*.yaml
 ```
 
@@ -432,7 +433,7 @@ session_timeout_seconds: 30
 | `/api/v1/pipe/session/` | Session 管理（创建/心跳/关闭） |
 | `/api/v1/pipe/{session_id}/events` | 事件推送 |
 | `/api/v1/pipe/consistency/*` | 一致性信号（audit_start/end, snapshot_end） |
-| `/api/v1/pipe/pipes` | fustordPipe 管理（列表/详情） |
+| `/api/v1/pipe/pipes` | FustordPipe 管理（列表/详情） |
 | `/api/v1/views/*` | 数据视图查询 |
 
 ### Session 创建响应

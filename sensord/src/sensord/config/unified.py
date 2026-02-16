@@ -58,7 +58,7 @@ def get_outbound_ip(target_host: str = "8.8.8.8", target_port: int = 80) -> str:
         return socket.gethostname()
 
 
-class sensordPipeConfig(BaseModel):
+class SensordPipeConfig(BaseModel):
     """Configuration for a single sensord pipe."""
     source: str  # Reference to source ID
     sender: str  # Reference to sender ID
@@ -86,7 +86,7 @@ class UnifiedsensordConfig(BaseModel):
 
     sources: Dict[str, Dict[str, Any]] = {}
     senders: Dict[str, Dict[str, Any]] = {}
-    pipes: Dict[str, sensordPipeConfig] = {}
+    pipes: Dict[str, SensordPipeConfig] = {}
     
     # Tuning parameters
     fs_scan_workers: int = Field(default=4, description="Default concurrency for FS scans")
@@ -114,7 +114,7 @@ class sensordConfigLoader:
         # Merged namespace
         self._sources: Dict[str, SourceConfig] = {}
         self._senders: Dict[str, SenderConfig] = {}
-        self._pipes: Dict[str, sensordPipeConfig] = {}
+        self._pipes: Dict[str, SensordPipeConfig] = {}
         
         # Track which file defines which pipes (for selective startup)
         self._pipes_by_file: Dict[str, Set[str]] = {}
@@ -194,7 +194,7 @@ class sensordConfigLoader:
             for pipe_id, pipe_data in data.get("pipes", {}).items():
                 if pipe_id in self._pipes:
                     logger.warning(f"Pipe '{pipe_id}' redefined in {path}")
-                self._pipes[pipe_id] = sensordPipeConfig(**pipe_data)
+                self._pipes[pipe_id] = SensordPipeConfig(**pipe_data)
                 pipe_ids.add(pipe_id)
             
             self._pipes_by_file[file_key] = pipe_ids
@@ -224,7 +224,7 @@ class sensordConfigLoader:
         self.ensure_loaded()
         return self._senders.get(sender_id)
     
-    def get_pipe(self, pipe_id: str) -> Optional[sensordPipeConfig]:
+    def get_pipe(self, pipe_id: str) -> Optional[SensordPipeConfig]:
         self.ensure_loaded()
         return self._pipes.get(pipe_id)
     
@@ -236,21 +236,21 @@ class sensordConfigLoader:
         self.ensure_loaded()
         return self._senders.copy()
     
-    def get_all_pipes(self) -> Dict[str, sensordPipeConfig]:
+    def get_all_pipes(self) -> Dict[str, SensordPipeConfig]:
         self.ensure_loaded()
         return self._pipes.copy()
     
-    def get_pipes_from_file(self, filename: str) -> Dict[str, sensordPipeConfig]:
+    def get_pipes_from_file(self, filename: str) -> Dict[str, SensordPipeConfig]:
         """Get pipes defined in a specific file."""
         self.ensure_loaded()
         pipe_ids = self._pipes_by_file.get(filename, set())
         return {pid: self._pipes[pid] for pid in pipe_ids if pid in self._pipes}
     
-    def get_default_pipes(self) -> Dict[str, sensordPipeConfig]:
+    def get_default_pipes(self) -> Dict[str, SensordPipeConfig]:
         """Get pipes from default.yaml."""
         return self.get_pipes_from_file("default.yaml")
     
-    def get_enabled_pipes(self) -> Dict[str, sensordPipeConfig]:
+    def get_enabled_pipes(self) -> Dict[str, SensordPipeConfig]:
         """
         Get all enabled pipes.
         In sensord, a pipe is enabled if its source is enabled.

@@ -8,22 +8,22 @@ from fastapi import APIRouter
 
 from fustor_core.transport.receiver import Receiver, ReceiverRegistry
 from fustor_core.models.states import SessionInfo
-from .fustord_pipe import fustordPipe
+from .fustord_pipe import FustordPipe
 from ..config.unified import fustord_config
 from ..view_manager.manager import get_cached_view_manager
 from ..api.consistency import consistency_router
 
 logger = logging.getLogger(__name__)
 
-class fustordPipeManager:
+class FustordPipeManager:
     """
-    Manages the lifecycle of fustordPipes and their associated Receivers.
+    Manages the lifecycle of FustordPipes and their associated Receivers.
     
     Refactored to use unified fustordConfigLoader V2.
     """
     
     def __init__(self):
-        self._pipes: Dict[str, fustordPipe] = {}
+        self._pipes: Dict[str, FustordPipe] = {}
         self._receivers: Dict[str, Receiver] = {} # Keyed by signature (driver, port)
         self._bridges: Dict[str, Any] = {}
         self._session_to_pipe: Dict[str, str] = {}
@@ -47,7 +47,7 @@ class fustordPipeManager:
         """
         Internal initialization logic (no locking).
         """
-        logger.info(f"fustordPipeManager._initialize_pipes_internal called with config_list={config_list}")
+        logger.info(f"FustordPipeManager._initialize_pipes_internal called with config_list={config_list}")
         
         # 1. Load configs
         fustord_config.reload()
@@ -68,7 +68,7 @@ class fustordPipeManager:
                 r_cfg = resolved['receiver']
                 
                 if r_cfg.disabled:
-                    logger.warning(f"fustordPipe '{p_id}' skipped because receiver '{p_cfg.receiver}' is disabled")
+                    logger.warning(f"FustordPipe '{p_id}' skipped because receiver '{p_cfg.receiver}' is disabled")
                     continue
 
                 # 1. Initialize/Get Receiver (Shared by driver + port)
@@ -131,13 +131,13 @@ class fustordPipeManager:
                         logger.error(f"Failed to load view group {v_id} for pipe {p_id}: {e}")
 
                 if not view_handlers:
-                    logger.warning(f"fustordPipe {p_id} has no valid views, skipping")
+                    logger.warning(f"FustordPipe {p_id} has no valid views, skipping")
                     continue
 
-                # 3. Create fustordPipe
+                # 3. Create FustordPipe
                 view_ids = list(resolved['views'].keys())
                 
-                fustord_pipe = fustordPipe(
+                fustord_pipe = FustordPipe(
                     pipe_id=p_id,
                     config={
                         "view_ids": view_ids,
@@ -154,7 +154,7 @@ class fustordPipeManager:
                 
                 # Link bridge to pipe for GAP-4 session isolation
                 fustord_pipe.session_bridge = bridge
-                logger.info(f"Initialized fustordPipe: {p_id} with {len(view_handlers)} views")
+                logger.info(f"Initialized FustordPipe: {p_id} with {len(view_handlers)} views")
                 initialized_count += 1
                 
             except Exception as e:
@@ -176,7 +176,7 @@ class fustordPipeManager:
                 if fustord_config.get_pipe(item):
                     targets.append(item)
                 else:
-                    logger.error(f"fustordPipe ID '{item}' not found in any loaded config")
+                    logger.error(f"FustordPipe ID '{item}' not found in any loaded config")
         return targets
 
     async def start(self):
@@ -243,7 +243,7 @@ class fustordPipeManager:
                 if fustord_pipe:
                     await fustord_pipe.stop()
                     self._bridges.pop(p_id, None)
-                    logger.info(f"fustordPipe '{p_id}' stopped for reload/update")
+                    logger.info(f"FustordPipe '{p_id}' stopped for reload/update")
             
             # 2. Re-initialize and start added AND modified pipes
             to_start = added | modified
@@ -289,10 +289,10 @@ class fustordPipeManager:
         
         return pipe_ids
 
-    def get_pipes(self) -> Dict[str, fustordPipe]:
+    def get_pipes(self) -> Dict[str, FustordPipe]:
         return self._pipes.copy()
 
-    def get_pipe(self, pipe_id: str) -> Optional[fustordPipe]:
+    def get_pipe(self, pipe_id: str) -> Optional[FustordPipe]:
         """Get a specific pipe instance by ID."""
         return self._pipes.get(pipe_id)
 
@@ -324,7 +324,7 @@ class fustordPipeManager:
     async def _on_session_created(self, session_id, task_id, p_id, client_info, session_timeout_seconds):
         # Lock-free lookup (pipes dict is stable after init)
         fustord_pipe = self._pipes.get(p_id)
-        if not fustord_pipe: raise ValueError(f"fustordPipe {p_id} not found")
+        if not fustord_pipe: raise ValueError(f"FustordPipe {p_id} not found")
         
         # Check for duplicate task ID across all views served by this pipe
         from ..api.session import _check_duplicate_task
@@ -401,9 +401,9 @@ class fustordPipeManager:
                 logger.debug(f"Scan complete (job_id={job_id}) for path {scan_path} on session {session_id}")
 
 # Alias for compatibility
-PipeManager = fustordPipeManager
+PipeManager = FustordPipeManager
 
 # Global singleton
-pipe_manager = fustordPipeManager()
+pipe_manager = FustordPipeManager()
 fustord_pipe_manager = pipe_manager
 

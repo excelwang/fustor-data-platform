@@ -50,7 +50,7 @@ def get_app_config() -> AppConfig:
         valid_pipes_yaml = pipes_config.get_all()
         valid_pipes: Dict[str, PipeConfig] = {}
         
-        # Convert sensordPipeConfig to PipeConfig
+        # Convert SensordPipeConfig to PipeConfig
         for p_id, p_yaml in valid_pipes_yaml.items():
             # PipeConfig doesn't have 'id' field, it's the key in the dict
             p_dict = p_yaml.model_dump(exclude={'id'})

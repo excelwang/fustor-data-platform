@@ -1,13 +1,13 @@
 # sensord/tests/runtime/test_sensord_pipe_role_switch.py
 """
-Tests for sensordPipe role transitions (Leader <-> Follower).
+Tests for SensordPipe role transitions (Leader <-> Follower).
 """
 import pytest
 import asyncio
 from unittest.mock import MagicMock, AsyncMock
 from fustor_core.pipe import PipeState
-from sensord.runtime.sensord_pipe import sensordPipe
-from sensord.runtime.sensord_pipe import sensordPipe
+from sensord.runtime.sensord_pipe import SensordPipe
+from sensord.runtime.sensord_pipe import SensordPipe
 
 @pytest.mark.timeout(10)
 class TestsensordRoleSwitch:
@@ -22,7 +22,7 @@ class TestsensordRoleSwitch:
         mock_bus.internal_bus = AsyncMock()
         mock_bus.internal_bus.get_events_for = AsyncMock(return_value=[])
 
-        pipe = sensordPipe(
+        pipe = SensordPipe(
             "test-id", pipe_config,
             mock_source, mock_sender, event_bus=mock_bus
         )
@@ -78,7 +78,7 @@ class TestsensordRoleSwitch:
         mock_bus.internal_bus = AsyncMock()
         mock_bus.internal_bus.get_events_for = AsyncMock(return_value=[])
 
-        pipe = sensordPipe(
+        pipe = SensordPipe(
             "test-id", pipe_config,
             mock_source, mock_sender, event_bus=mock_bus
         )

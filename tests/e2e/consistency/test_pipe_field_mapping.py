@@ -1,6 +1,6 @@
 # tests/e2e/consistency/test_pipe_field_mapping.py
 """
-Integration test for Field Mapping in sensordPipe.
+Integration test for Field Mapping in SensordPipe.
 """
 import time
 import pytest
@@ -10,7 +10,7 @@ from ..fixtures.constants import MOUNT_POINT, FUSION_ENDPOINT, MEDIUM_TIMEOUT, P
 logger = logging.getLogger("fustor_test")
 
 class TestPipeFieldMapping:
-    """Test field mapping functionality in sensordPipe."""
+    """Test field mapping functionality in SensordPipe."""
     
     def test_field_mapping_affects_data(
         self, 

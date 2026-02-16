@@ -1,6 +1,6 @@
 # sensord/tests/runtime/test_sensord_pipe_remap.py
 """
-Tests for sensordPipe.remap_to_new_bus() method.
+Tests for SensordPipe.remap_to_new_bus() method.
 
 This tests the hot-migration of a pipe to a new EventBus instance
 when bus splitting occurs.
@@ -8,7 +8,7 @@ when bus splitting occurs.
 import pytest
 from unittest.mock import MagicMock
 from fustor_core.pipe import PipeState
-from sensord.runtime.sensord_pipe import sensordPipe
+from sensord.runtime.sensord_pipe import SensordPipe
 
 @pytest.fixture
 def mock_bus():
@@ -28,7 +28,7 @@ def new_mock_bus():
 
 @pytest.fixture
 def sensord_pipe(mock_source, mock_sender, pipe_config, mock_bus):
-    return sensordPipe(
+    return SensordPipe(
         pipe_id="test-pipe",
         config=pipe_config,
         source_handler=mock_source,
@@ -102,7 +102,7 @@ class TestRemapToNewBus:
     async def test_remap_from_none_bus(self, mock_source, mock_sender, pipe_config, new_mock_bus):
         """remap_to_new_bus should work when initial bus is None."""
         # Create pipe without bus
-        pipe = sensordPipe(
+        pipe = SensordPipe(
             pipe_id="test-pipe-no-bus",
             config=pipe_config,
             source_handler=mock_source,

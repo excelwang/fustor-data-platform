@@ -163,7 +163,7 @@ class FSArbitrator:
         final_last_updated_at = time.time() if is_fresh_confirmation else old_last_updated_at
 
         # Perform the actual update (last_updated_at is set correctly by tree.py)
-        # Extract lineage info from event metadata (injected by fustordPipe)
+        # Extract lineage info from event metadata (injected by FustordPipe)
         metadata = getattr(event, 'metadata', {}) or {}
         lineage_info = {
             'last_sensord_id': metadata.get('sensord_id'),

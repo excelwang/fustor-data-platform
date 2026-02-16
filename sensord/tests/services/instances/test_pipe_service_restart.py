@@ -11,7 +11,7 @@ from sensord.services.instances.bus import EventBusService
 from sensord.services.drivers.source_driver import SourceDriverService
 from sensord.services.drivers.sender_driver import SenderDriverService
 from fustor_core.models.config import AppConfig, PipeConfig, SourceConfig, SenderConfig, PasswdCredential
-from sensord.config.unified import sensordPipeConfig
+from sensord.config.unified import SensordPipeConfig
 
 @pytest.fixture
 def mock_services():
@@ -75,9 +75,9 @@ async def test_pipe_service_restart_outdated_pipes(mock_services):
 
 
     with patch("sensord.services.configs.pipe.sensord_config") as mock_sensord_config, \
-         patch("sensord.services.instances.pipe.sensordPipe", side_effect=[mock_pipe_instance_1, mock_pipe_instance_2]) as MocksensordPipeClass:
+         patch("sensord.services.instances.pipe.SensordPipe", side_effect=[mock_pipe_instance_1, mock_pipe_instance_2]) as MockSensordPipeClass:
         
-        sensord_pipe_config = sensordPipeConfig(source="s1", sender="se1")
+        sensord_pipe_config = SensordPipeConfig(source="s1", sender="se1")
         mock_sensord_config.get_pipe.return_value = sensord_pipe_config
         
         # 1. Start initially
@@ -98,7 +98,7 @@ async def test_pipe_service_restart_outdated_pipes(mock_services):
         # Verify "p1" is still in pool (new one started)
         assert "p1" in service.pool
         assert service.pool["p1"] is not first_instance
-        assert MocksensordPipeClass.call_count == 2
+        assert MockSensordPipeClass.call_count == 2
 
 @pytest.mark.asyncio
 async def test_pipe_service_stop_all_cleans_up(mock_services):
@@ -111,9 +111,9 @@ async def test_pipe_service_stop_all_cleans_up(mock_services):
     mock_pipe_instance.bus = MagicMock(id="mock-bus-id-1") # Ensure bus attribute exists
 
     with patch("sensord.services.configs.pipe.sensord_config") as mock_sensord_config, \
-         patch("sensord.services.instances.pipe.sensordPipe", return_value=mock_pipe_instance) as MocksensordPipeClass:
+         patch("sensord.services.instances.pipe.SensordPipe", return_value=mock_pipe_instance) as MockSensordPipeClass:
         
-        sensord_pipe_config = sensordPipeConfig(source="s1", sender="se1")
+        sensord_pipe_config = SensordPipeConfig(source="s1", sender="se1")
         mock_sensord_config.get_pipe.return_value = sensord_pipe_config
 
         # Mock bus_service.get_or_create_bus_for_subscriber as it is called in start_one

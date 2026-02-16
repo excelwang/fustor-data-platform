@@ -1,6 +1,6 @@
 # fustord/src/fustord/runtime/session_bridge.py
 """
-Bridge between fustordPipe and the existing SessionManager.
+Bridge between FustordPipe and the existing SessionManager.
 
 This module connects the Pipe Runtime with the SessionManager
 for session lifecycle management.
@@ -8,7 +8,7 @@ for session lifecycle management.
 Architecture:
     
     ┌────────────────────────┐
-    │   fustordPipe       │
+    │   FustordPipe       │
     │   (new architecture)   │
     └───────────┬────────────┘
                 │
@@ -25,9 +25,9 @@ Architecture:
     └────────────────────────┘
 
 Usage:
-    from fustord.runtime import fustordPipe, PipeSessionBridge
+    from fustord.runtime import FustordPipe, PipeSessionBridge
     
-    pipe = fustordPipe(...)
+    pipe = FustordPipe(...)
     bridge = PipeSessionBridge(pipe, session_manager)
     
     # Create session goes through both systems
@@ -38,7 +38,7 @@ import logging
 from typing import Any, Dict, Optional, List, TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from .fustord_pipe import fustordPipe
+    from .fustord_pipe import FustordPipe
     from fustord.core.session_manager import SessionManager
 
 logger = logging.getLogger("fustord.session_bridge")
@@ -46,7 +46,7 @@ logger = logging.getLogger("fustord.session_bridge")
 
 class PipeSessionStore:
     """
-    Dedicated store for session-related state of a fustordPipe.
+    Dedicated store for session-related state of a FustordPipe.
     
     This object is owned by the PipeSessionBridge and updated synchronously
     during session creation/closure to ensure the control plane has 
@@ -105,7 +105,7 @@ class PipeSessionStore:
 
 class PipeSessionBridge:
     """
-    Bridge that synchronizes sessions between fustordPipe and SessionManager.
+    Bridge that synchronizes sessions between FustordPipe and SessionManager.
     
     This allows:
     1. Gradual migration without breaking existing code
@@ -115,14 +115,14 @@ class PipeSessionBridge:
     
     def __init__(
         self,
-        pipe: "fustordPipe",
+        pipe: "FustordPipe",
         session_manager: "SessionManager"
     ):
         """
         Initialize the bridge.
         
         Args:
-            pipe: fustordPipe instance
+            pipe: FustordPipe instance
             session_manager: Legacy SessionManager instance
         """
         self._pipe = pipe
@@ -134,7 +134,7 @@ class PipeSessionBridge:
         # New State Management (GAP-4)
         self.store = PipeSessionStore(pipe.view_ids)
         
-        # Event queue for asynchronous handler notifications in fustordPipe
+        # Event queue for asynchronous handler notifications in FustordPipe
         self.event_queue = asyncio.Queue()
         
         # Command/Response Correlation (GAP-P0-3)
@@ -244,7 +244,7 @@ class PipeSessionBridge:
             
         self.store.add_session(session_id, lineage)
 
-        # Enqueue background notification for fustordPipe handlers
+        # Enqueue background notification for FustordPipe handlers
         # This replaces the blocking on_session_created call
         await self.event_queue.put({
             "type": "create",
@@ -255,7 +255,7 @@ class PipeSessionBridge:
         })
         
         # Pass is_leader hint if the pipesupports it (for local state update if any)
-        # Note: fustordPipe will also consume the queue to notify handlers
+        # Note: FustordPipe will also consume the queue to notify handlers
         await self._pipe.on_session_created(
             session_id=session_id,
             task_id=task_id,
@@ -404,7 +404,7 @@ class PipeSessionBridge:
         
         self.store.remove_session(session_id)
         
-        # Enqueue background notification for fustordPipe handlers
+        # Enqueue background notification for FustordPipe handlers
         await self.event_queue.put({
             "type": "close",
             "session_id": session_id
@@ -499,7 +499,7 @@ class PipeSessionBridge:
     def resolve_command(self, command_id: str, result: Dict[str, Any]):
         """
         Resolve a pending command with a result.
-        Called by fustordPipe when it receives a command_result event.
+        Called by FustordPipe when it receives a command_result event.
         """
         if command_id in self._pending_commands:
             future = self._pending_commands.pop(command_id)
@@ -514,14 +514,14 @@ class PipeSessionBridge:
 
 
 def create_session_bridge(
-    pipe: "fustordPipe",
+    pipe: "FustordPipe",
     session_manager: Optional["SessionManager"] = None
 ) -> PipeSessionBridge:
     """
     Create a session bridge for the given pipe.
     
     Args:
-        pipe: The fustordPipe instance
+        pipe: The FustordPipe instance
         session_manager: Optional SessionManager, uses global if not provided
         
     Returns:

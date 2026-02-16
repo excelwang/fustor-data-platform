@@ -1,25 +1,25 @@
 # sensord/tests/runtime/test_sensord_pipe.py
 """
-Tests for sensordPipe - Basic unit tests only.
+Tests for SensordPipe - Basic unit tests only.
 
 Note: Full lifecycle tests are skipped because they require async task coordination.
 Those tests should be done as integration tests with proper timeouts.
 """
 import pytest
 from fustor_core.pipe import PipeState
-from sensord.runtime.sensord_pipe import sensordPipe
+from sensord.runtime.sensord_pipe import SensordPipe
 
 @pytest.fixture
 def sensord_pipe(mock_source, mock_sender, pipe_config):
-    return sensordPipe(
+    return SensordPipe(
         pipe_id="test-pipe",
         config=pipe_config,
         source_handler=mock_source,
         sender_handler=mock_sender
     )
 
-class TestsensordPipeInit:
-    """Test sensordPipe initialization."""
+class TestSensordPipeInit:
+    """Test SensordPipe initialization."""
     
     def test_initial_state(self, sensord_pipe):
         """Pipe should start in STOPPED state."""
@@ -49,7 +49,7 @@ class TestsensordPipeInit:
         assert not sensord_pipe.is_outdated()
 
 
-class TestsensordPipeStateManagement:
+class TestSensordPipeStateManagement:
     """Test pipestate transitions."""
     
     def test_set_state(self, sensord_pipe):

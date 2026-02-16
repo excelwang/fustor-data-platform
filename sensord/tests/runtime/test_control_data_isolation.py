@@ -9,7 +9,7 @@ import asyncio
 import pytest
 from unittest.mock import MagicMock, AsyncMock, patch
 from fustor_core.pipe import PipeState
-from sensord.runtime.sensord_pipe import sensordPipe
+from sensord.runtime.sensord_pipe import SensordPipe
 
 @pytest.mark.timeout(10)
 class TestControlDataIsolation:
@@ -24,7 +24,7 @@ class TestControlDataIsolation:
         mock_bus.internal_bus = MagicMock()
         mock_bus.internal_bus.get_events_for = AsyncMock(return_value=[])
         
-        pipe = sensordPipe(
+        pipe = SensordPipe(
             pipe_id="test-isolation",
             config=pipe_config,
             source_handler=mock_source,

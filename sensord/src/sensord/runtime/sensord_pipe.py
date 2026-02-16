@@ -1,5 +1,5 @@
 """
-sensordPipe orchestrates the flow: Source -> Sender
+SensordPipe orchestrates the flow: Source -> Sender
 """
 import asyncio
 import logging
@@ -25,7 +25,7 @@ logger = logging.getLogger("sensord")
 from .pipe.lifecycle import PipeLifecycleMixin
 from .pipe.leader import PipeLeaderMixin
 
-class sensordPipe(FustorPipe, PipeLifecycleMixin, PipeLeaderMixin):
+class SensordPipe(FustorPipe, PipeLifecycleMixin, PipeLeaderMixin):
     """
     sensord-side Pipe implementation.
     
@@ -53,7 +53,7 @@ class sensordPipe(FustorPipe, PipeLifecycleMixin, PipeLeaderMixin):
         context: Optional["PipeContext"] = None
     ):
         """
-        Initialize the sensordPipe.
+        Initialize the SensordPipe.
         
         Args:
             pipe_id: Unique identifier for this pipe
@@ -153,15 +153,15 @@ class sensordPipe(FustorPipe, PipeLifecycleMixin, PipeLeaderMixin):
     def _load_mgmt_processor(self) -> Optional[Any]:
         """Dynamically load the L3 management processor if available (Cached)."""
         # 1. Use cached factory/class if available
-        if sensordPipe._mgmt_processor_factory:
+        if SensordPipe._mgmt_processor_factory:
              try:
-                 return sensordPipe._mgmt_processor_factory()
+                 return SensordPipe._mgmt_processor_factory()
              except Exception as e:
                  logger.error(f"Pipe {self.id}: Failed to instantiate cached management processor: {e}")
                  return None
                  
         # 2. If already checked and nothing found, return None
-        if sensordPipe._mgmt_processor_checked:
+        if SensordPipe._mgmt_processor_checked:
             return None
 
         # 3. First time check (Expensive O(N) scan)
@@ -174,8 +174,8 @@ class sensordPipe(FustorPipe, PipeLifecycleMixin, PipeLeaderMixin):
                     processor_class = ep.load()
                     # verify callable
                     if callable(processor_class):
-                        sensordPipe._mgmt_processor_factory = processor_class
-                        sensordPipe._mgmt_processor_checked = True
+                        SensordPipe._mgmt_processor_factory = processor_class
+                        SensordPipe._mgmt_processor_checked = True
                         logger.info(f"Loaded management extension '{ep.name}' (cached for future pipes)")
                         return processor_class()
                 except Exception as e:
@@ -184,7 +184,7 @@ class sensordPipe(FustorPipe, PipeLifecycleMixin, PipeLeaderMixin):
             pass
             
         # Mark as checked so we don't scan again
-        sensordPipe._mgmt_processor_checked = True
+        SensordPipe._mgmt_processor_checked = True
         return None
 
     def _build_sensord_status(self) -> Dict[str, Any]:

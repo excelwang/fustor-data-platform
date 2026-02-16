@@ -1,7 +1,7 @@
 import pytest
 import yaml
 from pathlib import Path
-from fustord.config.pipes import PipesConfigLoader, fustordPipeConfig
+from fustord.config.pipes import PipesConfigLoader, FustordPipeConfig
 
 @pytest.fixture
 def config_dir(tmp_path):

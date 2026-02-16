@@ -16,7 +16,7 @@ graph LR
 
 ## Features
 
-*   **Pipe Interfaces**: Standardized abstract classes for `sensordPipe`, `SourceDriver`, and `SenderHandler`.
+*   **Pipe Interfaces**: Standardized abstract classes for `SensordPipe`, `SourceDriver`, and `SenderHandler`.
 *   **Driver Framework**: Tools and base classes to implement custom source drivers (e.g., MySQL, OSS, custom APIs).
 *   **Sender Framework**: Robust handlers for delivering data to various destinations, supporting retry logic and role management (Leader/Follower).
 *   **Configuration SDK**: Specialized Pydantic models and services to manage dynamic pipe configurations.

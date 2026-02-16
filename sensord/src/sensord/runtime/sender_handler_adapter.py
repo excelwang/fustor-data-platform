@@ -1,6 +1,6 @@
 # sensord/src/sensord/runtime/sender_handler_adapter.py
 """
-Adapter to wrap a Sender transport as a SenderHandler for use in sensordPipe.
+Adapter to wrap a Sender transport as a SenderHandler for use in SensordPipe.
 
 This allows the existing sender-http and other transport implementations
 to be used with the new Pipe-based architecture.
@@ -36,8 +36,8 @@ class SenderHandlerAdapter(SenderHandler):
         )
         handler = SenderHandlerAdapter(sender)
         
-        # Now usable with sensordPipe
-        pipe = sensordPipe(
+        # Now usable with SensordPipe
+        pipe = SensordPipe(
             source_handler=source,
             sender_handler=handler,
             ...

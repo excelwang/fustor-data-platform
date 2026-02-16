@@ -72,7 +72,7 @@ version: 1.0.0
 
 ### 2.2 Leader 选举
 
-- **先到先得**：第一个建立 Session 的 sensordPipe 成为 Leader
+- **先到先得**：第一个建立 Session 的 SensordPipe 成为 Leader
 - **故障转移**：仅当 Leader 心跳超时或断开后，fustord 才释放 Leader 锁
 - **实现**：通过 `ViewStateManager` 管理 Leader 锁，`SessionManager` 管理会话生命周期
 
@@ -85,7 +85,7 @@ sensord 向 fustord 发送的消息分为三类，通过 `message_source` 字段
 | 类型 | 来源 | 说明 |
 |------|------|------|
 | `realtime` | inotify 事件 | 单个文件的增删改，优先级最高 |
-| `snapshot` | sensordPipe 启动时全量扫描 | 初始化内存树 |
+| `snapshot` | SensordPipe 启动时全量扫描 | 初始化内存树 |
 | `audit` | 定时审计扫描 | 发现盲区变更 |
 
 ### 3.1 Audit 快速扫描算法 (sensord 端)
@@ -482,17 +482,17 @@ for path in audit_seen_paths:
 由于 sensord 运行在物理机上的时钟可能与 NFS Server 的时钟（即文件 mtime 的来源）存在偏差，为了保证物理时间戳（index）与逻辑时间戳（mtime）的可比性，Source Driver 必须执行漂移补偿。
 
 **机制 (Shadow Reference Frame)**：
-- **Sampling**: sensordPipe 启动时执行 Pre-scan，收集所有目录的 recursive mtime。
+- **Sampling**: SensordPipe 启动时执行 Pre-scan，收集所有目录的 recursive mtime。
 - **Reference Selection**: 选取 P99 分位的 mtime 作为 `latest_mtime_stable` (排除未来时间或极端异常值)。
 - **Drift Calculation**: `drift = latest_mtime_stable - time.time()`。这里假设最活跃的目录 mtime 极其接近 NFS Server 当前时间。
 - **Correction**: 生成事件时，物理时间戳 `index` = `(time.time() + drift) * 1000`。
-- **目的**: 确保 fustord 收到的事件 `index` 大致对齐到 NFS 的时间轴，防止因 sensordPipe 时钟大幅落后导致事件被误判为"陈旧"而被丢弃。
+- **目的**: 确保 fustord 收到的事件 `index` 大致对齐到 NFS 的时间轴，防止因 SensordPipe 时钟大幅落后导致事件被误判为"陈旧"而被丢弃。
 
 ---
 
 ## 7. 审计生命周期
 
-sensordPipe 通过 API 发送生命周期信号，触发 fustord 的一致性处理：
+SensordPipe 通过 API 发送生命周期信号，触发 fustord 的一致性处理：
 
 | API | 时机 | fustord 动作 |
 |-----|------|-------------|
@@ -547,8 +547,8 @@ GET /api/v1/views/{view_id}/tree?path=/data/logs&force-real-time=true
 
 **处理流程**：
 1. fustord 接收请求，挂起 HTTP 响应
-2.通过 Heartbeat Response 向 Leader sensordPipe 下发 `scan` 命令
-3. sensordPipe 执行 `scan_path("/data/logs")` 并推送事件
+2.通过 Heartbeat Response 向 Leader SensordPipe 下发 `scan` 命令
+3. SensordPipe 执行 `scan_path("/data/logs")` 并推送事件
 4. fustord 接收事件更新视图
 5. (可选) fustord 返回更新后的结果或超时
 ```

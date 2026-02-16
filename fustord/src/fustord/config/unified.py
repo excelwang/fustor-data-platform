@@ -59,7 +59,7 @@ class ViewConfig(BaseModel):
     disabled: bool = False
 
 
-class fustordPipeConfig(BaseModel):
+class FustordPipeConfig(BaseModel):
     """Configuration for a single fustord pipe."""
     receiver: str  # Reference to receiver ID
     views: List[str] = []  # References to view IDs
@@ -92,7 +92,7 @@ class fustordConfigLoader:
         # Merged namespace
         self._receivers: Dict[str, ReceiverConfig] = {}
         self._views: Dict[str, ViewConfig] = {}
-        self._pipes: Dict[str, fustordPipeConfig] = {}
+        self._pipes: Dict[str, FustordPipeConfig] = {}
         
         # Track which file defines which pipes
         self._pipes_by_file: Dict[str, Set[str]] = {}
@@ -163,7 +163,7 @@ class fustordConfigLoader:
             for pipe_id, pipe_data in data.get("pipes", {}).items():
                 if pipe_id in self._pipes:
                     logger.warning(f"Pipe '{pipe_id}' redefined in {path}")
-                self._pipes[pipe_id] = fustordPipeConfig(**pipe_data)
+                self._pipes[pipe_id] = FustordPipeConfig(**pipe_data)
                 pipe_ids.add(pipe_id)
             
             self._pipes_by_file[file_key] = pipe_ids
@@ -200,7 +200,7 @@ class fustordConfigLoader:
         self.ensure_loaded()
         return self._views.get(view_id)
     
-    def get_pipe(self, pipe_id: str) -> Optional[fustordPipeConfig]:
+    def get_pipe(self, pipe_id: str) -> Optional[FustordPipeConfig]:
         self.ensure_loaded()
         return self._pipes.get(pipe_id)
     
@@ -212,21 +212,21 @@ class fustordConfigLoader:
         self.ensure_loaded()
         return self._views.copy()
     
-    def get_all_pipes(self) -> Dict[str, fustordPipeConfig]:
+    def get_all_pipes(self) -> Dict[str, FustordPipeConfig]:
         self.ensure_loaded()
         return self._pipes.copy()
     
-    def get_pipes_from_file(self, filename: str) -> Dict[str, fustordPipeConfig]:
+    def get_pipes_from_file(self, filename: str) -> Dict[str, FustordPipeConfig]:
         """Get pipes defined in a specific file."""
         self.ensure_loaded()
         pipe_ids = self._pipes_by_file.get(filename, set())
         return {pid: self._pipes[pid] for pid in pipe_ids if pid in self._pipes}
     
-    def get_default_pipes(self) -> Dict[str, fustordPipeConfig]:
+    def get_default_pipes(self) -> Dict[str, FustordPipeConfig]:
         """Get pipes from default.yaml."""
         return self.get_pipes_from_file("default.yaml")
     
-    def get_enabled_pipes(self) -> Dict[str, fustordPipeConfig]:
+    def get_enabled_pipes(self) -> Dict[str, FustordPipeConfig]:
         """
         Get all enabled pipes.
         In fustord, a pipe is enabled if its receiver is enabled 

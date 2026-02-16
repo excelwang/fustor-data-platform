@@ -79,7 +79,7 @@ async def test_app_startup_shutdown(mock_config_dir, tmp_path):
             mock_pipe.bus = MagicMock(id="mock-bus-id") # Mock bus attribute
 
             with patch("sensord.app.SourceHandlerAdapter"), patch("sensord.app.SenderHandlerAdapter"):
-                with patch("sensord.runtime.sensord_pipe.sensordPipe", return_value=mock_pipe):
+                with patch("sensord.runtime.sensord_pipe.SensordPipe", return_value=mock_pipe):
                     await app.startup()
                     assert "pipe1" in app.pipe_runtime
                     mock_pipe.start.assert_called_once()
@@ -122,7 +122,7 @@ async def test_app_reload_config(mock_config_dir, tmp_path):
                 return AsyncMock()
 
             with patch("sensord.app.SourceHandlerAdapter"), patch("sensord.app.SenderHandlerAdapter"):
-                with patch("sensord.runtime.sensord_pipe.sensordPipe", side_effect=pipe_side_effect):
+                with patch("sensord.runtime.sensord_pipe.SensordPipe", side_effect=pipe_side_effect):
                     await app.startup()
                     assert "pipe1" in app.pipe_runtime
                     

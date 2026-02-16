@@ -8,7 +8,7 @@ import pytest
 from fustord.api.session import create_session
 from fustord.core.session_manager import session_manager
 from fustord.view_state_manager import view_state_manager
-from fustord.runtime.fustord_pipe import fustordPipe
+from fustord.runtime.fustord_pipe import FustordPipe
 from fustord.runtime.session_bridge import create_session_bridge
 from fustord import runtime_objects
 
@@ -22,15 +22,15 @@ class MockRequest:
 async def setup_dummy_pipe(view_id: str, allow_concurrent_push: bool = False):
     """Register a dummy pipe in the global manager for API tests."""
     if not runtime_objects.pipe_manager:
-        from fustord.runtime.pipe_manager import fustordPipeManager
-        runtime_objects.pipe_manager = fustordPipeManager()
+        from fustord.runtime.pipe_manager import FustordPipeManager
+        runtime_objects.pipe_manager = FustordPipeManager()
     
     mock_handler = Mock()
     mock_handler.id = "dummy-handler"
     mock_handler.view_id = view_id
     mock_handler.resolve_session_role = AsyncMock(return_value={"role": "leader"})
     
-    pipe = fustordPipe(
+    pipe = FustordPipe(
         pipe_id=view_id,
         config={"view_ids": [view_id], "allow_concurrent_push": allow_concurrent_push},
         view_handlers=[mock_handler]

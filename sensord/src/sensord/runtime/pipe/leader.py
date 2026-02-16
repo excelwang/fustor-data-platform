@@ -5,19 +5,19 @@ from fustor_core.pipe import PipeState
 from fustor_core.exceptions import SessionObsoletedError
 
 if TYPE_CHECKING:
-    from ..sensord_pipe import sensordPipe
+    from ..sensord_pipe import SensordPipe
 
 logger = logging.getLogger("sensord.pipe.leader")
 
 class PipeLeaderMixin:
     """
-    Mixin for sensordPipe leader task orchestration.
+    Mixin for SensordPipe leader task orchestration.
     """
 
     # _run_leader_sequence removed (Blocking logic deprecated)
 
 
-    async def _run_snapshot_sync(self: "sensordPipe") -> None:
+    async def _run_snapshot_sync(self: "SensordPipe") -> None:
         """Execute snapshot sync phase."""
         logger.debug(f"Pipe {self.id}: Snapshot sync phase starting")
         # Set state bit
@@ -46,7 +46,7 @@ class PipeLeaderMixin:
         finally:
             self._set_state(self.state & ~PipeState.SNAPSHOT_SYNC)
 
-    async def _run_audit_loop(self: "sensordPipe") -> None:
+    async def _run_audit_loop(self: "SensordPipe") -> None:
         """Periodically run audit phase."""
         while self.is_running():
             # Check role at start of loop
@@ -79,12 +79,12 @@ class PipeLeaderMixin:
                 backoff = self._handle_data_error(e, "audit")
                 await asyncio.sleep(backoff)
 
-    async def _run_audit_sync(self: "sensordPipe") -> None:
+    async def _run_audit_sync(self: "SensordPipe") -> None:
         """Execute audit phase."""
         from .phases import run_audit_sync
         await run_audit_sync(self)
 
-    async def _run_sentinel_loop(self: "sensordPipe") -> None:
+    async def _run_sentinel_loop(self: "SensordPipe") -> None:
         """Periodically run sentinel checks."""
         while self.is_running():
             # Check role at start of loop
@@ -114,26 +114,26 @@ class PipeLeaderMixin:
                 backoff = self._handle_data_error(e, "sentinel")
                 await asyncio.sleep(backoff)
 
-    async def _run_sentinel_check(self: "sensordPipe") -> None:
+    async def _run_sentinel_check(self: "SensordPipe") -> None:
         """Execute sentinel check."""
         from .phases import run_sentinel_check
         await run_sentinel_check(self)
 
-    async def trigger_audit(self: "sensordPipe") -> None:
+    async def trigger_audit(self: "SensordPipe") -> None:
         """Manually trigger an audit cycle."""
         if self.current_role == "leader":
             asyncio.create_task(self._run_audit_sync())
         else:
             logger.warning(f"Pipe {self.id}: Cannot trigger audit, not a leader")
 
-    async def trigger_sentinel(self: "sensordPipe") -> None:
+    async def trigger_sentinel(self: "SensordPipe") -> None:
         """Manually trigger a sentinel check."""
         if self.current_role == "leader":
             asyncio.create_task(self._run_sentinel_check())
         else:
             logger.warning(f"Pipe {self.id}: Cannot trigger sentinel, not a leader")
 
-    async def _cancel_leader_tasks(self: "sensordPipe") -> None:
+    async def _cancel_leader_tasks(self: "SensordPipe") -> None:
         """Cancel leader-specific background tasks and clear handles."""
         tasks_to_cancel = []
         if self._snapshot_task and not self._snapshot_task.done():

@@ -10,7 +10,7 @@ import pytest
 import asyncio
 from fustor_core.event import EventBase
 from fustor_core.event.types import EventType
-from fustord.runtime import fustordPipe
+from fustord.runtime import FustordPipe
 
 
 class FlakeyViewHandler:
@@ -46,7 +46,7 @@ class TestHandlerDegradation:
     async def test_handler_is_disabled_after_max_errors(self):
         """验证当前行为: Handler 达到 MAX_HANDLER_ERRORS 后被永久禁用。"""
         handler = FlakeyViewHandler(fail_count=100)  # 永遠失败
-        pipe = fustordPipe(
+        pipe = FustordPipe(
             pipe_id="test",
             config={"view_ids": ["1"], "allow_concurrent_push": True},
             view_handlers=[handler]
@@ -76,7 +76,7 @@ class TestHandlerDegradation:
         验证修复后: 被禁用的 Handler 在冷却期后恢复。
         """
         handler = FlakeyViewHandler(fail_count=5)  # 5 次后恢复
-        pipe = fustordPipe(
+        pipe = FustordPipe(
             pipe_id="test",
             config={
                 "view_ids": ["1"], 

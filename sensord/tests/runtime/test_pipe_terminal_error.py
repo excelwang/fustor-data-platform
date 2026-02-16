@@ -14,7 +14,7 @@ import asyncio
 from unittest.mock import AsyncMock
 from fustor_core.pipe import PipeState
 from fustor_core.exceptions import fustordConnectionError
-from sensord.runtime.sensord_pipe import sensordPipe
+from sensord.runtime.sensord_pipe import SensordPipe
 from .mocks import MockSourceHandler, MockSenderHandler
 
 
@@ -30,7 +30,7 @@ def pipe_with_low_max_errors():
         "max_consecutive_errors": 3,
         "batch_size": 10,
     }
-    pipe = sensordPipe("test-pipe", config, src, snd)
+    pipe = SensordPipe("test-pipe", config, src, snd)
     return pipe, src, snd
 
 

@@ -5,7 +5,7 @@ import pytest
 import pytest_asyncio
 import asyncio
 from fustor_core.pipe.handler import ViewHandler
-from fustord.runtime import fustordPipe
+from fustord.runtime import FustordPipe
 from fustord.runtime.session_bridge import create_session_bridge
 
 
@@ -40,7 +40,7 @@ async def pipe_with_bridge():
     await session_manager.clear_all_sessions("bv1")
 
     handler = MinimalHandler(hid="bv1")
-    pipe = fustordPipe(
+    pipe = FustordPipe(
         pipe_id="bridge-test",
         config={"view_ids": ["bv1"], "allow_concurrent_push": True},
         view_handlers=[handler]

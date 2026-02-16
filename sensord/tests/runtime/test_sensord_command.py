@@ -1,7 +1,7 @@
 import pytest
 import asyncio
 from unittest.mock import MagicMock, AsyncMock, patch
-from sensord.runtime.sensord_pipe import sensordPipe
+from sensord.runtime.sensord_pipe import SensordPipe
 from fustor_source_fs.driver import FSDriver
 from fustor_core.pipe.sender import SenderHandler
 
@@ -24,7 +24,7 @@ async def test_sensord_command_execution():
     config = {
         "control_loop_interval": 0.1
     }
-    pipe = sensordPipe("pipe-1", config, mock_source, mock_sender)
+    pipe = SensordPipe("pipe-1", config, mock_source, mock_sender)
     pipe.session_id = "sess-1"
     pipe.current_role = "leader"
     

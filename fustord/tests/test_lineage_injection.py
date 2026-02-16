@@ -1,13 +1,13 @@
 import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
-from fustord.runtime.fustord_pipe import fustordPipe
+from fustord.runtime.fustord_pipe import FustordPipe
 from fustor_core.event import EventBase
 from fustord.core.session_manager import SessionManager, session_manager
 from fustord_sdk.interfaces import SessionInfo
 
 @pytest.mark.asyncio
 async def test_lineage_injection_flow():
-    # 1. Setup fustordPipe with a mock handler
+    # 1. Setup FustordPipe with a mock handler
     mock_handler = MagicMock()
     mock_handler.id = "fs-handler"
     mock_handler.schema_name = "fs"
@@ -17,7 +17,7 @@ async def test_lineage_injection_flow():
     mock_handler.close = AsyncMock()
     mock_handler.process_event = AsyncMock(return_value=True)
     
-    pipe = fustordPipe(pipe_id="v1", config={"view_ids": ["v1"]}, view_handlers=[mock_handler])
+    pipe = FustordPipe(pipe_id="v1", config={"view_ids": ["v1"]}, view_handlers=[mock_handler])
     await pipe.start()
     
     from fustord.runtime.session_bridge import create_session_bridge

@@ -7,7 +7,7 @@ import shutil
 from unittest.mock import MagicMock, AsyncMock, patch
 from pathlib import Path
 
-from sensord.runtime.sensord_pipe import sensordPipe
+from sensord.runtime.sensord_pipe import SensordPipe
 from fustor_core.pipe.pipe import PipeState
 
 @pytest.fixture(autouse=True)
@@ -24,8 +24,8 @@ def mock_pipe():
     }
     source_h = MagicMock()
     sender_h = AsyncMock()
-    # sensordPipe will load CommandProcessor if installed (which it is since we ran uv sync)
-    pipe = sensordPipe("test-pipe", config, source_h, sender_h)
+    # SensordPipe will load CommandProcessor if installed (which it is since we ran uv sync)
+    pipe = SensordPipe("test-pipe", config, source_h, sender_h)
     pipe.session_id = "s123"
     pipe.state = PipeState.RUNNING
     return pipe

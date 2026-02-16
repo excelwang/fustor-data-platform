@@ -117,7 +117,7 @@ rm tests/e2e/.env_state  # 强制刷新哈希状态
 - K: Fan-Out / Aggregation / HA 动态配置
 
 ### Pipe 架构
-- pipe_basic: sensordPipe 基本操作
+- pipe_basic: SensordPipe 基本操作
 - pipe_field_mapping: 字段映射
 
 ## 目录结构

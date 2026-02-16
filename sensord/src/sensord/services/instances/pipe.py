@@ -5,7 +5,7 @@ from dataclasses import dataclass
 
 from .base import BaseInstanceService
 from fustor_core.models.states import PipeState
-from sensord.runtime import sensordPipe
+from sensord.runtime import SensordPipe
 from sensord.runtime.source_handler_adapter import SourceHandlerAdapter
 from sensord.runtime.sender_handler_adapter import SenderHandlerAdapter
 from fustor_core.exceptions import NotFoundError
@@ -20,8 +20,8 @@ class StartResult:
     error: Optional[str] = None
     skipped: bool = False
 
-# PipeRuntime is now always sensordPipe
-PipeRuntime = sensordPipe
+# PipeRuntime is now always SensordPipe
+PipeRuntime = SensordPipe
 
 
 
@@ -169,7 +169,7 @@ class PipeInstanceService(BaseInstanceService, PipeInstanceServiceInterface): # 
                 "fields_mapping": field_mappings,
             }
 
-            pipe = sensordPipe(
+            pipe = SensordPipe(
                 pipe_id=id,
                 config=runtime_config,
                 source_handler=source_handler,
@@ -274,7 +274,7 @@ class PipeInstanceService(BaseInstanceService, PipeInstanceServiceInterface): # 
 
         logger.info(f"Marking pipes dependent on {dependency_type} '{dependency_id}' as outdated.")
         for pipe_instance in affected_pipes:
-            # Use PipeState which is what sensordPipe uses internally
+            # Use PipeState which is what SensordPipe uses internally
             pipe_instance.state |= PipeState.CONF_OUTDATED
             pipe_instance.info = reason_info # Update info directly
         self.logger.info(f"Marked {len(affected_pipes)} pipes as outdated.")

@@ -8,7 +8,7 @@ U6: message_sync 任务崩溃后 control loop 的检测和恢复。
 import pytest
 import asyncio
 from fustor_core.pipe import PipeState
-from sensord.runtime.sensord_pipe import sensordPipe
+from sensord.runtime.sensord_pipe import SensordPipe
 from .mocks import MockSourceHandler, MockSenderHandler
 
 
@@ -24,7 +24,7 @@ def pipe_with_session():
         "max_consecutive_errors": 10,  # 高阈值避免终态
         "batch_size": 10,
     }
-    pipe = sensordPipe("test-pipe", config, src, snd)
+    pipe = SensordPipe("test-pipe", config, src, snd)
     return pipe
 
 

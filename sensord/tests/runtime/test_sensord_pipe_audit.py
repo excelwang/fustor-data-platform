@@ -2,13 +2,13 @@
 import pytest
 import asyncio
 from unittest.mock import MagicMock
-from sensord.runtime.sensord_pipe import sensordPipe
+from sensord.runtime.sensord_pipe import SensordPipe
 from sensord.runtime.pipe.phases import run_audit_sync
 from .mocks import MockSourceHandler, MockSenderHandler
 
 from fustor_core.pipe import PipeState
 
-class TestsensordPipeAudit:
+class TestSensordPipeAudit:
     
     @pytest.fixture
     def mock_source_audit(self):
@@ -22,7 +22,7 @@ class TestsensordPipeAudit:
 
     @pytest.fixture
     def sensord_pipe(self, mock_source_audit, mock_sender, pipe_config):
-        pipe = sensordPipe(
+        pipe = SensordPipe(
             pipe_id="test-audit-pipe",
             config=pipe_config,
             source_handler=mock_source_audit,

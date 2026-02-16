@@ -81,7 +81,7 @@ sequenceDiagram
 
 ### 关键组件解析
 
-1.  **主任务 (`_run_message_sync`)**: 这是 `sensordPipe` 的主控制循环，它永远以最高优先级运行，负责处理实时消息流。
+1.  **主任务 (`_run_message_sync`)**: 这是 `SensordPipe` 的主控制循环，它永远以最高优先级运行，负责处理实时消息流。
 
 2.  **信号检测**: 在每次 `push` 实时数据后，主任务会检查来自远端消费者的响应，看是否包含 `snapshot_needed: true` 的请求。
 
@@ -89,7 +89,7 @@ sequenceDiagram
 
 4.  **后台任务 (`_run_message_sync`)**: 这个 `aphase` 方法现在作为一个独立的、并发的后台任务运行。它内部依然使用第2节描述的“生产者-消费者”模型来拉取数据和推送数据。它的运行完全独立，不影响主任务。
 
-5.  **状态同步 (`_is_snapshot_running` 标志)**: 这个布尔标志起到了一个简单的互斥锁（Mutex）的作用，确保在任何时候，对于同一个 `sensordPipe`，最多只有一个补充快照任务在运行。
+5.  **状态同步 (`_is_snapshot_running` 标志)**: 这个布尔标志起到了一个简单的互斥锁（Mutex）的作用，确保在任何时候，对于同一个 `SensordPipe`，最多只有一个补充快照任务在运行。
 
 通过这种两层并发模型的组合，Fustor sensord 既解决了底层驱动的 I/O 阻塞问题，又实现了上层业务逻辑的“实时不中断，后台异步回填”的高级功能。
 
@@ -101,7 +101,7 @@ sequenceDiagram
 
 ### 4.2 状态持久化与恢复的增强
 
-`sensordPipeDTO` 中持久化的 `bus_id` 字段，确保了在应用重启后，`sensordPipe` 能够恢复并重新连接到它之前所属的正确事件总线上。
+`SensordPipeDTO` 中持久化的 `bus_id` 字段，确保了在应用重启后，`SensordPipe` 能够恢复并重新连接到它之前所属的正确事件总线上。
 
 ### 4.3 总线分裂机制
 

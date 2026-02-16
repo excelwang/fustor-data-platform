@@ -114,7 +114,7 @@ class ViewStateManager:
         return None
 
     async def get_leader(self, view_id: str) -> Optional[str]:
-        """Alias for get_leader_session_id to match fustordPipe expectations."""
+        """Alias for get_leader_session_id to match FustordPipe expectations."""
         return await self.get_leader_session_id(view_id)
 
     # --- 写操作（per-view 锁） ---

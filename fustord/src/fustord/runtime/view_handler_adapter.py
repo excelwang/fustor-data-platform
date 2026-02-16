@@ -1,6 +1,6 @@
 # fustord/src/fustord/runtime/view_handler_adapter.py
 """
-Adapter to wrap a ViewDriver or ViewManager as a ViewHandler for use in fustordPipe.
+Adapter to wrap a ViewDriver or ViewManager as a ViewHandler for use in FustordPipe.
 
 This allows the existing view-fs and other view driver implementations
 to be used with the new Pipe-based architecture.
@@ -36,8 +36,8 @@ class ViewDriverAdapter(ViewHandler):
         )
         handler = ViewDriverAdapter(driver)
         
-        # Now usable with fustordPipe
-        pipe = fustordPipe(
+        # Now usable with FustordPipe
+        pipe = FustordPipe(
             pipe_id="ds-1",
             config={...},
             view_handlers=[handler]
@@ -186,7 +186,7 @@ class ViewManagerAdapter(ViewHandler):
             config=config or {}
         )
         self._manager = view_manager
-        # "view-manager" acts as a wildcard schema in fustordPipe routing
+        # "view-manager" acts as a wildcard schema in FustordPipe routing
         self.schema_name = "view-manager"
     
     @property

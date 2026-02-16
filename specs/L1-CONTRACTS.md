@@ -28,7 +28,7 @@ invariants:
 
 - **NEVER_STOP_RETRY**: System MUST NOT stop retrying after reaching the alert threshold; it MUST continue retrying at max interval indefinitely.
   > Responsibility: Survival — ensure upstream recovery triggers automatic reconnection.
-  > Verification: sensordPipe remains in RECONNECTING state and retries persist beyond alert threshold.
+  > Verification: SensordPipe remains in RECONNECTING state and retries persist beyond alert threshold.
 
 ### Exception Isolation
 
@@ -155,7 +155,7 @@ invariants:
 
 ### Queue & Backpressure
 
-- **QUEUE_ISOLATION**: Each fustordPipe MUST have an independent event queue and processing loop.
+- **QUEUE_ISOLATION**: Each FustordPipe MUST have an independent event queue and processing loop.
   > Responsibility: Isolation — different views process independently.
   > Verification: No cross-pipe shared queues exist.
 
@@ -195,7 +195,7 @@ invariants:
   > Verification: All event types from same source share identical `event_schema`.
 
 - **TWO_TIER_ROUTING**: System MUST implement two-tier event routing:
-  > 1. **Tier 1 (fustordPipe)**: Route by `Handler.schema_name` matching `Event.event_schema`
+  > 1. **Tier 1 (FustordPipe)**: Route by `Handler.schema_name` matching `Event.event_schema`
   > 2. **Tier 2 (ViewManager)**: Route by `Driver.target_schema` matching `Event.event_schema`
   > Responsibility: Safety — prevent cross-schema data pollution.
   > Verification: DB events never reach FS memory tree; FS events never reach DB handlers.

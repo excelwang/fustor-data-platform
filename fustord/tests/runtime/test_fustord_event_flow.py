@@ -2,18 +2,18 @@ import pytest
 import pytest_asyncio
 import asyncio
 from unittest.mock import MagicMock, AsyncMock, patch
-from fustord.runtime.fustord_pipe import fustordPipe
+from fustord.runtime.fustord_pipe import FustordPipe
 from fustor_core.pipe.handler import ViewHandler
 
 class TestfustordEventFlow:
     """
-    Test suite for fustordPipe event flow and signal handling.
+    Test suite for FustordPipe event flow and signal handling.
     """
 
     @pytest_asyncio.fixture
     async def pipe(self):
         config = {"view_ids": ["view-main"]}
-        pipe = fustordPipe("pipe-test", config)
+        pipe = FustordPipe("pipe-test", config)
         pipe._set_state = MagicMock() # Mock state transitions
         pipe._handlers_ready.set()    # Avoid initialization timeout
         

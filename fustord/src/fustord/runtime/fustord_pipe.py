@@ -1,6 +1,6 @@
 # fustord/src/fustord/runtime/fustord_pipe.py
 """
-fustordPipe - The V2 Pipe implementation for fustord.
+FustordPipe - The V2 Pipe implementation for fustord.
 
 This Pipe receives events from sensords and dispatches them to ViewHandlers.
 It implements the receiver side of the sensord -> fustord data flow.
@@ -10,7 +10,7 @@ Architecture:
 
     sensord                               fustord
     ┌─────────────┐                    ┌─────────────────────────────┐
-    │sensordPipe│ ─── HTTP/gRPC ───▶ │     fustordPipe          │
+    │SensordPipe│ ─── HTTP/gRPC ───▶ │     FustordPipe          │
     └─────────────┘                    │  ┌─────────────────────┐    │
                                        │  │ ReceiverHandler     │    │
                                        │  │ (session, events)   │    │
@@ -41,7 +41,7 @@ from ..core.session_manager import session_manager
 logger = logging.getLogger("fustord.pipe")
 
 
-class fustordPipe(FustorPipe):
+class FustordPipe(FustorPipe):
     """
     fustord-side Pipe for receiving and processing events.
     
@@ -52,9 +52,9 @@ class fustordPipe(FustorPipe):
     4. Provides aggregated statistics and data views
     
     Usage:
-        from fustord.runtime import fustordPipe
+        from fustord.runtime import FustordPipe
         
-        pipe = fustordPipe(
+        pipe = FustordPipe(
             pipe_id="view-1",
             config={"view_id": "view-1"},
             view_handlers=[fs_view_handler, ...]
@@ -77,7 +77,7 @@ class fustordPipe(FustorPipe):
         context: Optional["PipeContext"] = None
     ):
         """
-        Initialize the fustordPipe.
+        Initialize the FustordPipe.
         
         Args:
             pipe_id: Unique identifier for this connection pipeline (mapped to self.id)
@@ -88,11 +88,11 @@ class fustordPipe(FustorPipe):
         """
         super().__init__(pipe_id, config, context)
         
-        # fustordPipe handles M:N view mappings.
+        # FustordPipe handles M:N view mappings.
         # view_ids must be explicitly provided in config (from fustord-pipes-config.yaml)
         self.view_ids = config.get("view_ids")
         if not self.view_ids:
-            raise ValueError(f"fustordPipe '{pipe_id}': 'view_ids' is required in config. A pipe must serve at least one view.")
+            raise ValueError(f"FustordPipe '{pipe_id}': 'view_ids' is required in config. A pipe must serve at least one view.")
 
         self.allow_concurrent_push = config.get("allow_concurrent_push", True)
         self.queue_batch_size = config.get("queue_batch_size", 100)
@@ -212,14 +212,14 @@ class fustordPipe(FustorPipe):
                 name=f"fustord-pipe-session-events-{self.id}"
             )
         
-        logger.info(f"fustordPipe {self.id} started with {len(self._view_handlers)} view handlers")
+        logger.info(f"FustordPipe {self.id} started with {len(self._view_handlers)} view handlers")
     
     async def stop(self) -> None:
         """Stop the pipe."""
         if not self.is_running():
             return
             
-        logger.info(f"Stopping fustordPipe {self.id}")
+        logger.info(f"Stopping FustordPipe {self.id}")
         self._set_state(PipeState.STOPPING, "Stopping...")
         
         # 1. Cancel background tasks
@@ -264,7 +264,7 @@ class fustordPipe(FustorPipe):
                 logger.error(f"Error stopping handler {h_id}: {e}")
                 
         self._set_state(PipeState.STOPPED, "Stopped")
-        logger.info(f"fustordPipe {self.id} stopped")
+        logger.info(f"FustordPipe {self.id} stopped")
 
     async def _initialize_handlers(self) -> None:
         """Background task to initialize handlers without blocking fustord startup."""
@@ -908,7 +908,7 @@ class fustordPipe(FustorPipe):
                 await asyncio.sleep(0.1)
 
     def __str__(self) -> str:
-        return f"fustordPipe({self.id}, state={self.state.name})"
+        return f"FustordPipe({self.id}, state={self.state.name})"
 
 
 

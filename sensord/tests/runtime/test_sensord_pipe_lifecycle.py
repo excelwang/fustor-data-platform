@@ -1,17 +1,17 @@
 # sensord/tests/runtime/test_sensord_pipe_lifecycle.py
 """
-Lifecycle and role management tests for sensordPipe.
+Lifecycle and role management tests for SensordPipe.
 These tests verify the state transitions and sequence of the pipe.
 """
 import asyncio
 import pytest
 from unittest.mock import MagicMock, AsyncMock, patch
 from fustor_core.pipe import PipeState
-from sensord.runtime.sensord_pipe import sensordPipe
+from sensord.runtime.sensord_pipe import SensordPipe
 
 @pytest.mark.timeout(5)
-class TestsensordPipeLifecycle:
-    """Test sensordPipe lifecycle and role transitions."""
+class TestSensordPipeLifecycle:
+    """Test SensordPipe lifecycle and role transitions."""
 
     @pytest.fixture
     def sensord_pipe(self, mock_source, mock_sender, pipe_config):
@@ -21,7 +21,7 @@ class TestsensordPipeLifecycle:
         # Prevent busy loop in message sync task
         mock_bus.internal_bus.get_events_for = AsyncMock(return_value=[])
         
-        return sensordPipe(
+        return SensordPipe(
             pipe_id="test-pipe",
             config=pipe_config,
             source_handler=mock_source,

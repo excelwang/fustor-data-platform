@@ -35,7 +35,7 @@ class EmbeddedReceiverConfig(BaseModel):
     api_keys: List[APIKeyConfig] = []
 
 
-class fustordPipeConfig(BaseModel):
+class FustordPipeConfig(BaseModel):
     """
     Unified fustord pipe configuration with embedded receiver and views.
     
@@ -89,11 +89,11 @@ class PipesConfigLoader:
             config_dir = home / "config"
         
         self.dir = Path(config_dir)
-        self._pipes: Dict[str, fustordPipeConfig] = {}
+        self._pipes: Dict[str, FustordPipeConfig] = {}
         self._default_list: List[str] = []
         self._loaded = False
     
-    def scan(self) -> Dict[str, fustordPipeConfig]:
+    def scan(self) -> Dict[str, FustordPipeConfig]:
         """Scan directory and load all pipe configurations."""
         self._pipes.clear()
         self._default_list.clear()
@@ -127,7 +127,7 @@ class PipesConfigLoader:
                 # fustord specific: we might need to distinguish sensord vs fustord configs
                 # For now, if it has 'receiver' or 'views', it's likely a fustord pipe config
                 if 'receiver' in data or 'views' in data:
-                    config = fustordPipeConfig(**data)
+                    config = FustordPipeConfig(**data)
                     self._pipes[config.id] = config
                     logger.debug(f"Loaded fustord pipe config: {config.id}")
             except Exception as e:
@@ -140,15 +140,15 @@ class PipesConfigLoader:
         if not self._loaded:
             self.scan()
     
-    def get(self, pipe_id: str) -> Optional[fustordPipeConfig]:
+    def get(self, pipe_id: str) -> Optional[FustordPipeConfig]:
         self.ensure_loaded()
         return self._pipes.get(pipe_id)
     
-    def get_all(self) -> Dict[str, fustordPipeConfig]:
+    def get_all(self) -> Dict[str, FustordPipeConfig]:
         self.ensure_loaded()
         return self._pipes.copy()
     
-    def get_enabled(self) -> Dict[str, fustordPipeConfig]:
+    def get_enabled(self) -> Dict[str, FustordPipeConfig]:
         self.ensure_loaded()
         return {k: v for k, v in self._pipes.items() if v.enabled}
     
@@ -169,13 +169,13 @@ class PipesConfigLoader:
                 return candidate
         return None
 
-    def load_from_path(self, path: Path) -> Optional[fustordPipeConfig]:
+    def load_from_path(self, path: Path) -> Optional[FustordPipeConfig]:
         try:
             with open(path) as f:
                 data = yaml.safe_load(f)
             if not data:
                 return None
-            return fustordPipeConfig(**data)
+            return FustordPipeConfig(**data)
         except Exception as e:
             logger.error(f"Failed to load fustord pipe config from {path}: {e}")
             return None

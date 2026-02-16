@@ -1,12 +1,12 @@
 # sensord/tests/runtime/test_sensord_pipe_error_recovery.py
 """
-Tests for sensordPipe error recovery and session loss handling.
+Tests for SensordPipe error recovery and session loss handling.
 """
 import pytest
 import asyncio
 from unittest.mock import MagicMock, AsyncMock, patch
 from fustor_core.pipe import PipeState
-from sensord.runtime.sensord_pipe import sensordPipe
+from sensord.runtime.sensord_pipe import SensordPipe
 from .mocks import MockSourceHandler, MockSenderHandler
 
 # Using fixtures and fast intervals from conftest.py
@@ -34,7 +34,7 @@ class TestsensordErrorRecovery:
         # Ensure it doesn't fail on length check or iteration
         mock_bus.internal_bus.get_events_for = AsyncMock(return_value=[])
         
-        pipe = sensordPipe(
+        pipe = SensordPipe(
             "test-id", pipe_config,
             mock_source, mock_sender, event_bus=mock_bus
         )
@@ -65,7 +65,7 @@ class TestsensordErrorRecovery:
         mock_bus.internal_bus = AsyncMock()
         mock_bus.internal_bus.get_events_for = AsyncMock(return_value=[])
         
-        pipe = sensordPipe(
+        pipe = SensordPipe(
             "test-id", pipe_config,
             mock_source, mock_sender, event_bus=mock_bus
         )
@@ -108,7 +108,7 @@ class TestsensordErrorRecovery:
     @pytest.mark.asyncio
     async def test_audit_sync_with_session_loss(self, mock_source, mock_sender, pipe_config):
         """Audit phase should handle session being cleared during execution."""
-        pipe = sensordPipe(
+        pipe = SensordPipe(
             "test-id", pipe_config,
             mock_source, mock_sender
         )
@@ -142,7 +142,7 @@ class TestsensordErrorRecovery:
         """Pipe should go to ERROR state if handler initialization fails."""
         mock_source.initialize = AsyncMock(side_effect=RuntimeError("Init failed"))
         
-        pipe = sensordPipe(
+        pipe = SensordPipe(
             "test-id", pipe_config,
             mock_source, mock_sender
         )
@@ -170,7 +170,7 @@ class TestsensordErrorRecovery:
         mock_bus.internal_bus = AsyncMock()
         mock_bus.internal_bus.get_events_for = AsyncMock(return_value=[])
         
-        pipe = sensordPipe(
+        pipe = SensordPipe(
             "test-id", pipe_config_no_bg,
             mock_source, mock_sender, event_bus=mock_bus
         )
@@ -226,7 +226,7 @@ class TestsensordErrorRecovery:
     async def test_exponential_backoff_values(self, mock_source, mock_sender, pipe_config):
 
         """Test that consecutive errors increase backoff."""
-        pipe = sensordPipe(
+        pipe = SensordPipe(
             "test-id", pipe_config,
             mock_source, mock_sender
         )

@@ -7,7 +7,7 @@ from .base import BaseConfigService
 from .source import SourceConfigService
 from .sender import SenderConfigService
 from sensord_sdk.interfaces import PipeConfigServiceInterface # Import the interface
-from sensord.config.unified import sensord_config, sensordPipeConfig # New Unified YAML loader
+from sensord.config.unified import sensord_config, SensordPipeConfig # New Unified YAML loader
 
 logger = logging.getLogger("sensord")
 
@@ -33,7 +33,7 @@ class PipeConfigService(BaseConfigService[PipeConfig], PipeConfigServiceInterfac
         """Injects the PipeInstanceService for dependency management."""
         self.pipe_instance_service = pipe_instance_service
 
-    def _convert_yaml_to_model(self, y_cfg: sensordPipeConfig) -> PipeConfig:
+    def _convert_yaml_to_model(self, y_cfg: SensordPipeConfig) -> PipeConfig:
         """Convert YAML configuration to internal model."""
         fields_mapping = [
             FieldMapping(to=m["to"], source=m["source"], required=m.get("required", False))

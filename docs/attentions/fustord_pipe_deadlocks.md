@@ -1,8 +1,8 @@
-# fustordPipe Deadlock with `wait_for_drain`
+# FustordPipe Deadlock with `wait_for_drain`
 
 ## Issue Description
 
-When handling an event batch in `fustordPipe.process_events`, if the event itself requires the pipe to be "drained" before processing continues (e.g. Audit End or Snapshot End signals), a deadlock can occur.
+When handling an event batch in `FustordPipe.process_events`, if the event itself requires the pipe to be "drained" before processing continues (e.g. Audit End or Snapshot End signals), a deadlock can occur.
 
 The deadlock happens because `process_events` tracks active pushes:
 

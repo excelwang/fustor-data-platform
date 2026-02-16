@@ -6,17 +6,17 @@ from fustor_core.exceptions import SessionObsoletedError, fustordConnectionError
 from sensord.config.unified import get_outbound_ip
 
 if TYPE_CHECKING:
-    from ..sensord_pipe import sensordPipe
+    from ..sensord_pipe import SensordPipe
 
 logger = logging.getLogger("sensord.pipe.lifecycle")
 
 class PipeLifecycleMixin:
     """
-    Mixin for sensordPipe lifecycle and control loop management.
-    Expected to be mixed into sensordPipe class.
+    Mixin for SensordPipe lifecycle and control loop management.
+    Expected to be mixed into SensordPipe class.
     """
     
-    def _calculate_backoff(self: "sensordPipe", consecutive_errors: int) -> float:
+    def _calculate_backoff(self: "SensordPipe", consecutive_errors: int) -> float:
         """Standardized exponential backoff calculation."""
         if consecutive_errors <= 0:
             return 0.0
@@ -26,17 +26,17 @@ class PipeLifecycleMixin:
         )
         return backoff
 
-    def _handle_control_error(self: "sensordPipe", error: Exception, loop_name: str) -> float:
+    def _handle_control_error(self: "SensordPipe", error: Exception, loop_name: str) -> float:
         """Control plane error handling: affects session recovery speed."""
         self._control_errors += 1
         return self._common_error_handler(self._control_errors, error, loop_name, is_control=True)
 
-    def _handle_data_error(self: "sensordPipe", error: Exception, loop_name: str) -> float:
+    def _handle_data_error(self: "SensordPipe", error: Exception, loop_name: str) -> float:
         """Data plane error handling: does not affect heartbeat or session."""
         self._data_errors += 1
         return self._common_error_handler(self._data_errors, error, loop_name, is_control=False)
 
-    def _common_error_handler(self: "sensordPipe", error_count: int, error: Exception, loop_name: str, is_control: bool) -> float:
+    def _common_error_handler(self: "SensordPipe", error_count: int, error: Exception, loop_name: str, is_control: bool) -> float:
         """Shared logic for error logging and backoff calculation."""
         backoff = self._calculate_backoff(error_count)
         
@@ -59,7 +59,7 @@ class PipeLifecycleMixin:
             
         return backoff
 
-    async def _run_control_loop(self: "sensordPipe") -> None:
+    async def _run_control_loop(self: "SensordPipe") -> None:
         """Main control loop for session management and error recovery."""
         logger.info(f"Pipe {self.id}: Control loop started")
         

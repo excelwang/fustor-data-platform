@@ -48,7 +48,7 @@ Leader 的选举完全由 fustord 端控制，采用非抢占式的锁机制。
 | 标志类型 | 示例 | 语义 | 适用场景 |
 |---------|------|------|----------|
 | **瞬态标志** (Transient) | `PipeState.MESSAGE_SYNC` | 表示某个 Task **当前正在运行**。Task 完成、异常退出或重建时，标志会短暂清除。 | 内部控制逻辑 (如是否需要重启 task) |
-| **单调标志** (Monotonic) | `is_realtime_ready` | 表示记录 sensordPipe **曾经成功连接过** EventBus 并处于就绪状态。一旦设为 `True`，除非 sensordPipe 重启不然不会变回 `False`。 | 外部状态判断 (如 Heartbeat `can_realtime`) |
+| **单调标志** (Monotonic) | `is_realtime_ready` | 表示记录 SensordPipe **曾经成功连接过** EventBus 并处于就绪状态。一旦设为 `True`，除非 SensordPipe 重启不然不会变回 `False`。 | 外部状态判断 (如 Heartbeat `can_realtime`) |
 
 > [!CAUTION]
 > 避免在外部监控或测试中使用瞬态标志作为"服务就绪"的判据，这会导致因 Task 重启窗口期引发的 Flaky Test。
@@ -70,12 +70,12 @@ Session 超时时间由 **Client-Hint + Server-Default** 共同决定：
 | `SessionObsoletedError` | **Immediate Retry** | 会话被服务端主动终结 (如 Leader Failover)，应立即重连以竞选新 Leader。 |
 | `RuntimeError` | **Exponential Backoff** | 连接超时、配置错误等环境问题，快速重试会加重系统负担。 |
 | `CancelledError` (+ STOPPING) | **Break** | 正常的停止流程。 |
-| `CancelledError` (- STOPPING) | **Continue** | 单个 Task (如 Snapshot) 被取消，但 sensordPipe 仍需运行 (见 §1.7)。 |
+| `CancelledError` (- STOPPING) | **Continue** | 单个 Task (如 Snapshot) 被取消，但 SensordPipe 仍需运行 (见 §1.7)。 |
 | Background Task Crash | **Count & Retry** | 记录连续错误计数，触发 Backoff，等待下一轮循环重启 Task。 |
 
 ### 1.7 Heartbeat Never Dies Invariant (心跳永不停止原则)
 
-**核心不变量**: 只要 `sensordPipe.start()` 被调用，心跳循环 **永远不应因内部错误而停止**。
+**核心不变量**: 只要 `SensordPipe.start()` 被调用，心跳循环 **永远不应因内部错误而停止**。
 
 即使 Snapshot 崩溃、Message Sync 异常、Audit 失败，心跳也必须持续向 fustord 报告状态 (通过 `can_realtime` 字段隐式传递健康度)。
 
@@ -83,7 +83,7 @@ Session 超时时间由 **Client-Hint + Server-Default** 共同决定：
 1. fustord 返回 `role=follower`。
 2. sensord 取消 `snapshot`/`audit`/`sentinel` 任务 (抛出 `CancelledError`)。
 3. 心跳任务 (`_heartbeat_task`) **保持运行**。
-4. 控制循环捕获 `CancelledError`，因未设置 `STOPPING` 标志，选择 `continue` 而非退出的，确保 sensordPipe 实例存活。
+4. 控制循环捕获 `CancelledError`，因未设置 `STOPPING` 标志，选择 `continue` 而非退出的，确保 SensordPipe 实例存活。
 
 ---
 
@@ -95,7 +95,7 @@ Session 超时时间由 **Client-Hint + Server-Default** 共同决定：
 **无需持久化**：此缓存仅存在于进程内存中，不需要跨重启保存。sensord 重启后首轮 audit 执行全量扫描是可接受的行为。
 
 ### 2.2 生命周期
-- **存储位置**: `sensordPipe` 实例的内存堆（纯内存，不持久化）。
+- **存储位置**: `SensordPipe` 实例的内存堆（纯内存，不持久化）。
 - **构建时机**: 当选 Leader 后的 **第一次 Audit** 过程中动态构建。
 - **清空时机**:
     1. **Session 重建**: 显式清空。
@@ -151,7 +151,7 @@ fustord can issue commands to the sensord via the Heartbeat response channel.
 
 - **High Priority**: Commands (like `scan`) are processed immediately after the Heartbeat response is received.
 - **Concurrency**: Commands are typically executed as asynchronous tasks, running in parallel with the main Event Loop.
-- **State Bypass**: On-Demand tasks **MUST** be executable regardless of the sensordPipe's current state (e.g., Initializing, Follower, Error, Degraded).
+- **State Bypass**: On-Demand tasks **MUST** be executable regardless of the SensordPipe's current state (e.g., Initializing, Follower, Error, Degraded).
     - Even if `is_realtime_ready=False` or the sensord_pipe is stuck in `SNAPSHOT_SYNC`, the `scan` command must be processed to support troubleshooting.
     - The execution logic should typically bypass the shared `EventBus` and send results directly via `SenderHandler` to ensure delivery even if the local bus is broken.
 
@@ -172,7 +172,7 @@ fustord can issue commands to the sensord via the Heartbeat response channel.
 | 故障层级 | 影响范围 | 恢复策略 |
 |---------|----------|----------|
 | **Task Level** (Snapshot/Audit) | 仅影响该阶段的数据更新 | **Task Restart**: Heartbeat 保持运行，Control Loop 经 Backoff 后重启 Task。 |
-| **Component Level** (Driver/Bus) | 影响依赖该组件的所有 sensordPipe | **Component Reset**: 必须支持 Invalidate/Re-init (见 §5.2)。 |
+| **Component Level** (Driver/Bus) | 影响依赖该组件的所有 SensordPipe | **Component Reset**: 必须支持 Invalidate/Re-init (见 §5.2)。 |
 | **Session Level** (fustord Conn) | 影响数据传输 | **Re-Session**: 销毁旧 Session，重新从握手开始 (Backoff/Immediate)。 |
 | **Process Level** (OOM/Crash) | 影响整个 sensord | **Service Restart**: 依赖外部 Supervisor (systemd/k8s) 重启进程。 |
 
@@ -202,18 +202,18 @@ fustord can issue commands to the sensord via the Heartbeat response channel.
 | 组件 | 层面 | 说明 |
 |------|------|------|
 | **Source** | sensord | 数据源驱动（如 FSDriver） |
-| **sensordPipe** | sensord | 代理管道 |
+| **SensordPipe** | sensord | 代理管道 |
 | **Sender** | sensord | 上行发送通道 |
 | **Receiver** | fustord | 下行接收通道 |
-| **fustordPipe** | fustord | 融合管道 |
+| **FustordPipe** | fustord | 融合管道 |
 | **View** | fustord | 视图驱动（如 FSViewDriver） |
 
 #### 级联故障规则 (Cascading Failure Rules)
 
 - **Pipe 失败不影响其他 Pipe**: 每个 Pipe 独立运行，某个 Pipe 崩溃不影响同进程内的其他 Pipe
-- **Source/Sender 失败 → 关联 sensordPipe 全部失败**: Source 或 Sender 是共享组件，其故障影响所有依赖它的 sensordPipe
-- **Receiver 失败 → 关联 fustordPipe 全部失败**: Receiver 是共享组件，其故障影响所有依赖它的 fustordPipe
-- **fustordPipe 失败 → 中止下游视图**: fustordPipe 故障应中止其下游关联的 View 的数据写入，View 的查询 API 的可用性要根据view的类型进行判断。live类型的视图一旦任一fustordPipe失败则不可用（保留应急on-demand查询服务），其他类型的默认继续可用。
+- **Source/Sender 失败 → 关联 SensordPipe 全部失败**: Source 或 Sender 是共享组件，其故障影响所有依赖它的 SensordPipe
+- **Receiver 失败 → 关联 FustordPipe 全部失败**: Receiver 是共享组件，其故障影响所有依赖它的 FustordPipe
+- **FustordPipe 失败 → 中止下游视图**: FustordPipe 故障应中止其下游关联的 View 的数据写入，View 的查询 API 的可用性要根据view的类型进行判断。live类型的视图一旦任一FustordPipe失败则不可用（保留应急on-demand查询服务），其他类型的默认继续可用。
 - 失败后，组件应尝试通过自行重启恢复运行，并记录错误日志。健康状态中记录失败重启次数。
 
 #### 可观测性要求

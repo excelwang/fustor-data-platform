@@ -197,7 +197,7 @@ class CommandProcessorInterface(Protocol):
 
 class PipeInterface(Protocol):
     """
-    Interface for sensordPipe to be used by extensions (L3).
+    Interface for SensordPipe to be used by extensions (L3).
     Ensures type safety and coupling control.
     """
     id: str

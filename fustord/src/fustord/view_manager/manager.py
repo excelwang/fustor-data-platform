@@ -333,7 +333,7 @@ async def get_cached_view_manager(view_id: str) -> 'ViewManager':
         logger.info(f"Creating new view manager for view {v_id_str}")
         new_manager = ViewManager(view_id=v_id_str)
         # Note: We do NOT await initialization here anymore to avoid blocking PipeManager.
-        # Initialization will be triggered by the caller (e.g. fustordPipe.start)
+        # Initialization will be triggered by the caller (e.g. FustordPipe.start)
         runtime_objects.view_managers[v_id_str] = new_manager
         return new_manager
 

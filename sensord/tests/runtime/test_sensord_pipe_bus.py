@@ -1,14 +1,14 @@
 # sensord/tests/runtime/test_sensord_pipe_bus.py
 """
-Tests for sensordPipe integration with EventBus.
+Tests for SensordPipe integration with EventBus.
 """
 import pytest
 import asyncio
 from unittest.mock import MagicMock, AsyncMock
 from fustor_core.pipe import PipeState
-from sensord.runtime.sensord_pipe import sensordPipe
+from sensord.runtime.sensord_pipe import SensordPipe
 
-class TestsensordPipeBus:
+class TestSensordPipeBus:
 
     @pytest.mark.asyncio
     async def test_run_bus_message_sync_success(self, mock_source, mock_sender, pipe_config):
@@ -30,7 +30,7 @@ class TestsensordPipeBus:
         # Override send_batch with AsyncMock for assertions
         mock_sender.send_batch = AsyncMock(return_value=(True, {"count": 1}))
         
-        pipe = sensordPipe(
+        pipe = SensordPipe(
             "test-id", pipe_config,
             mock_source, mock_sender, event_bus=mock_bus
         )
@@ -76,7 +76,7 @@ class TestsensordPipeBus:
             (True, {"success": True})
         ])
         
-        pipe = sensordPipe(
+        pipe = SensordPipe(
             "test-id", pipe_config,
             mock_source, mock_sender, event_bus=mock_bus
         )

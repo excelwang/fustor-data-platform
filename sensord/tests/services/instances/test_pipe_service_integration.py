@@ -5,7 +5,7 @@ import time
 import logging
 from unittest.mock import MagicMock, Mock, patch, AsyncMock
 
-from sensord.runtime import sensordPipe
+from sensord.runtime import SensordPipe
 from sensord.services.drivers.source_driver import SourceDriverService
 from sensord.services.drivers.sender_driver import SenderDriverService
 from sensord.services.instances.bus import EventBusService
@@ -59,7 +59,7 @@ class MockSenderDriver:
 
 @pytest.mark.asyncio
 async def test_pipe_instance_service_integration(integration_configs, tmp_path: Path, caplog):
-    """Integration test for PipeInstanceService using sensordPipe."""
+    """Integration test for PipeInstanceService using SensordPipe."""
     pipe_config, source_config, sender_config = integration_configs
     
     # Setup AppConfig
@@ -69,10 +69,10 @@ async def test_pipe_instance_service_integration(integration_configs, tmp_path: 
     app_config.add_pipe("test_pipe", pipe_config)
 
     from unittest.mock import patch
-    from sensord.config.unified import sensordPipeConfig
+    from sensord.config.unified import SensordPipeConfig
 
     with patch("sensord.services.configs.pipe.sensord_config") as mock_sensord_config:
-        sensord_pipe_config = sensordPipeConfig(
+        sensord_pipe_config = SensordPipeConfig(
             source="test_source",
             sender="test_sender",
             disabled=False,
@@ -137,16 +137,16 @@ async def test_pipe_instance_service_integration(integration_configs, tmp_path: 
             try:
                 await service.start_one("test_pipe")
                 
-                # Give some time for sensordPipe to run its sequence
+                # Give some time for SensordPipe to run its sequence
                 await asyncio.sleep(1)
                 
                 # Verify instance in pool
                 instance = service.get_instance("test_pipe")
                 assert instance is not None
-                assert isinstance(instance, sensordPipe)
+                assert isinstance(instance, SensordPipe)
                 
                 # Check logs for pipe activity
-                # We assert "start initiated successfully" instead of "Using sensordPipe"
+                # We assert "start initiated successfully" instead of "Using SensordPipe"
                 assert "Pipe instance 'test_pipe' start initiated successfully" in caplog.text
                 assert "Snapshot sync phase complete" in caplog.text or "Starting message sync phase" in caplog.text
 

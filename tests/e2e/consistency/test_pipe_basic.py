@@ -1,8 +1,8 @@
 # tests/e2e/consistency/test_pipe_basic.py
 """
-Basic integration tests for sensordPipe.
+Basic integration tests for SensordPipe.
 
-These tests verify that the sensordPipe architecture works correctly
+These tests verify that the SensordPipe architecture works correctly
 with the integration test environment.
 
 Run with:
@@ -17,7 +17,7 @@ logger = logging.getLogger("fustor_test")
 
 
 class TestPipeBasicOperations:
-    """Test basic file operations in sensordPipe mode."""
+    """Test basic file operations in SensordPipe mode."""
     
     def test_file_create_detected(
         self, 

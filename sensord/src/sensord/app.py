@@ -12,7 +12,7 @@ from typing import Dict, Any, Optional, List
 from fustor_core.common import get_fustor_home_dir
 # ID generation is removed per config-only requirement
 
-from .config.unified import sensord_config, sensordPipeConfig
+from .config.unified import sensord_config, SensordPipeConfig
 
 # Import driver and instance services
 from .services.drivers.source_driver import SourceDriverService
@@ -166,14 +166,14 @@ class App:
         sender = self.sender_driver_service.create_driver(pipe_cfg.sender, sender_cfg)
         
         # 3. Create pipe instance
-        from .runtime.sensord_pipe import sensordPipe
+        from .runtime.sensord_pipe import SensordPipe
         
-        # Adapt unified sensordPipeConfig to what sensordPipe expects (dict-like or object)
-        # sensordPipe usually takes a config dict or object. 
-        # We'll pass the unified config object directly if sensordPipe supports it, 
+        # Adapt unified SensordPipeConfig to what SensordPipe expects (dict-like or object)
+        # SensordPipe usually takes a config dict or object. 
+        # We'll pass the unified config object directly if SensordPipe supports it, 
         # or convert relevant fields.
-        # Wrap drivers in adapters for sensordPipe
-        # sensordPipe requires SourceHandler and SenderHandler
+        # Wrap drivers in adapters for SensordPipe
+        # SensordPipe requires SourceHandler and SenderHandler
         
         # Source Handler: Adapt from the bus's source driver
         source_handler = SourceHandlerAdapter(bus_runtime.source_driver_instance)
@@ -184,7 +184,7 @@ class App:
         # Helper to get dict from pydantic model (v1/v2 compatible)
         pipe_config_dict = pipe_cfg.model_dump() if hasattr(pipe_cfg, "model_dump") else pipe_cfg.dict()
 
-        pipe = sensordPipe(
+        pipe = SensordPipe(
             pipe_id=pipe_id,
             config=pipe_config_dict,
             source_handler=source_handler,

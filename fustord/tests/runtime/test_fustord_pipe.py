@@ -1,6 +1,6 @@
 # fustord/tests/runtime/test_fustord_pipe.py
 """
-Tests for fustordPipe.
+Tests for FustordPipe.
 """
 import pytest
 import asyncio
@@ -9,7 +9,7 @@ from typing import Any, Dict, List, Optional
 
 from fustor_core.pipe import PipeState
 from fustor_core.pipe.handler import ViewHandler
-from fustord.runtime import fustordPipe
+from fustord.runtime import FustordPipe
 
 
 class MockViewHandler(ViewHandler):
@@ -80,7 +80,7 @@ async def fustord_pipe(mock_view_handler, pipe_config):
     await view_state_manager.clear_state("mock-view")
     await session_manager.clear_all_sessions("mock-view")
     
-    p = fustordPipe(
+    p = FustordPipe(
         pipe_id="test-pipe",
         config=pipe_config,
         view_handlers=[mock_view_handler]
@@ -90,8 +90,8 @@ async def fustord_pipe(mock_view_handler, pipe_config):
     return p
 
 
-class TestfustordPipeInit:
-    """Test fustordPipe initialization."""
+class TestFustordPipeInit:
+    """Test FustordPipe initialization."""
     
     @pytest.mark.asyncio
     async def test_initial_state(self, fustord_pipe):
@@ -118,8 +118,8 @@ class TestfustordPipeInit:
         assert dto["view_ids"] == ["mock-view"]
 
 
-class TestfustordPipeLifecycle:
-    """Test fustordPipe start/stop lifecycle."""
+class TestFustordPipeLifecycle:
+    """Test FustordPipe start/stop lifecycle."""
     
     @pytest.mark.asyncio
     async def test_start(self, fustord_pipe, mock_view_handler):
@@ -138,7 +138,7 @@ class TestfustordPipeLifecycle:
         assert mock_view_handler._closed is True
 
 
-class TestfustordPipeSession:
+class TestFustordPipeSession:
     """Test session management."""
     
     @pytest.mark.asyncio
@@ -208,7 +208,7 @@ class TestfustordPipeSession:
         await fustord_pipe.stop()
 
 
-class TestfustordPipeDto:
+class TestFustordPipeDto:
     """Test data transfer objects."""
     
     @pytest.mark.asyncio
@@ -221,11 +221,11 @@ class TestfustordPipeDto:
     @pytest.mark.asyncio
     async def test_str_representation(self, fustord_pipe):
         s = str(fustord_pipe)
-        assert "fustordPipe" in s
+        assert "FustordPipe" in s
         assert "test-pipe" in s
 
 
-class TestfustordPipeViewHandler:
+class TestFustordPipeViewHandler:
     """Test view handler management."""
     
     @pytest.mark.asyncio

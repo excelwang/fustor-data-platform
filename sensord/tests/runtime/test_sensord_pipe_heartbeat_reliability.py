@@ -1,7 +1,7 @@
 import pytest
 import asyncio
 from unittest.mock import AsyncMock, MagicMock
-from sensord.runtime.sensord_pipe import sensordPipe
+from sensord.runtime.sensord_pipe import SensordPipe
 from fustor_core.exceptions import SessionObsoletedError
 from .mocks import MockSourceHandler, MockSenderHandler
 
@@ -28,7 +28,7 @@ async def test_heartbeat_failure_backoff(mock_source, mock_sender, pipe_config):
         RuntimeError("Transient error"),
     ])
     
-    pipe = sensordPipe(
+    pipe = SensordPipe(
         "hb-test", pipe_config,
         mock_source, mock_sender
     )
@@ -61,7 +61,7 @@ async def test_heartbeat_session_obsolete_recovery(mock_source, mock_sender, pip
         
     mock_sender.send_heartbeat = mock_hb
     
-    pipe = sensordPipe(
+    pipe = SensordPipe(
         "hb-fatal", pipe_config,
         mock_source, mock_sender
     )

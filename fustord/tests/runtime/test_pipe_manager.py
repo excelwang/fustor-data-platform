@@ -2,7 +2,7 @@ import pytest
 import asyncio
 from unittest.mock import MagicMock, patch, AsyncMock
 from fustord.runtime.pipe_manager import PipeManager
-from fustord.runtime.fustord_pipe import fustordPipe
+from fustord.runtime.fustord_pipe import FustordPipe
 from fustor_core.event import EventBase
 
 @pytest.fixture
@@ -122,7 +122,7 @@ class TestPipeManager:
     @pytest.mark.asyncio
     async def test_callbacks(self, pipe_manager):
         # Manually inject a mock pipe and bridge
-        mock_pipe = AsyncMock(spec=fustordPipe)
+        mock_pipe = AsyncMock(spec=FustordPipe)
         mock_pipe.id = "pipe-1"
         mock_pipe.view_id = "view-1"
         mock_pipe.view_ids = ["view-1"]

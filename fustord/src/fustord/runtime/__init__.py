@@ -4,11 +4,11 @@ Runtime components for Fustor fustord.
 
 This module provides the Pipe-based architecture for fustord:
 
-fustordPipe Architecture:
+FustordPipe Architecture:
 ============================
 
 ┌─────────────────────────────────────────────────────────────┐
-│                    fustordPipe                           │
+│                    FustordPipe                           │
 │  (receives events from sensords)                              │
 └────────────────────────┬────────────────────────────────────┘
                          │
@@ -23,10 +23,10 @@ fustordPipe Architecture:
 Example Usage:
 --------------
 
-    from fustord.runtime import fustordPipe
+    from fustord.runtime import FustordPipe
 
     # Create pipe
-    pipe = fustordPipe(
+    pipe = FustordPipe(
         pipe_id="view-1",
         config={"view_id": 1},
         view_handlers=[fs_view_handler]
@@ -42,7 +42,7 @@ Example Usage:
     tree = pipe.get_view("fs", path="/")
 """
 
-from .fustord_pipe import fustordPipe
+from .fustord_pipe import FustordPipe
 
 from .view_handler_adapter import (
     ViewDriverAdapter,
@@ -60,7 +60,7 @@ from .session_bridge import (
 
 __all__ = [
     # Pipe
-    "fustordPipe",
+    "FustordPipe",
     
     # View Handler Adapters
     "ViewDriverAdapter",

@@ -11,7 +11,7 @@ logger = logging.getLogger("sensord.mgmt")
 
 class CommandProcessor(CommandProcessorInterface):
     """
-    Management (L3) processor for sensordPipe.
+    Management (L3) processor for SensordPipe.
     Handles commands from fustord (e.g., on-demand scans, reload, stop).
     """
 
