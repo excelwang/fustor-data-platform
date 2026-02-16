@@ -20,7 +20,7 @@ class TestPipeManager:
     async def test_initialization_empty(self, pipe_manager, mock_receivers_config):
         mock_receivers_config.get_default_pipes.return_value = {}
         await pipe_manager.initialize_pipes()
-        assert pipe_manager._pipes == {}
+        assert pipe_manager.pool == {}
         assert pipe_manager._receivers == {}
 
     @pytest.mark.asyncio
@@ -116,7 +116,7 @@ class TestPipeManager:
              
              await pipe_manager.initialize_pipes()
              
-             assert "pipe-1" in pipe_manager._pipes
+             assert "pipe-1" in pipe_manager.pool
              mock_get_vm.assert_called_with('view1')
 
     @pytest.mark.asyncio
@@ -134,15 +134,17 @@ class TestPipeManager:
         mock_bridge.create_session.return_value = {"role": "leader"}
         mock_bridge.keep_alive.return_value = {"status": "ok", "role": "leader"}
         
-        pipe_manager._pipes["pipe-1"] = mock_pipe
+        pipe_manager.pool["pipe-1"] = mock_pipe
         # Manually injecting bridge since we check it
         pipe_manager._bridges["pipe-1"] = mock_bridge
         pipe_manager._session_to_pipe["sess-1"] = "pipe-1"
         
         # Test session created
-        session_info = await pipe_manager._on_session_created(
-            "sess-1", "task-1", "pipe-1", {"client_ip": "1.2.3.4"}, 60
-        )
+        # We need to mock _check_duplicate_task because it is called in _on_session_created
+        with patch("fustord.management.api.session._check_duplicate_task", new=AsyncMock(return_value=False)):
+            session_info = await pipe_manager._on_session_created(
+                "sess-1", "task-1", "pipe-1", {"client_ip": "1.2.3.4"}, 60
+            )
         # Note: on_session_created returns what create_session returns (from bridge) or pipe?
         # Let's check implementation. It calls _bridges[...].create_session
         assert session_info.role == "leader"

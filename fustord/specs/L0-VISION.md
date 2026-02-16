@@ -66,24 +66,7 @@ graph TD
 - **Single Point of Control**: 运维人员通过 fustord API 下发指令，由 fustord 自动通过 SCP 隧道分发至目标 Sensord 进程。
 - **原子升级**: 升级指令由 fustord 精准下发 (Unicast)，确保集群平滑滚动更新。
 
-## VISION.LAYER_MODEL
 
-**fustord** 采用 **"稳定性下沉，业务力上行"** 的三层垂直模型。每一层都专注于一个核心生存/业务目标：
-
-### Stability Layer (Ingestion & Session)
-- **战略意图**: 确保 fustord 永远对外"可见"且"可达"。
-- **职责**: 维护物理链接 (Pipes) 与 业务租约 (Sessions)。
-- **中立性**: 仅保障 SCP/SDP 数据包的机械投递。不感知业务逻辑。
-
-### Domain Layer (Arbitration & Views)
-- **战略意图**: 实现分布式数据的最终一致性。
-- **职责**: 核心大脑。负责逻辑时钟 (Watermark)、多源对账 (Leader Election)、以及 View 驱动实现。
-- **自治性**: 即使管理层插件被卸载，View 层依然能根据实时数据维持一致性。
-
-### Management Layer (Fleet Ops & UI)
-- **战略意图**: 提供人类可操作的运维平面。
-- **职责**: 外部交互与策略下发。
-- **插件化**: 所有的 UI 接口和运维辅助工具均为可选插件。
 
 ---
 

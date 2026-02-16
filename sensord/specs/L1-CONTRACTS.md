@@ -51,9 +51,9 @@
   > Responsibility: Protection — prevent event storms.
   > Verification: Rapid `IN_MODIFY` events merged within throttle window.
 
-- **EVENTBUS_RING_BUFFER**: Sensord MUST use a bounded ring buffer for its internal EventBus, with automatic fast/slow consumer splitting triggered at high capacity usage.
+- **BOUNDED_BUFFERING**: Sensord MUST use bounded memory buffers for all internal event queues, enabling backpressure or drop-policies at capacity.
   > Responsibility: Memory safety — prevent OOM and head-of-line blocking.
-  > Verification: EventBus never exceeds configured buffer size.
+  > Verification: EventBus and Queues have explicit `maxsize` configuration.
 
 ---
 
@@ -93,19 +93,15 @@
 
 ## CONTRACTS.CONCURRENCY
 
-### Threading Model
+### Execution Model
 
-- **SINGLE_EVENT_LOOP**: Sensord core MUST run on an asyncio single-threaded event loop.
-  > Responsibility: Correctness — ensure deterministic execution order.
-  > Verification: No `threading.Lock` usage on shared state; all coordination via asyncio.
+- **NON_BLOCKING_IO**: Core orchestration logic MUST NOT be blocked by I/O operations (File/Network).
+  > Responsibility: Liveness — Heartbeats and control commands must be processed immediately.
+  > Verification: Main event loop latency stays within defined SLA (e.g., <100ms).
 
-- **THREAD_BRIDGE_PATTERN**: Sensord MUST use the Thread Bridge pattern for synchronous IO iterators (e.g., `os.scandir`):
-  > 1. Producer Thread: dedicated thread for sync iterator
-  > 2. `asyncio.Queue` as backpressure buffer
-  > 3. `threading.Event` (`stop_event`) for exit signaling
-  > 4. Consumer MUST drain queue before exit to unblock Producer
-  > Responsibility: Correctness — prevent deadlocks in sync-to-async bridging.
-  > Verification: Queue drained on shutdown; no hung threads.
+- **DETERMINISTIC_ORDERING**: State mutations within a single component MUST occur sequentially to guarantee consistency without race conditions.
+  > Responsibility: Correctness — prevent concurrent state modification bugs.
+  > Verification: No usage of `threading.Lock` for business state; separate threads used only for raw I/O isolation.
 
 ---
 

@@ -12,7 +12,7 @@ from sensord.domain.drivers.source_driver import SourceDriverService
 from sensord.domain.drivers.sender_driver import SenderDriverService
 from sensord_core.models.states import PipeState
 from sensord_core.models.config import AppConfig, PipeConfig, SourceConfig, SenderConfig, PasswdCredential
-from sensord.config.unified import SensordPipeConfig
+from sensord.config.unified import SensordPipeConfig, sensord_config
 
 @pytest.fixture
 def mock_services():
@@ -49,13 +49,8 @@ def mock_services():
             
             # Mock get_config on instances because SourceConfigService uses global sensord_config
             # and we want to bypass that for this integration test of PipeManager
-            source_cfg_svc.get_config = MagicMock(side_effect=lambda id: source_cfg if id == "s1" else None)
-            sender_cfg_svc.get_config = MagicMock(side_effect=lambda id: sender_cfg if id == "se1" else None)
-
+            
             service = PipeManager(
-                pipe_config_service=pipe_cfg_svc,
-                source_config_service=source_cfg_svc,
-                sender_config_service=sender_cfg_svc,
                 bus_manager=bus_mgr,
                 sender_driver_service=MagicMock(),
                 source_driver_service=MagicMock()
@@ -64,12 +59,12 @@ def mock_services():
             bus_mgr.set_dependencies(service)
             service.source_driver_service._get_driver_by_type = MagicMock(return_value=MagicMock())
             service.sender_driver_service._get_driver_by_type = MagicMock(return_value=MagicMock())
-    return service, pipe_cfg_svc
+    return service
 
 @pytest.mark.asyncio
 async def test_pipe_service_restart_outdated_pipes(mock_services):
     """Verify that restart_outdated_pipes stops existing and starts new instance."""
-    service, pipe_cfg_svc = mock_services
+    service = mock_services
     
     mock_pipe_instance_1 = AsyncMock()
     mock_pipe_instance_1.id = "p1"
@@ -87,7 +82,7 @@ async def test_pipe_service_restart_outdated_pipes(mock_services):
     mock_pipe_instance_2.bus = MagicMock(id="mock-bus-id-2")
 
 
-    with patch("sensord.domain.configs.pipe.sensord_config") as mock_sensord_config, \
+    with patch("sensord.stability.pipe_manager.sensord_config") as mock_sensord_config, \
          patch("sensord.stability.pipe_manager.SensordPipe", side_effect=[mock_pipe_instance_1, mock_pipe_instance_2]) as MockSensordPipeClass:
         
         sensord_pipe_config = SensordPipeConfig(source="s1", sender="se1")
@@ -116,7 +111,7 @@ async def test_pipe_service_restart_outdated_pipes(mock_services):
 @pytest.mark.asyncio
 async def test_pipe_service_stop_all_cleans_up(mock_services):
     """Stop all should close bus service and stop all pipes."""
-    service, _ = mock_services
+    service = mock_services
     # The attribute is bus_manager, not bus_service
     # But we want to verify calls on the existing bus_manager mock from fixture, or replace it.
     # The fixture sets bus_mgr. Let's spy on it or mock methods on it.
@@ -129,7 +124,7 @@ async def test_pipe_service_stop_all_cleans_up(mock_services):
     mock_pipe_instance.id = "p1"
     mock_pipe_instance.bus = MagicMock(id="mock-bus-id-1") # Ensure bus attribute exists
 
-    with patch("sensord.domain.configs.pipe.sensord_config") as mock_sensord_config, \
+    with patch("sensord.stability.pipe_manager.sensord_config") as mock_sensord_config, \
          patch("sensord.stability.pipe_manager.SensordPipe", return_value=mock_pipe_instance) as MockSensordPipeClass:
         
         sensord_pipe_config = SensordPipeConfig(source="s1", sender="se1")

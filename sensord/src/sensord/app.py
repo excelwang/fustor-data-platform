@@ -13,9 +13,6 @@ from sensord_core.common import get_fustor_home_dir
 # ID generation is removed per config-only requirement
 
 # Import config services
-from .domain.configs.pipe import PipeConfigService
-from .domain.configs.source import SourceConfigService
-from .domain.configs.sender import SenderConfigService
 from sensord_core.models.config import AppConfig
 
 from .config.unified import sensord_config, SensordPipeConfig
@@ -73,19 +70,9 @@ class App:
         # Initialize Config Services (adapter for PipeManager)
         # Note: In future, PipeManager might use sensord_config directly
         self.app_config = AppConfig()
-        self.source_config_service = SourceConfigService(self.app_config)
-        self.sender_config_service = SenderConfigService(self.app_config)
-        self.pipe_config_service = PipeConfigService(
-            self.app_config, 
-            self.source_config_service, 
-            self.sender_config_service
-        )
         
         # Initialize PipeManager
         self.pipe_manager = PipeManager(
-            self.pipe_config_service,
-            self.source_config_service,
-            self.sender_config_service,
             self.event_bus_manager,
             self.sender_driver_service,
             self.source_driver_service

@@ -11,9 +11,6 @@ from sensord.domain.drivers.sender_driver import SenderDriverService
 from sensord_core.models.states import PipeState
 from sensord.domain.event_bus import EventBusManager
 from sensord.stability.pipe_manager import PipeManager
-from sensord.domain.configs.pipe import PipeConfigService
-from sensord.domain.configs.source import SourceConfigService
-from sensord.domain.configs.sender import SenderConfigService
 from sensord_core.models.config import PipeConfig, SourceConfig, SenderConfig, PasswdCredential, FieldMapping, AppConfig
 
 @pytest.fixture
@@ -72,23 +69,21 @@ async def test_pipe_instance_service_integration(integration_configs, tmp_path: 
     from unittest.mock import patch
     from sensord.config.unified import SensordPipeConfig
 
-    with patch("sensord.domain.configs.pipe.sensord_config") as mock_sensord_config:
+    with patch("sensord.stability.pipe_manager.sensord_config") as mock_sensord_config:
         sensord_pipe_config = SensordPipeConfig(
             source="test_source",
             sender="test_sender",
             disabled=False,
             fields_mapping=[
-                {"to": "target.file_path", "source": ["fs.files.file_path:0"]},
-                {"to": "target.size", "source": ["fs.files.size:0"]}
+                FieldMapping(to="target.file_path", source=["fs.files.file_path:0"]),
+                FieldMapping(to="target.size", source=["fs.files.size:0"])
             ]
         )
         mock_sensord_config.get_all_pipes.return_value = {"test_pipe": sensord_pipe_config}
         mock_sensord_config.get_pipe.return_value = sensord_pipe_config
+        mock_sensord_config.get_source.return_value = source_config
+        mock_sensord_config.get_sender.return_value = sender_config
         
-        # Initialize Services
-        source_cfg_svc = SourceConfigService(app_config)
-        sender_cfg_svc = SenderConfigService(app_config)
-        pipe_cfg_svc = PipeConfigService(app_config, source_cfg_svc, sender_cfg_svc)
         
         # Patch discovery before creating services
         with patch.object(SourceDriverService, "_discover_installed_drivers", return_value={}), \
@@ -123,13 +118,8 @@ async def test_pipe_instance_service_integration(integration_configs, tmp_path: 
             mock_pipe_instance = AsyncMock(id="test_pipe", state=PipeState.STARTING)
             mock_pipe_cls.return_value = mock_pipe_instance
             
-            source_cfg_svc.get_config = MagicMock(side_effect=lambda id: source_config if id == "test_source" else None)
-            sender_cfg_svc.get_config = MagicMock(side_effect=lambda id: sender_config if id == "test_sender" else None)
-
+            
             service = PipeManager(
-                pipe_config_service=pipe_cfg_svc,
-                source_config_service=source_cfg_svc,
-                sender_config_service=sender_cfg_svc,
                 bus_manager=bus_svc,
                 sender_driver_service=sender_dr_svc,
                 source_driver_service=source_dr_svc

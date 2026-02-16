@@ -4,19 +4,22 @@ import logging
 from typing import Dict, List, Optional, Any
 
 from sensord_core.transport.receiver import Receiver
+from sensord_core.stability import BasePipeManager, StartResult
 from .pipe import FustordPipe
 from .mixins.manager_lifecycle import ManagerLifecycleMixin
 from .mixins.manager_callbacks import ManagerCallbacksMixin
+from fustord.config.unified import fustord_config
 
 logger = logging.getLogger(__name__)
 
-class FustordPipeManager(ManagerLifecycleMixin, ManagerCallbacksMixin):
+class FustordPipeManager(BasePipeManager[FustordPipe], ManagerLifecycleMixin, ManagerCallbacksMixin):
     """
     Manages the lifecycle of FustordPipes and their associated Receivers.
     """
     
     def __init__(self):
-        self._pipes: Dict[str, FustordPipe] = {}
+        super().__init__()
+        # self.pool is already initialized by super()
         self._receivers: Dict[str, Receiver] = {} # Keyed by signature (driver, port)
         self._bridges: Dict[str, Any] = {}
         self._session_to_pipe: Dict[str, str] = {}
@@ -33,14 +36,14 @@ class FustordPipeManager(ManagerLifecycleMixin, ManagerCallbacksMixin):
         Maps a View ID to a list of Pipe IDs that service it.
         """
         pipe_ids = []
-        for p_id, pipe in self._pipes.items():
+        for p_id, pipe in self.pool.items():
             if pipe.find_handler_for_view(view_id):
                 pipe_ids.append(p_id)
         
         return pipe_ids
 
     def get_pipes(self) -> Dict[str, FustordPipe]:
-        return self._pipes.copy()
+        return self.pool.copy()
 
     def is_session_active(self, session_id: str) -> bool:
         """Check if session is active in any pipe."""
@@ -49,7 +52,7 @@ class FustordPipeManager(ManagerLifecycleMixin, ManagerCallbacksMixin):
     async def list_sessions(self, view_id: Optional[str] = None) -> List[Dict[str, Any]]:
         """List all active sessions across all pipes, optionally filtered by view_id."""
         sessions = []
-        for pipe in self._pipes.values():
+        for pipe in self.pool.values():
             if view_id and view_id not in pipe.view_ids:
                 continue
             
@@ -62,8 +65,8 @@ class FustordPipeManager(ManagerLifecycleMixin, ManagerCallbacksMixin):
 
     async def clear_all_sessions(self, view_id: Optional[str] = None):
         """Terminate all sessions across all pipes, optionally filtered by view."""
-        for p_id in list(self._pipes.keys()):
-            pipe = self._pipes[p_id]
+        for p_id in list(self.pool.keys()):
+            pipe = self.pool[p_id]
             if view_id and view_id not in pipe.view_ids:
                 continue
             
@@ -74,14 +77,14 @@ class FustordPipeManager(ManagerLifecycleMixin, ManagerCallbacksMixin):
 
     async def cleanup_expired_sessions(self):
         """Identify and remove expired sessions from all pipes."""
-        for p_id in list(self._pipes.keys()):
+        for p_id in list(self.pool.keys()):
             bridge = self._bridges.get(p_id)
             if bridge:
                 await bridge.cleanup_expired_sessions()
 
     def get_pipe(self, pipe_id: str) -> Optional[FustordPipe]:
         """Get a specific pipe instance by ID."""
-        return self._pipes.get(pipe_id)
+        return self.pool.get(pipe_id)
 
     def get_bridge(self, pipe_id: str) -> Optional[Any]:
         """Get the session bridge for a specific pipe."""
@@ -89,7 +92,6 @@ class FustordPipeManager(ManagerLifecycleMixin, ManagerCallbacksMixin):
 
     def get_receiver(self, receiver_id: str) -> Optional[Receiver]:
         """Get receiver by ID or internal signature."""
-        from .config.unified import fustord_config
         
         # 1. Check if receiver_id is a config ID
         config = fustord_config.get_receiver(receiver_id)
@@ -103,6 +105,30 @@ class FustordPipeManager(ManagerLifecycleMixin, ManagerCallbacksMixin):
                 return r
         
         return None
+
+    # BasePipeManager implementation
+    async def start_one(self, id: str, **kwargs) -> StartResult:
+        try:
+            # Re-use internal init logic which handles receiver creation etc.
+            # This is slightly inefficient as it re-discovers receivers but safe.
+            await self._initialize_pipes_internal([id])
+            
+            pipe = self.pool.get(id)
+            if pipe:
+                await pipe.start()
+                return StartResult(sensord_pipe_id=id, success=True)
+            else:
+                return StartResult(sensord_pipe_id=id, success=False, error="Initialization failed silently")
+        except Exception as e:
+            logger.error(f"Failed to start pipe {id}: {e}")
+            return StartResult(sensord_pipe_id=id, success=False, error=str(e))
+
+    async def stop_one(self, id: str, **kwargs):
+        pipe = self.pool.pop(id, None)
+        if pipe:
+            await pipe.stop()
+            self._bridges.pop(id, None)
+            logger.info(f"Pipe {id} stopped")
 
 # Global singleton
 pipe_manager = FustordPipeManager()

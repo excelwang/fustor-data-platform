@@ -31,7 +31,7 @@ from typing import Dict, Optional, List, Any, Set
 from pydantic import BaseModel, field_validator, Field
 
 from sensord_core.common import get_fustor_home_dir
-from sensord_core.models.config import SourceConfig, SenderConfig, GlobalLoggingConfig
+from sensord_core.models.config import SourceConfig, SenderConfig, GlobalLoggingConfig, FieldMapping
 
 logger = logging.getLogger(__name__)
 
@@ -77,7 +77,7 @@ class SensordPipeConfig(BaseModel):
     disabled: bool = False
     
     # Field mapping
-    fields_mapping: List[Dict[str, Any]] = []
+    fields_mapping: List[FieldMapping] = []
 
 
 class UnifiedsensordConfig(BaseModel):

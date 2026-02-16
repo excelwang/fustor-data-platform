@@ -3,57 +3,28 @@ from typing import TYPE_CHECKING, Dict, Any, Optional, Union, List
 import logging 
 from dataclasses import dataclass
 
-from .base import BaseInstanceService
-from sensord_core.models.states import PipeState
+from sensord_core.stability import BasePipeManager, StartResult
 from sensord.stability.pipe import SensordPipe
-from sensord.domain.source_handler_adapter import SourceHandlerAdapter
-from sensord.stability.sender_adapter import SenderHandlerAdapter
-from sensord_core.exceptions import NotFoundError
-from sensord_sdk.interfaces import PipeManagerInterface # Import the interface
-
-
-@dataclass
-class StartResult:
-    """Result of a pipe start operation for fault isolation."""
-    sensord_pipe_id: str
-    success: bool
-    error: Optional[str] = None
-    skipped: bool = False
 
 # PipeRuntime is now always SensordPipe
 PipeRuntime = SensordPipe
 
-
-
-
-
-if TYPE_CHECKING:
-    from sensord.domain.configs.pipe import PipeConfigService
-    from sensord.domain.configs.source import SourceConfigService
-    from sensord.domain.configs.sender import SenderConfigService
-    from sensord.domain.configs.pipe import PipeConfigService
-    from sensord.domain.configs.source import SourceConfigService
-    from sensord.domain.configs.sender import SenderConfigService
-    from sensord.domain.event_bus import EventBusManager, EventBusInstanceRuntime
-    from sensord.domain.drivers.sender_driver import SenderDriverService
-    from sensord.domain.drivers.source_driver import SourceDriverService
+from sensord.domain.source_handler_adapter import SourceHandlerAdapter
+from sensord.stability.sender_adapter import SenderHandlerAdapter
+from sensord.config.unified import sensord_config
 
 logger = logging.getLogger("sensord")
 
-class PipeManager(BaseInstanceService, PipeManagerInterface): # Inherit from the interface
+from sensord_sdk.interfaces import PipeManagerInterface # Import the interface
+
+class PipeManager(BasePipeManager, PipeManagerInterface): # Inherit from base and interface
     def __init__(
         self, 
-        pipe_config_service: "PipeConfigService",
-        source_config_service: "SourceConfigService",
-        sender_config_service: "SenderConfigService",
         bus_manager: "EventBusManager",
         sender_driver_service: "SenderDriverService",
         source_driver_service: "SourceDriverService",
     ):
         super().__init__()
-        self.pipe_config_service = pipe_config_service
-        self.source_config_service = source_config_service
-        self.sender_config_service = sender_config_service
         self.bus_manager = bus_manager
         self.sender_driver_service = sender_driver_service
         self.source_driver_service = source_driver_service
@@ -77,7 +48,7 @@ class PipeManager(BaseInstanceService, PipeManagerInterface): # Inherit from the
             self.logger.warning(f"Pipe instance '{id}' is already running or being managed.")
             return StartResult(sensord_pipe_id=id, success=True, skipped=True)
 
-        pipe_config = self.pipe_config_service.get_config(id)
+        pipe_config = sensord_config.get_pipe(id)
         if not pipe_config:
             error_msg = f"Pipe config '{id}' not found."
             self.logger.error(error_msg)
@@ -90,7 +61,7 @@ class PipeManager(BaseInstanceService, PipeManagerInterface): # Inherit from the
             self.logger.info(f"Pipe instance '{id}' will not be started because its configuration is disabled.")
             return StartResult(sensord_pipe_id=id, success=True, skipped=True)
 
-        source_config = self.source_config_service.get_config(pipe_config.source)
+        source_config = sensord_config.get_source(pipe_config.source)
         if not source_config:
             error_msg = f"Source config '{pipe_config.source}' not found for pipe '{id}'."
             self.logger.error(error_msg)
@@ -99,7 +70,7 @@ class PipeManager(BaseInstanceService, PipeManagerInterface): # Inherit from the
             return StartResult(sensord_pipe_id=id, success=False, error=error_msg)
         self.logger.debug(f"Found source config for {id}")
         
-        sender_config = self.sender_config_service.get_config(pipe_config.sender)
+        sender_config = sensord_config.get_sender(pipe_config.sender)
         if not sender_config:
             error_msg = f"Required Sender config '{pipe_config.sender}' not found."
             self.logger.error(error_msg)
@@ -113,7 +84,6 @@ class PipeManager(BaseInstanceService, PipeManagerInterface): # Inherit from the
             # D-05: Global Config Injection
             # Inject global fs_scan_workers default if not present in driver_params
             if source_config.driver == "fs":
-                from sensord.config.unified import sensord_config
                 if "max_scan_workers" not in source_config.driver_params:
                     source_config.driver_params["max_scan_workers"] = sensord_config.fs_scan_workers
             
@@ -267,7 +237,7 @@ class PipeManager(BaseInstanceService, PipeManagerInterface): # Inherit from the
         from sensord_core.pipe import PipeState
         affected_pipes = []
         for inst in self.list_instances():
-            pipe_config = self.pipe_config_service.get_config(inst.id)
+            pipe_config = sensord_config.get_pipe(inst.id)
             if not pipe_config:
                 continue
             
@@ -294,46 +264,14 @@ class PipeManager(BaseInstanceService, PipeManagerInterface): # Inherit from the
         Returns:
             Summary dict with started/failed/skipped counts and details
         """
-        all_pipe_configs = self.pipe_config_service.list_configs()
+        all_pipe_configs = sensord_config.get_all_pipes()
         if not all_pipe_configs:
             return {"started": 0, "failed": 0, "skipped": 0, "details": []}
 
         enabled_ids = [pid for pid, cfg in all_pipe_configs.items() if not cfg.disabled]
-        self.logger.info(f"Attempting to auto-start {len(enabled_ids)} enabled sync tasks (fault-isolated)...")
         
-        # Use gather with return_exceptions=True for fault isolation
-        results: List[StartResult] = await asyncio.gather(
-            *[self.start_one(pid) for pid in enabled_ids],
-            return_exceptions=True
-        )
-        
-        # Convert exceptions to StartResult
-        normalized_results = []
-        for pid, result in zip(enabled_ids, results):
-            if isinstance(result, Exception):
-                self.logger.error(f"Unexpected error starting pipe '{pid}': {result}")
-                normalized_results.append(StartResult(sensord_pipe_id=pid, success=False, error=str(result)))
-            else:
-                normalized_results.append(result)
-        
-        # Calculate summary
-        started = sum(1 for r in normalized_results if r.success and not r.skipped)
-        failed = sum(1 for r in normalized_results if not r.success)
-        skipped = sum(1 for r in normalized_results if r.skipped)
-        
-        self.logger.info(f"Pipe startup complete: {started} started, {failed} failed, {skipped} skipped")
-        
-        # Log failures for visibility
-        for r in normalized_results:
-            if not r.success:
-                self.logger.error(f"  - {r.sensord_pipe_id}: {r.error}")
-        
-        return {
-            "started": started,
-            "failed": failed,
-            "skipped": skipped,
-            "details": [vars(r) for r in normalized_results]
-        }
+        # Use base class implementation for parallel start
+        return await self.start_all(enabled_ids)
             
     async def restart_outdated_pipes(self) -> int:
         from sensord_core.pipe import PipeState

@@ -47,6 +47,23 @@ Every node MUST adhere to the **Stability $\succ$ Domain $\succ$ Management** hi
 | **Domain** | Consistency, State, View | `FSViewDriver`, `LogicalClock`, `Arbitrator` |
 | **Stability** | Transport, Ingestion, Queuing | `Receiver`, `FustordPipe`, `MemoryEventBus` |
 
+#### Layer Definitions
+
+**Stability Layer (Ingestion & Session)**
+- **Strategic Intent**: Ensure fustord is always "visible" and "reachable".
+- **Responsibility**: Maintains physical links (Pipes) and business leases (Sessions).
+- **Neutrality**: Only guarantees mechanical delivery of SCP/SDP packets. Agnostic to business logic.
+
+**Domain Layer (Arbitration & Views)**
+- **Strategic Intent**: Achieve eventual consistency of distributed data.
+- **Responsibility**: The Core Brain. Handles logical clocks (Watermark), multi-source reconciliation (Leader Election), and View implementations.
+- **Autonomy**: Even if Management plugins are unloaded, the Domain Layer can still maintain consistency based on real-time data.
+
+**Management Layer (Fleet Ops & UI)**
+- **Strategic Intent**: Provide a human-operable control plane.
+- **Responsibility**: External interaction and policy dispatch.
+- **Pluggability**: All UI interfaces and ops tools are optional plugins.
+
 ### 2.2 Peer-to-Peer Symmetry
 
 Fustord mirrors Sensord's architecture:
@@ -60,29 +77,7 @@ Fustord mirrors Sensord's architecture:
 
 ---
 
-## 3. Package Structure
 
-The fustord codebase is organized into core and extension packages:
-
-### 3.1 Core Packages
-
-- `fustord`: The main daemon entry point, CLI, and lifecycle management.
-- `fustord-core`: Shared libraries and interfaces.
-    - `clock/`: LogicalClock and Skew detection logic.
-    - `session/`: SessionManager and Session state machine.
-    - `view/`: Abstract base classes for View Drivers.
-    - `stability/`: (Shared) BasePipeManager and common Mixins from `sensord-core`.
-
-### 3.2 Extension Packages
-
-- `fustor-receiver-*`: Transport protocol implementations.
-    - `fustor-receiver-http`: HTTP/REST receiver (FastAPI/Aiohttp).
-    - `fustor-receiver-grpc`: gRPC receiver (Future).
-- `fustor-view-*`: Domain specific view drivers.
-    - `fustor-view-fs`: File System Consistency View (Tombstones, Suspects).
-    - `fustor-view-fs-forest`: Multi-tree Aggregation View.
-
----
 
 ## 4. Ingestion Topology
 
@@ -155,28 +150,7 @@ A dedicated service (`TaskOrchestrator`) isolates dispatch complexity:
 
 ---
 
-## 7. Configuration Structure
 
-Settings are loaded from `$FUSTORD_HOME`.
-
-```yaml
-# receivers.yaml - 定义监听端口
-http-main:
-  driver: http
-  port: 18881
-  api_keys: ["key-1", "key-2"]
-
-# views/main-view.yaml - 定义业务视图
-main-fs-view:
-  driver: fs-view
-  driver_params:
-      hot_file_threshold: 60.0
-
-# pipes/pipe-1.yaml - 定义绑定关系
-pipe-1:
-  receiver: http-main
-  views: [main-fs-view]
-```
 
 ---
 

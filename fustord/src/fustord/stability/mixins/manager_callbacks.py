@@ -16,7 +16,7 @@ class ManagerCallbacksMixin:
     """
     
     async def _on_session_created(self: "FustordPipeManager", session_id, task_id, p_id, client_info, session_timeout_seconds):
-        fustord_pipe = self._pipes.get(p_id)
+        fustord_pipe = self.pool.get(p_id) # Use self.pool
         if not fustord_pipe: raise ValueError(f"FustordPipe {p_id} not found")
         
         from fustord.management.api.session import _check_duplicate_task
@@ -57,7 +57,7 @@ class ManagerCallbacksMixin:
     async def _on_event_received(self: "FustordPipeManager", session_id, events, source_type, is_end, metadata=None):
         p_id = self._session_to_pipe.get(session_id)
         if p_id:
-            fustord_pipe = self._pipes.get(p_id)
+            fustord_pipe = self.pool.get(p_id) # Use self.pool
             if fustord_pipe:
                 res = await fustord_pipe.process_events(events, session_id, source_type, is_end=is_end, metadata=metadata)
                 return res.get("success", False)
@@ -82,7 +82,7 @@ class ManagerCallbacksMixin:
         from fustord.domain.job_manager import job_manager
         pipe_id = self._session_to_pipe.get(session_id)
         if pipe_id:
-            fustord_pipe = self._pipes.get(pipe_id)
+            fustord_pipe = self.pool.get(pipe_id) # Use self.pool
             if fustord_pipe:
                 for vid in fustord_pipe.view_ids:
                     await job_manager.complete_job_for_session(vid, session_id, scan_path, job_id)

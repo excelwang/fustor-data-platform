@@ -126,7 +126,7 @@ class ManagerLifecycleMixin:
                     view_handlers=view_handlers
                 )
                 
-                self._pipes[p_id] = fustord_pipe
+                self.pool[p_id] = fustord_pipe # Use self.pool
                 from fustord.stability.session_bridge import create_session_bridge
                 bridge = create_session_bridge(fustord_pipe)
                 self._bridges[p_id] = bridge
@@ -158,7 +158,7 @@ class ManagerLifecycleMixin:
 
     async def start(self: "FustordPipeManager"):
         async with self._init_lock:
-            for p_id, fustord_pipe in self._pipes.items():
+            for p_id, fustord_pipe in self.pool.items(): # Use self.pool
                 await fustord_pipe.start()
             for r_sig, receiver in self._receivers.items():
                 await receiver.start()
@@ -168,7 +168,7 @@ class ManagerLifecycleMixin:
         async with self._init_lock:
             for r_sig, receiver in self._receivers.items():
                 await receiver.stop()
-            for p_id, fustord_pipe in self._pipes.items():
+            for p_id, fustord_pipe in self.pool.items(): # Use self.pool
                 await fustord_pipe.stop()
             logger.info("fustord components stopped")
 
@@ -178,7 +178,7 @@ class ManagerLifecycleMixin:
         fustord_config.reload()
         
         async with self._init_lock:
-            current_pipe_ids = set(self._pipes.keys())
+            current_pipe_ids = set(self.pool.keys()) # Use self.pool
             modified = set()
             for p_id in current_pipe_ids:
                 new_resolved = fustord_config.resolve_pipe_refs(p_id)
@@ -197,7 +197,7 @@ class ManagerLifecycleMixin:
             logger.info(f"Config change: added={added}, removed={removed}, modified={len(modified)}")
             
             for p_id in (removed | modified):
-                fustord_pipe = self._pipes.pop(p_id, None)
+                fustord_pipe = self.pool.pop(p_id, None) # Use self.pool
                 if fustord_pipe:
                     await fustord_pipe.stop()
                     self._bridges.pop(p_id, None)
@@ -206,11 +206,11 @@ class ManagerLifecycleMixin:
             if to_start:
                 await self._initialize_pipes_internal(list(to_start))
                 for p_id in to_start:
-                    if p_id in self._pipes:
-                        await self._pipes[p_id].start()
+                    if p_id in self.pool:
+                        await self.pool[p_id].start() # Use self.pool
             
             active_receiver_sigs = set()
-            for p_id in self._pipes:
+            for p_id in self.pool: # Use self.pool
                 resolved = fustord_config.resolve_pipe_refs(p_id)
                 if resolved:
                     r_cfg = resolved['receiver']

@@ -200,7 +200,7 @@ class HTTPReceiver(Receiver):
         
         api_router = APIRouter(prefix="/api/v1/pipe")
         api_router.include_router(self._session_router, prefix="/session")
-        api_router.include_router(self._ingestion_router, prefix="/ingest")
+        api_router.include_router(self._ingestion_router, prefix="")
         receiver_app.include_router(api_router)
         
         return receiver_app

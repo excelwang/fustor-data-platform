@@ -59,9 +59,9 @@ class fustordClient:
         )
         # Set API paths (unified pipe-based only)
         self._session_path = "/api/v1/pipe/session"
-        self._events_path = "/api/v1/pipe/ingest"
+        self._events_path = "/api/v1/pipe"
         self._consistency_path = "/api/v1/pipe/consistency"
-        self._management_path = "/api/v1/management"
+        self._management_path = "/api/v1/mgmt"
 
     # --- Management API ---
 

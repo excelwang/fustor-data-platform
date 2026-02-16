@@ -88,23 +88,7 @@ Sensord formally separates its communication into two distinct protocols:
 - **Purpose**: Data Contract & Consistency. Defines event schemas, change semantics (mtime, size), and consistency metadata (Atomic Write, Audit flags).
 - **Invariant**: SDP is extensible and schema-driven (e.g., `sensord-schema-fs`).
 
-## VISION.LAYER_MODEL
 
-**Sensord** 采用 **"下沉稳定性，上行扩展性"** 的三层垂直模型：
-
-### Stability Layer (Stability & Session)
-- **职责**: 纯粹的连接维护。负责管道 (Pipes)、生存隧道 (Umbilical Cord)、生命体征监控。
-- **中立原则**: Stability Layer 只提供**寻址原语** (Unicast / Broadcast)。不感知业务逻辑。
-- **愿景定位**: 系统的"生存地基"。
-
-### Domain Layer (Domain & Data)
-- **职责**: 定义数据的"血肉"。包括 Source 驱动、快照生成、事件索引维护。
-- **自治原则**: 驱动本地数据的感知与其生命周期。
-- **层级借用**: Domain Layer 通过调用 Stability Layer 的中立原语来实现数据发送。
-
-### Management Layer (Operations & Plugins)
-- **职责**: 非实时管理工作（升级、状态报告插件）。
-- **独立原则**: Management 层必须是插件化实现。移除后，核心同步能力必须保持可用。
 
 ## VISION.AUTONOMY
 
