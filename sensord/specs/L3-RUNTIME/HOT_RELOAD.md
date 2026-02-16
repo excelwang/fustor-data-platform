@@ -38,6 +38,9 @@ Sensord 对比 `OldState` 与 `NewState` 的差异：
 1.  **静默更新**: 重载期间，`EventBus` 中的存量数据不得丢失。
 2.  **句柄复用**: 对于 URI 未变更的 Driver，必须保持物理连接（如 NFS Mount 或 SQL Connection），仅更新引用。
 3.  **最终一致**: 重载完成后，Sensord 会自动触发一次 Audit 扫描以抹平窗口期的状态差异。
+
+```mermaid
+sequenceDiagram
     participant Daemon as sensord Daemon
     participant App as App.reload_config()
     participant Config as ConfigLoader

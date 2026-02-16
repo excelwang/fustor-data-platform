@@ -23,7 +23,9 @@
 ## 2. 线程隔离 (Thread Isolation)
 
 每一个 Driver 允许拥有自己的独立采集线程，但必须通过 **Sensord-core** 提供的 `Thread Bridge` 模式与主 asyncio 循环通信。
-e)**: 当多个 SensordPipe 配置指向同一物理 URI 且使用相同凭证时，系统只会创建一个 Driver 实例，并为其分配独立的订阅者视图。
+### 1.3 资源复用模型 (Resource Multiplexing)
+
+**机制**: 当多个 SensordPipe 配置指向同一物理 URI 且使用相同凭证时，系统只会创建一个 Driver 实例，并为其分配独立的订阅者视图。
 -   **资源互斥 (Resource Pooling)**: 共享实例意味着底层的 WatchManager（如 inotify 监听器）、扫描线程池以及 EventQueue (EventBus) 在物理层上是共用的。
 -   **订阅隔离**: 虽然底层资源共享，但每个 SensordPipe 拥有独立的 `last_consumed_index`，确保数据消费进度的独立性。
 

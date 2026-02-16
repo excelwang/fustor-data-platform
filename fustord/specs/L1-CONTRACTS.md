@@ -1,272 +1,93 @@
----
-version: 1.0.0
-invariants:
-  - id: INV_CONTROL_SURVIVES_DATA
-    statement: "The Control Plane must survive the Data Plane. Business logic errors must never terminate the Sensord or fustord process."
-  - id: INV_API_NEVER_503
-    statement: "The /fs/tree API endpoint must always return a valid response, never 503."
-  - id: INV_LAYER_ORDER
-    statement: "Stability/Domain Layer must never depend on Management Layer. Management Layer is an optional plugin."
----
+# L1: Fustor Contracts (Fustord Perspective)
 
-# L1: Fustor Contracts
+> **Subject**: System | Fustord
+> **Relation**: `Fustord MUST [action]` AND `Fustord RELIES ON [Sensord action]`
 
-> **Subject**: Sensord | System. Pattern: `[Sensord|System] MUST [action]`
-> - Responsibility: WHO is accountable
-> - Verification: HOW to measure compliance
+## 1. CONTRACTS.SYSTEM (Universal)
 
----
+Contracts that apply to **ALL** Python processes (both fustord and sensord).
 
-## CONTRACTS.STABILITY (SCP Foundations)
+### Stability
 
-### Connection Retry
+- **NO_CRASH_PRINCIPLE**: Process MUST NOT crash on any business logic exception.
+  > Verification: Zero process terminations in logs due to unhandled `Exception`.
 
-- **RETRY_BACKOFF**: System MUST implement exponential backoff for connection retry to external consumers.
-  > Responsibility: Reliability — ensure automatic reconnection after transient failures.
-  > Verification: Backoff interval increases exponentially up to a configured maximum.
+- **SINGLE_EVENT_LOOP**: System MUST run on a single `asyncio` event loop.
+  > Verification: No `threading.Thread` spawning without `run_in_executor`.
 
-- **NEVER_STOP_RETRY**: Sensord MUST NOT stop retrying after reaching the alert threshold; it MUST continue retrying at max interval indefinitely.
-  > Responsibility: Survival — ensure upstream recovery triggers automatic reconnection.
-  > Verification: SensordPipe remains in RECONNECTING state and retries persist beyond alert threshold.
+- **NO_SHARED_MUTABLE_IN_EXECUTOR**: Thread pool tasks MUST be pure functions without shared mutable state.
+  > Verification: No `Lock` usage in executor tasks.
 
-### Exception Isolation
+### Threading Bridge
 
-- **SINGLE_FILE_ISOLATION**: System MUST isolate single-file processing failures from affecting the entire task.
-  > Responsibility: Fault isolation — prevent individual file errors from cascading.
-  > Verification: `PermissionError`, `FileNotFoundError` are logged and skipped; subsequent files continue processing.
-
-- **NO_CRASH_PRINCIPLE**: System MUST NOT crash on any exception. Sensord and fustord MUST log errors and continue operation.
-  > Responsibility: Indestructibility — maintain process uptime.
-  > Verification: Zero process terminations due to business logic exceptions in production.
-
-### Data Integrity (SDP Foundations)
-
-- **ATOMIC_WRITE_MARKING**: System MUST mark events with `is_atomic_write` field at the data source.
-  > Responsibility: Correctness — distinguish partial writes from complete writes.
-  > Verification: `IN_CLOSE_WRITE` events marked `is_atomic_write=True`; `IN_MODIFY` events marked `False`.
-
-- **SUSPECT_ON_PARTIAL**: System MUST mark files as `integrity_suspect=True` when receiving `is_atomic_write=False` events.
-  > Responsibility: Data quality — flag potentially incomplete data.
-  > Verification: Suspect flag set on partial write, cleared on atomic write confirmation.
-
-- **EVENT_LIFECYCLE**: System MUST follow file event lifecycle rules (SDP):
-  > - File creation: only `on_closed` (`IN_CLOSE_WRITE`) sends metadata, marked `is_atomic_write=True`.
-  > - File modification: `on_modified` sends `is_atomic_write=False`, `on_closed` sends `is_atomic_write=True`.
-  > - Known limitation: `cp -p`, `rsync` without `IN_CLOSE_WRITE` require Audit for discovery.
-  > Responsibility: Protocol compliance — ensure consistent event semantics.
-  > Verification: Event flow matches lifecycle rules in integration tests.
-
-### Resource Protection
-
-- **BATCH_SEND**: System MUST aggregate events using configurable batch size before sending.
-  > Responsibility: Efficiency — reduce network overhead.
-  > Verification: Network packets contain batched events based on configuration.
-
-- **THROTTLE_EVENTS**: System MUST use configurable throttle interval to merge frequent `IN_MODIFY` events.
-  > Responsibility: Protection — prevent event storms.
-  > Verification: Rapid `IN_MODIFY` events merged within throttle window.
-
-- **EVENTBUS_RING_BUFFER**: System MUST use a bounded ring buffer for EventBus, with automatic fast/slow consumer splitting triggered at high capacity usage.
-  > Responsibility: Memory safety — prevent OOM and head-of-line blocking.
-  > Verification: EventBus never exceeds configured buffer size; splitting occurs when lag exceeds threshold.
+- **THREAD_BRIDGE_PATTERN**: Sync IO (DB/Disk) MUST use the Producer(Thread)-Queue-Consumer(Async) pattern.
+  > Verification: No blocking IO calls in main loop.
 
 ---
 
-## CONTRACTS.LIFECYCLE (SCP Interactions)
+## 2. CONTRACTS.FUSTORD (Aggregator Obligations)
 
-### Hot Upgrade & Config
+Contracts specific to the **Fustord** process.
 
-- **HOT_UPGRADE_ATOMICITY**: Sensord MUST guarantee atomic, in-place replacement of the Sensord process logic.
-  > Responsibility: Survival — Ensure zero downtime during upgrades.
-  > Verification: Process PID may change, but pipe connections MUST remain active or reconnect within 1 retry interval.
+### Reliability
 
-- **TARGETED_DELIVERY**: fustord MUST be able to target a specific Sensord instance for upgrade, ignoring others sharing the same Session.
-  > Responsibility: Operations — Canary deployments.
-  > Verification: Only the targeted SensordID receives the upgrade command.
+- **ZOMBIE_DETECTION**: Fustord MUST detect Sensords with active Heartbeat but zero Data flow for > `threshold`.
+  > Responsibility: Detect "brain-dead" sensors.
 
-- **CONFIG_RELOAD_ATOMICITY**: Configuration changes MUST apply to the entire Sensord process state atomically.
-  > Responsibility: Consistency — No partial configuration states (e.g., half-old, half-new).
-  > Verification: All components switch to new config revision effectively simultaneously.
+- **REMOTE_REMEDIATION**: Fustord MUST be able to Unicast a "Restart" command to a specific Zombie Sensord.
+  > Responsibility: Self-healing control plane.
 
-### Health & Remediation
+### Concurrency & Locking
 
-- **ZOMBIE_DETECTION**: fustord MUST detect Sensords that maintain Heartbeat but fail to send Data events for > `threshold` period.
-  > Responsibility: Health — Detect "brain-dead" sensors.
-  > Verification: Alert triggered when heartbeat ok but data flow zero for X minutes.
+- **PER_VIEW_LOCK**: ViewStateManager MUST use per-view `asyncio.Lock`. Global lock is FORBIDDEN.
+  > Responsibility: Parallelism.
 
-- **REMOTE_REMEDIATION**: fustord MUST be able to push a "Kill & Restart" or "Clean Slate Config" command to a Zombie Sensord via SCP.
-  > Responsibility: Survival — Remote fix for non-responsive data planes.
-  > Verification: Zombie sensor receives command, terminates, restarts, and resumes normal operation.
+- **RW_LOCK_DISCIPLINE**: Views MUST use `AsyncRWLock` (Read-Shared, Write-Exclusive).
+  > Responsibility: High concurrent read throughput.
 
-## CONTRACTS.AUTONOMY
+- **QUEUE_ISOLATION**: Each `FustordPipe` MUST have an independent `asyncio.Queue`.
+  > Responsibility: Slow pipe isolation.
 
-### Intrinsic Drive
+- **QUEUE_DRAIN_SIGNAL**: Queue workers MUST use `asyncio.Event` for shutdown, not polling.
+  > Responsibility: Efficiency.
 
-- **INTRINSIC_DRIVE**: Sensord Domain Layer MUST initiate data scanning and synchronization based on local configuration, WITHOUT waiting for fustord commands.
-  > Responsibility: Autonomy — Sensord is a proactive sensor, not a passive remote hook.
-  > Verification: Sensord starts scanning immediately upon boot/config load, even if fustord is unreachable.
+### Data Routing
 
-### Multi-Target Renting
+- **TWO_TIER_ROUTING**: Events MUST be routed first by `FustordPipe` (Schema match), then by `ViewManager`.
+  > Responsibility: Prevent schema pollution.
 
-- **MULTI_TARGET_RENTING**: Sensord Domain Layer MUST be able to push data to multiple independent Receivers (fustord, Local-Log, 3rd-Party) simultaneously using the same Stability primitives.
-  > Responsibility: Decoupling — Data ownership belongs to Sensord, not fustord.
-  > Verification: One source event replicated to multiple configured pipes/senders.
+- **PAYLOAD_OPACITY**: Stability Layer (SessionManager) MUST treat payloads as opaque dicts.
+  > Responsibility: Layer independence.
 
 ---
 
-## CONTRACTS.CONCURRENCY
+## 3. CONTRACTS.PREREQUISITES (Sensord Obligations)
 
+Fustord's correctness **DEPENDS** on Sensord fulfilling these contracts.
 
-### Threading Model
+### Connection & Transport
 
-- **SINGLE_EVENT_LOOP**: System MUST run on asyncio single-threaded event loop.
-  > Responsibility: Correctness — ensure deterministic execution order.
-  > Verification: No `threading.Lock` usage on shared state; all coordination via asyncio.
+- **RETRY_BACKOFF**: Sensord MUST implement exponential backoff.
+- **NEVER_STOP_RETRY**: Sensord MUST retry connection indefinitely.
+- **BATCH_SEND**: Sensord MUST batch events (configurable size).
+- **THROTTLE_EVENTS**: Sensord MUST merge rapid `IN_MODIFY` events.
 
-- **NO_SHARED_MUTABLE_IN_EXECUTOR**: System MUST NOT access shared mutable state from `run_in_executor` threads.
-  > Responsibility: Safety — prevent data races.
-  > Verification: Zero `threading.Lock` on shared state; executor-only for pure computation.
+### Data Integrity (SDP)
 
-- **THREAD_BRIDGE_PATTERN**: System MUST use Thread Bridge pattern for synchronous IO iterators (e.g., `os.scandir`, MinIO SDK):
-  > 1. Producer Thread: dedicated thread for sync iterator
-  > 2. `asyncio.Queue` as backpressure buffer
-  > 3. `threading.Event` (`stop_event`) for Consumer exit signaling
-  > 4. Consumer MUST drain queue before exit to unblock Producer
-  > Responsibility: Correctness — prevent deadlocks in sync-to-async bridging.
-  > Verification: Queue drained on shutdown; no hung threads.
+- **ATOMIC_WRITE_MARKING**: Sensord MUST mark `is_atomic_write=True` ONLY on `close_write`.
+- **EVENT_LIFECYCLE**: `on_modified` -> `atomic=False`; `on_closed` -> `atomic=True`.
+- **SEMANTIC_SCHEMA**: Sensord MUST use logical schema names (e.g. "fs"), not paths.
 
-### Lock Strategy
+### Lifecycle
 
-- **PER_VIEW_LOCK**: System MUST use per-view `asyncio.Lock` granularity for ViewStateManager and SessionManager.
-  > Responsibility: Parallelism — different views must never block each other.
-  > Verification: Concurrent requests to different views proceed without mutual blocking.
-
-- **NO_GLOBAL_LOCK_REGRESSION**: System MUST NOT degrade per-view/per-pipe locks to global locks.
-  > Responsibility: Performance — prevent serialization bottleneck.
-  > Verification: No single lock guards multiple views/pipes.
-
-- **RW_LOCK_DISCIPLINE**: View-FS MUST use `AsyncRWLock`:
-  > - Read Lock: `process_event`, `query` (concurrent reads allowed)
-  > - Write Lock: `rebuild` only (exclusive, blocks all reads/writes)
-  > - MUST NOT substitute Read Lock with Write Lock "for safety"
-  > Responsibility: Throughput — maintain read concurrency under load.
-  > Verification: Multiple concurrent queries do not serialize.
-
-### Queue & Backpressure
-
-- **QUEUE_ISOLATION**: Each FustordPipe MUST have an independent event queue and processing loop.
-  > Responsibility: Isolation — different views process independently.
-  > Verification: No cross-pipe shared queues exist.
-
-- **QUEUE_DRAIN_SIGNAL**: System MUST use `asyncio.Event` for queue drain signaling, NOT busy-wait polling.
-  > Responsibility: Efficiency — eliminate `while not empty: sleep(N)` patterns.
-  > Verification: `wait_for_drain()` method used instead of polling.
-
-### Cache Strategy
-
-- **CONFIG_CACHE_TTL**: System MUST cache YAML config reads with TTL (default 5s). MUST NOT execute `yaml.safe_load()` on every request.
-  > Responsibility: Performance — avoid hot-path file IO.
-  > Verification: Config reads served from cache within TTL.
-
-- **LEADER_CACHE_VERIFY**: System MUST periodically verify leader cache validity (every 5 heartbeats). MUST NOT permanently trust leader cache.
-  > Responsibility: Consistency — prevent stale leader state.
-  > Verification: Cache invalidation on mismatch detected.
-
-### Performance Targets
-
-| Metric | Target | Rationale |
-|--------|--------|-----------|
-| Event throughput | 1,000 events/sec (peak) | Single pipe serial processing sufficient |
-| Concurrent sessions | 100+ | Per-view/per-pipe locks |
-| Query concurrency | Unlimited | Lock-free reads |
+- **HOT_UPGRADE_ATOMICITY**: Sensord upgrade MUST NOT drop active pipe connections > 1 retry interval.
+- **CONFIG_RELOAD_ATOMICITY**: Config reload MUST apply atomically.
+- **INTRINSIC_DRIVE**: Sensord MUST initiate scanning without Fustord commands.
 
 ---
 
-## CONTRACTS.DATA_ROUTING
+## 4. CONTRACTS.LAYER_INDEPENDENCE
 
-
-- **SEMANTIC_SCHEMA**: `event_schema` MUST represent "data format" (e.g., `"fs"`), NOT physical path or source ID.
-  > Responsibility: Normalization — enable heterogeneous path merging.
-  > Verification: All Source drivers set `event_schema` to logical schema name; never to physical path.
-
-- **SOURCE_SCHEMA_CONSISTENCY**: Source driver MUST set `event_schema` identically for realtime, snapshot, and audit events.
-  > Responsibility: Consistency — single schema per data contract.
-  > Verification: All event types from same source share identical `event_schema`.
-
-- **TWO_TIER_ROUTING**: System MUST implement two-tier event routing:
-  > 1. **Tier 1 (FustordPipe)**: Route by `Handler.schema_name` matching `Event.event_schema`
-  > 2. **Tier 2 (ViewManager)**: Route by `Driver.target_schema` matching `Event.event_schema`
-  > Responsibility: Safety — prevent cross-schema data pollution.
-  > Verification: DB events never reach FS memory tree; FS events never reach DB handlers.
-
-- **FIELD_MAPPING_PROJECTION**: `fields_mapping` MUST use projection semantics:
-  > - Non-empty mapping: output contains ONLY explicitly mapped fields
-  > - Empty/absent mapping: transparent passthrough (no transformation)
-  > Invariant: `len(fields_mapping) == 0 ⟹ event_out ≡ event_in`
-  > Responsibility: Data security — prevent accidental field leakage.
-  > Verification: Unmapped fields absent from output events.
-
----
-
-## CONTRACTS.ADDRESSING
-
-> Source: STABILITY_NEUTRALITY, 2026-02-16T0220-neutral-addressing-primitives.md
-
-- **ADDRESSING_ONLY**: Every packet sent from fustord to Sensord MUST be either `unicast(target_id)` or `broadcast(view_id)`.
-  > Responsibility: Routing — purely mechanical packet delivery.
-  > Verification: Stability Layer code contains only `dispatch(header, payload)`.
-
-- **PAYLOAD_OPACITY**: Stability Layer MUST treat all command payloads as opaque dictionaries.
-  > Responsibility: Stability — Stability Layer survives invalid payloads.
-  > Verification: Zero inspections of `payload.type` or `payload.body` in `SessionManager`.
-
-- **NEUTRALITY**: The `SessionManager` MUST NOT contain string literals or logic related to `scan`, `snapshot`, `job_id`, or `path`.
-  > Responsibility: Decoupling — prevent business logic leakage.
-  > Verification: Grep check passes.
-
-- **AUTO_RECONNECT**: All remote operations (even destructive ones like restart) MUST be auto-recovered by Domain heartbeat reconnection.
-  > Responsibility: Resilience — umbilical cord stays ready when physically reachable.
-  > Verification: Sensord reconnects within 2× backoff interval after process restart.
-
----
-
-## CONTRACTS.TESTING
-
-
-- **NO_SURVIVAL_BIAS**: Test fixtures MUST strictly simulate real object creation processes. MUST NOT manually inject attributes to bypass errors.
-  > Responsibility: Authenticity — tests must expose real bugs, not mask them.
-  > Verification: Zero `setattr` on business objects in test code (except for explicit mocking).
-
-- **BASE_CLASS_TRUTH**: Base class attribute names are the single source of truth. Derived classes MUST NOT guess or invent attribute names.
-  > Responsibility: Contract integrity — prevent `AttributeError` in production.
-  > Verification: All `self.xxx` accesses verified against base class definition in code review.
-
-- **KWARGS_PASSTHROUGH**: Adapter pattern implementations MUST transparently pass `**kwargs` end-to-end.
-  > Responsibility: Extensibility — ensure Forest View and future drivers receive contextual parameters.
-  > Verification: Test with non-standard kwargs; verify no `TypeError` raised.
-
-- **REVIEW_CHECKLIST**: Code review MUST check:
-  > 1. Mock audit: No `setattr` on business logic classes
-  > 2. Attribute consistency: `super().__init__` matches base class
-  > 3. Terminology: Comments match latest architecture naming
-  > 4. Shadow errors: Test failures show real interface mismatches, not framework artifacts
-  > Responsibility: Quality gate — systematic error prevention.
-  > Verification: Checklist items verified in every PR review.
-
----
-
-## CONTRACTS.LAYER_INDEPENDENCE
-
-> Source: L0-VISION §1.4
-
-- **STABILITY_NEUTRALITY**: Stability Layer (SessionManager) MUST provide only addressing primitives (`broadcast`, `unicast`, `heartbeat_tunnel`). MUST NOT contain business logic.
-  > Responsibility: Stability — keep the survival layer simple and generic.
-  > Verification: Zero business terms (`scan`, `upgrade`, `path`, `job_id`) in Stability Layer code.
-
-- **DOMAIN_SELF_SUFFICIENT**: Domain Layer MUST implement API fallback (On-Command Find) independently. MUST NOT depend on Management Layer for data completeness.
-  > Responsibility: Availability — core API survives Management Layer removal.
-  > Verification: Disable all Management plugins; `/fs/tree` still returns valid data.
-
-- **MANAGEMENT_TRUE_PLUGIN**: Removing all Management packages MUST NOT affect Stability/Domain functionality.
-  > Responsibility: Independence — management is optional.
-  > Verification: System boots and serves API without `fustor-view-mgmt` or `fustor-sensor-mgmt`.
+- **STABILITY_NEUTRALITY**: SessionManager MUST NOT contain words: `scan`, `path`, `snapshot`.
+- **DOMAIN_SELF_SUFFICIENT**: API MUST work even if Management Layer is removed.
+- **MANAGEMENT_TRUE_PLUGIN**: System MUST boot without Management packages.

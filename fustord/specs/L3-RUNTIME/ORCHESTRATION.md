@@ -2,26 +2,6 @@
 version: 1.0.0
 ---
 
-# L3: [algorithm] Task Orchestration & Dispatch
-
-> Type: algorithm | interface
-
-## 1. 概述
-
-本文档定义了任务编排服务 (`TaskOrchestrator`) 的实现细节，负责将高层业务意图（如"升级"、"扫描"）转换为 Stability 层的中立寻址原语。
-
-## 2. 接口定义
-
-建议封装通用的 `TaskOrchestrator` 服务，隔离分发细节：
-
-```python
-class TaskOrchestrator:
-    async def view_broadcast(self, view_id: str, cmd: Dict) -> List[Dict]:
-        """
-        全量广播逻辑：用于回退扫描。
-        1. 确定 ViewID 关联的所有 Session
-        2. Stability.broadcast()
-        3. 汇聚结果
 # L3: [pattern] Fustord Command Orchestration (SCP)
 
 > Type: design_pattern
