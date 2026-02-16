@@ -3,8 +3,8 @@
 ```mermaid
 flowchart TD
     A[NFS Server<br/>(10M files)] --> B{File System<br/>Change?}
-    B -->|Yes| C[Server A<br/>fusensord-1]
-    B -->|Yes| D[Server B<br/>fusensord-2]
+    B -->|Yes| C[Server A<br/>fudatacast-1]
+    B -->|Yes| D[Server B<br/>fudatacast-2]
     C --> E[FSDriver<br/>detects change]
     D --> F[FSDriver<br/>detects change]
     E --> G[Convert to Event<br/>(path, type, metadata)]

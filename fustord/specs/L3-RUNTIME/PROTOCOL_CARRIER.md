@@ -7,9 +7,9 @@
 
 ## [overview] Protocol_Carrier_Layer_Overview
 
-The Protocol Carrier layer is the **True Symmetry Point** of the Sensord/Fustord ecosystem. It defines the binary/textual wire formats and state machines used to maintain the "Umbilical Cord" and the "Data Stream".
+The Protocol Carrier layer is the **True Symmetry Point** of the Datacast/Fustord ecosystem. It defines the binary/textual wire formats and state machines used to maintain the "Umbilical Cord" and the "Data Stream".
 
-## [protocol] SCP_Sensord_Control_Protocol_Definition
+## [protocol] SCP_Datacast_Control_Protocol_Definition
 
 SCP is responsible for **Presence**, **Survival**, and **Orchestration**.
 
@@ -23,7 +23,7 @@ SCP is responsible for **Presence**, **Survival**, and **Orchestration**.
     - **Upstream**: Health metrics, Current Role (L/F), Task Acknowledgments.
     - **Downstream**: Role assignment, Command dispatch (`scan`, `reload`, `upgrade`).
 
-## [protocol] SDP_Sensord_Data_Protocol_Definition
+## [protocol] SDP_Datacast_Data_Protocol_Definition
 
 SDP is responsible for **Event Delivery** and **Consistency Alignment**.
 
@@ -41,7 +41,7 @@ SDP is responsible for **Event Delivery** and **Consistency Alignment**.
 
 ### 1.1 The Asymmetry of Pipes
 **Pipes** are directional orchestrators. They define "how data moves through a node."
-- **SensordPipe**: Active orchestrator (Source $\rightarrow$ EventBus $\rightarrow$ Sender). Handles local drift, scanning, and pushing.
+- **DatacastPipe**: Active orchestrator (Source $\rightarrow$ EventBus $\rightarrow$ Sender). Handles local drift, scanning, and pushing.
 - **FustordPipe**: Passive orchestrator (Receiver $\rightarrow$ Queue $\rightarrow$ ViewHandlers). Handles multi-source merging and backpressure.
 
 > [!IMPORTANT]
@@ -52,8 +52,8 @@ Symmetry is found in the **Protocol Carrier layer**, not the Pipe layer. The car
 
 | Symmetric Point | Responsibility | Implementation Carrier |
 |-----------------|----------------|------------------------|
-| **Frame Definition** | Shared models for SCP/SDP packets | `sensord_core.protocol` |
-| **Negotiation Logic** | Logic for `session_timeout` and `role` | `sensord_core.protocol.scp` |
+| **Frame Definition** | Shared models for SCP/SDP packets | `datacast_core.protocol` |
+| **Negotiation Logic** | Logic for `session_timeout` and `role` | `datacast_core.protocol.scp` |
 | **Reliability Primitives** | Retries (Client) / Backpressure (Server) | `Stability Layer` |
 
-By extracting the Protocol Carrier into `sensord-core`, we achieve ecosystem-wide alignment without creating a monolithic, over-complicated Pipe component.
+By extracting the Protocol Carrier into `Datacast-core`, we achieve ecosystem-wide alignment without creating a monolithic, over-complicated Pipe component.

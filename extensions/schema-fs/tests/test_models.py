@@ -98,7 +98,7 @@ class TestFSDeleteRow:
 
 
 from fustor_schema_fs.models import FSInsertEvent, FSUpdateEvent, FSDeleteEvent
-from sensord_core.event import EventType
+from datacast_core.event import EventType
 
 class TestFSEvents:
     """Test FS Event Pydantic models."""

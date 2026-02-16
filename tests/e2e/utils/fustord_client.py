@@ -356,19 +356,19 @@ class fustordClient:
         except requests.HTTPError:
             suspect = False
 
-        # Check sensord_missing from blind-spots API
+        # Check Datacast_missing from blind-spots API
         # Note: This is less efficient but correct per new API design
         blind_spots = self.get_blind_spots()
-        sensord_missing = False
+        Datacast_missing = False
         
         # Check in additions list
         for f in blind_spots.get("additions", []):
             if f.get("path") == file_path:
-                sensord_missing = True
+                Datacast_missing = True
                 break
                 
         return {
-            "sensord_missing": sensord_missing,
+            "Datacast_missing": Datacast_missing,
             "integrity_suspect": suspect
         }
 
@@ -455,21 +455,21 @@ class fustordClient:
                 time.sleep(interval)
         return False
 
-    def wait_for_sensord_ready(self, sensord_id: str, timeout: float = AGENT_READY_TIMEOUT, interval: float = POLL_INTERVAL) -> bool:
-        """Wait for an sensord to be registered and reporting can_realtime=True."""
+    def wait_for_datacast_ready(self, datacast_id: str, timeout: float = AGENT_READY_TIMEOUT, interval: float = POLL_INTERVAL) -> bool:
+        """Wait for an datacast to be registered and reporting can_realtime=True."""
         import logging
         logger = logging.getLogger(__name__)
         start = time.time()
         while time.time() - start < timeout:
             try:
                 sessions = self.get_sessions()
-                logger.debug(f"wait_for_sensord_ready({sensord_id}): Current sessions: {[{'sensord_id': s.get('sensord_id'), 'can_realtime': s.get('can_realtime')} for s in sessions]}")
-                sensord_session = next((s for s in sessions if sensord_id in s.get("sensord_id", "")), None)
-                if sensord_session and sensord_session.get("can_realtime"):
-                    logger.info(f"sensord {sensord_id} is READY (session={sensord_session.get('session_id')})")
+                logger.debug(f"wait_for_datacast_ready({datacast_id}): Current sessions: {[{'datacast_id': s.get('datacast_id'), 'can_realtime': s.get('can_realtime')} for s in sessions]}")
+                datacast_session = next((s for s in sessions if datacast_id in s.get("datacast_id", "")), None)
+                if datacast_session and datacast_session.get("can_realtime"):
+                    logger.info(f"datacast {datacast_id} is READY (session={datacast_session.get('session_id')})")
                     return True
             except Exception as e:
-                logger.debug(f"Error in wait_for_sensord_ready: {e}")
+                logger.debug(f"Error in wait_for_datacast_ready: {e}")
                 pass
             time.sleep(interval)
         return False

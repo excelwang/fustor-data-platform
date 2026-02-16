@@ -4,7 +4,7 @@ version = "0.9.1"
 description = "Echo sender driver for Fustor"
 requires-python = ">= 3.10"
 dependencies = [
-    "sensord-core"]
+    "datacast-core"]
 authors = [
     { name = "Fustor Team" }
 ]
@@ -20,7 +20,7 @@ Homepage = "https://github.com/excelwang/fustor/tree/master/extensions/sender-ec
 
 license = "MIT"
 
-[project.entry-points."sensord.drivers.senders"]
+[project.entry-points."datacast.drivers.senders"]
 echo = "fustor_sender_echo:EchoDriver"
 
 [tool.setuptools.packages.find]

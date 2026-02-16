@@ -26,7 +26,7 @@ version: 1.0.0
 
 ### 2.3 背压传递 (Backpressure)
 - **规则**: 当 `FustordPipe` 队列长度超过容量阈值时，Receiver 在 HTTP 响应中返回 `429 Too Many Requests`。
-- **自愈**: **Sensord** 收到 429 后应启动退避重试，从而将接收端的压力反向传递给产生端。
+- **自愈**: **Datacast** 收到 429 后应启动退避重试，从而将接收端的压力反向传递给产生端。
 
 ## [lifecycle] Event_Bus_Resource_Management_Lifecycle回收
 - **低水位线 (Low Watermark)**: 取所有活跃订阅者中最小的 `last_seen_position`。

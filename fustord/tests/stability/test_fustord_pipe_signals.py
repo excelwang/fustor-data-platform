@@ -7,8 +7,8 @@ import asyncio
 from unittest.mock import AsyncMock, MagicMock, patch
 from typing import Any, Dict, List, Optional
 
-from sensord_core.pipe import PipeState
-from sensord_core.pipe.handler import ViewHandler
+from datacast_core.pipe import PipeState
+from datacast_core.pipe.handler import ViewHandler
 from fustord.stability import FustordPipe
 
 

@@ -2,7 +2,7 @@
 name = "fustor-source-oss"
 version = "0.9.1"
 description = "Fustor Source Driver for S3-compatible object storage (OSS)"
-dependencies = [ "boto3>=1.28.0,<2.0.0", "sensord-core", "pydantic>=2.0.0,<3.0.0"]
+dependencies = [ "boto3>=1.28.0,<2.0.0", "datacast-core", "pydantic>=2.0.0,<3.0.0"]
 requires-python = ">=3.11"
 
 [build-system]
@@ -17,7 +17,7 @@ Homepage = "https://github.com/excelwang/fustor/tree/master/extensions/source-os
 
 license = "MIT"
 
-[project.entry-points."sensord.drivers.sources"]
+[project.entry-points."datacast.drivers.sources"]
 source_oss = "fustor_source_oss.driver:OssSourceDriver"
 
 [tool.pytest.ini_options]

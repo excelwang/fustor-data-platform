@@ -6,7 +6,7 @@ import time
 import dataclasses
 import heapq
 from typing import Dict, List, Optional, Set, Tuple
-from sensord_core.exceptions import DriverError # NEW IMPORT
+from datacast_core.exceptions import DriverError # NEW IMPORT
 
 # Use the low-level inotify wrapper and high-level event types
 from watchdog.observers.inotify_c import Inotify
@@ -22,7 +22,7 @@ from watchdog.events import (
     DirMovedEvent,
 )
 
-logger = logging.getLogger("sensord.driver.fs")
+logger = logging.getLogger("datacast.driver.fs")
 
 def contains_surrogate_characters(path: str) -> bool:
     """Checks if a string contains surrogate characters."""
@@ -155,7 +155,7 @@ class _WatchManager:
 
 
     def _get_current_time(self) -> float:
-        """Returns the current time (sensord physical time)."""
+        """Returns the current time (datacast physical time)."""
         return time.time()
 
     def _event_processing_loop(self):

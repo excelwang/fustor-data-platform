@@ -1,7 +1,7 @@
 import pytest
 import time
 from fustor_view_fs import FSViewDriver
-from sensord_core.event import EventBase, EventType, MessageSource, UpdateEvent, DeleteEvent
+from datacast_core.event import EventBase, EventType, MessageSource, UpdateEvent, DeleteEvent
 
 @pytest.mark.asyncio
 async def test_arbitration_logic():

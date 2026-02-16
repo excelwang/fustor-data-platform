@@ -3,7 +3,7 @@ import logging
 from typing import Dict, List, Optional, Any, Set, Tuple
 from collections import defaultdict
 import os
-from sensord_core.clock import LogicalClock
+from datacast_core.clock import LogicalClock
 from .nodes import DirectoryNode, FileNode
 
 logger = logging.getLogger(__name__)

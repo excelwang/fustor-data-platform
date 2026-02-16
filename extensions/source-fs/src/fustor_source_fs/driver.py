@@ -1,5 +1,5 @@
 """
-Fusensord source driver for the file system.
+Fudatacast source driver for the file system.
 
 This driver implements a 'Smart Dynamic Monitoring' strategy to efficiently
 monitor large directory structures without exhausting system resources.
@@ -16,15 +16,15 @@ import threading
 import multiprocessing
 from typing import Any, Dict, Iterator, List, Tuple, Optional, Set
 from concurrent.futures import ThreadPoolExecutor
-from sensord_core.drivers import SourceDriver
-from sensord_core.models.config import SourceConfig
-from sensord_core.event import EventBase, UpdateEvent, DeleteEvent, MessageSource
+from datacast_core.drivers import SourceDriver
+from datacast_core.models.config import SourceConfig
+from datacast_core.event import EventBase, UpdateEvent, DeleteEvent, MessageSource
 
 from .components import _WatchManager, safe_path_handling
 from .event_handler import OptimizedWatchEventHandler, get_file_metadata, _get_relative_path
 from .scanner import FSScanner
 
-logger = logging.getLogger("sensord.driver.fs")
+logger = logging.getLogger("datacast.driver.fs")
             
 class FSDriver(SourceDriver):
     _instances: Dict[str, 'FSDriver'] = {}

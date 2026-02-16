@@ -16,7 +16,7 @@ class FSViewDriver(FSViewBase):
     Coordinates various components to maintain a fused, consistent view 
     of the FS using Smart Merge arbitration logic.
     
-    Live-mode: data is entirely built from real-time sensord pushes.
+    Live-mode: data is entirely built from real-time datacast pushes.
     When all sessions close, state is reset and queries return 503.
     """
     target_schema = "fs"
@@ -161,7 +161,7 @@ class FSViewDriver(FSViewBase):
             skew = self.state.logical_clock.get_skew()
             
             # Stability Check: Allow match on Raw Mtime OR Skew-Corrected Mtime
-            # sensord A (Skewed +2h) reports mtime=+2h. True mtime=0h. Skew=-2h.
+            # datacast A (Skewed +2h) reports mtime=+2h. True mtime=0h. Skew=-2h.
             # check 1: 0 == 2? False.
             # check 2: 0 == 2 + (-2)? True.
             is_raw_stable = abs(old_mtime - mtime) < 1e-6
@@ -227,7 +227,7 @@ class FSViewDriver(FSViewBase):
 
     async def trigger_on_demand_scan(self, path: str, recursive: bool = True) -> Tuple[bool, Optional[str]]:
         """
-        Triggers an on-demand scan on the sensord side by broadcasting a command to ALL pipes.
+        Triggers an on-demand scan on the datacast side by broadcasting a command to ALL pipes.
         Events produced are MessageSource.ON_DEMAND_JOB (Tier 3 compensatory, see §4.5).
         Returns: (success, job_id)
         """
@@ -243,7 +243,7 @@ class FSViewDriver(FSViewBase):
             
             session_ids = [s["session_id"] for s in active_sessions]
             
-            # 2. Create a unified sensord job record for tracking all sessions
+            # 2. Create a unified datacast job record for tracking all sessions
             job_id = await job_manager.create_job(self.view_id, path, session_ids)
             
             # 3. Queue the command for EACH session (Broadcast)

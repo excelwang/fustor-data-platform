@@ -1,9 +1,9 @@
 [project]
 name = "fustor-source-fs"
 version = "0.9.1"
-description = "Fustor sensord FS Source Driver"
+description = "Fustor datacast FS Source Driver"
 license = "MIT"
-dependencies = ["sensord-core", "fustor-schema-fs", "watchdog"]
+dependencies = ["datacast-core", "fustor-schema-fs", "watchdog"]
 
 [build-system]
 requires = [ "setuptools>=61.0" ]
@@ -15,5 +15,5 @@ build-backend = "setuptools.build_meta"
 Homepage = "https://github.com/excelwang/fustor/tree/master/extensions/source-fs"
 "Bug Tracker" = "https://github.com/excelwang/fustor/issues"
 
-[project.entry-points."sensord.drivers.sources"]
+[project.entry-points."datacast.drivers.sources"]
 fs = "fustor_source_fs:FSDriver"

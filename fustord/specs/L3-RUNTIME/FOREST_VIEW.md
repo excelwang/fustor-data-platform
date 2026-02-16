@@ -35,11 +35,11 @@ version: 1.0.0
 
 ### 1.3 来源识别
 
-在多 sensord 汇聚到同一 View (N:1) 的场景下，fustord 必须能够区分每个文件/事件的具体来源 sensord。
+在多 Datacast 汇聚到同一 View (N:1) 的场景下，fustord 必须能够区分每个文件/事件的具体来源 Datacast。
 
-- **标识机制**: 每个 sensord 必须拥有全局唯一的 `sensord_id`。
-- **自动检测**: sensord 默认会根据出站流量自动检测本地 IP 作为 `sensord_id`。
-- **目的**: 即使多个 sensord 向同一个 View 推送数据（共享 View ID），系统也能通过 `sensord_id` 精确区分数据来源，支持血缘追踪。
+- **标识机制**: 每个 Datacast 必须拥有全局唯一的 `datacast_id`。
+- **自动检测**: Datacast 默认会根据出站流量自动检测本地 IP 作为 `datacast_id`。
+- **目的**: 即使多个 Datacast 向同一个 View 推送数据（共享 View ID），系统也能通过 `datacast_id` 精确区分数据来源，支持血缘追踪。
 
 ---
 
@@ -56,25 +56,25 @@ version: 1.0.0
 - **Reuse**: 内部子树直接复用 `FSViewDriver` 的逻辑（Arbitration, Audit, Consistency）。
 
 ```
-SensordPipe-A/B/C ─(fustord_pipe_id=A)─┐                    ┌─ Tree A (FSViewDriver)
+DatacastPipe-A/B/C ─(fustord_pipe_id=A)─┐                    ┌─ Tree A (FSViewDriver)
                                │                    │
-SensordPipe-D/E/F ─(fustord_pipe_id=B)─┼─► ForestView ────► ├─ Tree B (FSViewDriver)
+DatacastPipe-D/E/F ─(fustord_pipe_id=B)─┼─► ForestView ────► ├─ Tree B (FSViewDriver)
                                │   (Router)         │
-SensordPipe-G/H/I ─(fustord_pipe_id=C)─┘                    └─ Tree C (FSViewDriver)
+DatacastPipe-G/H/I ─(fustord_pipe_id=C)─┘                    └─ Tree C (FSViewDriver)
 ```
 
 ### 2.2 为什么不用其他方案
 
 | 方案 | 否决原因 |
 |:---|:---|
-| 多 View + 独立聚合 API | 配置繁琐（N+1个View），破坏 SensordPipe-FustordPipe 对称性 |
+| 多 View + 独立聚合 API | 配置繁琐（N+1个View），破坏 DatacastPipe-FustordPipe 对称性 |
 | 独立 View Driver 组合 | 旧方案 (`view-multi-fs`)，导致无法直接 ingest 数据，不仅破坏对称性还导致架构耦合 |
 
 ---
 
 ## [definition] Forest_Configuration_Structure_Definition
 
-**Rationale**: Allow binding multiple sensors to a single forest view through pipe mapping.
+**Rationale**: Allow binding multiple datacasts to a single forest view through pipe mapping.
 
 ### 3.1 fustord 配置
 
@@ -85,11 +85,11 @@ receivers:
     bind_host: "0.0.0.0"
     port: 18881
     api_keys:
-      - key: "sensord-nfs-a-key"
+      - key: "Datacast-nfs-a-key"
         fustord_pipe_id: "pipe-nfs-a"
-      - key: "sensord-nfs-b-key"
+      - key: "Datacast-nfs-b-key"
         fustord_pipe_id: "pipe-nfs-b"
-      - key: "sensord-nfs-c-key"
+      - key: "Datacast-nfs-c-key"
         fustord_pipe_id: "pipe-nfs-c"
 
 views:
@@ -113,13 +113,13 @@ pipes:
     views: [shared-storage]  # 指向森林
 ```
 
-### 3.2 sensord 配置 (每台 NFS 服务器)
+### 3.2 Datacast 配置 (每台 NFS 服务器)
 
-每个 sensord 的配置结构不变，但即便是不同服务器，也**必须配置唯一的 `sensord_id`**：
+每个 Datacast 的配置结构不变，但即便是不同服务器，也**必须配置唯一的 `datacast_id`**：
 
 ```yaml
-# sensord-A (部署在 NFS-A 服务器上)
-sensord_id: "sensord-nfs-a"  # <--- 必须配置且唯一
+# Datacast-A (部署在 NFS-A 服务器上)
+datacast_id: "Datacast-nfs-a"  # <--- 必须配置且唯一
 
 sources:
   nfs-a-src:
@@ -131,7 +131,7 @@ senders:
     driver: fustord
     uri: "http://fustord-host:18881"
     credential:
-      key: "sensord-nfs-a-key"
+      key: "Datacast-nfs-a-key"
 
 pipes:
   pipe-nfs-a:
@@ -298,7 +298,7 @@ handler = self._pipe.get_view_handler(f"view-manager-{view_id}")
 | 禁止 | 原因 | 正确做法 |
 |:---|:---|:---|
 | 在 `FustordPipe` 中写 scoped snapshot key | 将 Forest 细节泄漏到标准层 | 通知 `handler.on_snapshot_complete()`，由 Forest 自行处理 |
-| 在 `FustordPipe._dispatch_to_handlers` 中注入 `pipe_id` 到 event metadata | sensord 端已在 metadata 中设置 pipe_id | 不需要 fustord 端重复注入 |
+| 在 `FustordPipe._dispatch_to_handlers` 中注入 `pipe_id` 到 event metadata | Datacast 端已在 metadata 中设置 pipe_id | 不需要 fustord 端重复注入 |
 | 在 `SessionBridge` 中猜测 handler_id 前缀 | 将 Adapter 内部命名规则泄漏到 Bridge | 使用 `find_handler_for_view()` |
 
 ### 5.4 `get_subtree_stats(path)` 方法
@@ -337,7 +337,7 @@ extensions/
 
 ### 6.1 不变的部分
 
-- 3 层对称模型 (Source/SensordPipe/Sender ↔ Receiver/FustordPipe/View)
+- 3 层对称模型 (Source/DatacastPipe/Sender ↔ Receiver/FustordPipe/View)
 - 6 层分层架构
 - 一致性模型 (Tombstone/Suspect/Blind-spot)
 - 每个基础 View 的独立性
@@ -350,9 +350,9 @@ extensions/
 
 ### 6.3 术语更新
 
-| sensord 概念 | fustord 对应 | 示例 |
+| Datacast 概念 | fustord 对应 | 示例 |
 |:---|:---|:---|
 | Source (fs) | View (fs) | 单 NFS 视图 |
 | Source (oss) | View (oss) | 对象存储视图 |
 | — | View (forest-fs) | 多 NFS 聚合视图 |
-| SensordPipe | FustordPipe | 数据管道链路 |
+| DatacastPipe | FustordPipe | 数据管道链路 |

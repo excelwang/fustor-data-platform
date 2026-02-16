@@ -1,11 +1,11 @@
 # fustor-sender-openapi
 
-This package provides a robust `SenderDriver` implementation for the Fustor sensord service, designed to push data to any external service that exposes an OpenAPI (Swagger) specification. It intelligently discovers API endpoints for batch ingestion, session management, and heartbeat, and handles authentication using Basic Auth or API Keys.
+This package provides a robust `SenderDriver` implementation for the Fustor datacast service, designed to push data to any external service that exposes an OpenAPI (Swagger) specification. It intelligently discovers API endpoints for batch ingestion, session management, and heartbeat, and handles authentication using Basic Auth or API Keys.
 
 ## Features
 
 *   **OpenAPI Specification Driven**: Dynamically parses the target service's OpenAPI specification to discover relevant endpoints for data ingestion, session creation, and heartbeats.
-*   **Flexible Endpoint Discovery**: Supports custom `x-sensord-status-endpoint`, `x-sensord-ingest-batch-endpoint`, and `x-sensord-open-session-endpoint` extensions in the OpenAPI spec, or attempts to infer them from common patterns.
+*   **Flexible Endpoint Discovery**: Supports custom `x-datacast-status-endpoint`, `x-datacast-ingest-batch-endpoint`, and `x-datacast-open-session-endpoint` extensions in the OpenAPI spec, or attempts to infer them from common patterns.
 *   **Session Management**: Implements `create_session` and `heartbeat` to manage the session lifecycle with the target OpenAPI service.
 *   **Checkpointing**: Retrieves the latest committed index from the target service to support resume functionality.
 *   **Authentication**: Supports `Basic Auth` (username/password) and `API Key` (Bearer Token or `x-api-key` header) for secure communication.
@@ -14,16 +14,16 @@ This package provides a robust `SenderDriver` implementation for the Fustor sens
 
 ## Installation
 
-This package is part of the Fustor monorepo and is typically installed in editable mode within the monorepo's development environment using `uv sync`. It is registered as a `sensord.drivers.senders` entry point.
+This package is part of the Fustor monorepo and is typically installed in editable mode within the monorepo's development environment using `uv sync`. It is registered as a `datacast.drivers.senders` entry point.
 
 ## Usage
 
-To use the `fustor-sender-openapi` driver, configure a Sender in your Fustor sensord setup with the driver type `openapi`. You will need to provide the URL to the target service's OpenAPI specification and appropriate credentials.
+To use the `fustor-sender-openapi` driver, configure a Sender in your Fustor datacast setup with the driver type `openapi`. You will need to provide the URL to the target service's OpenAPI specification and appropriate credentials.
 
-Example (conceptual configuration in Fustor sensord):
+Example (conceptual configuration in Fustor datacast):
 
 ```yaml
-# Fustor 主目录下的 sensord-config.yaml
+# Fustor 主目录下的 datacast-config.yaml
 senders:
   my-openapi-sender:
     driver_type: openapi
@@ -38,7 +38,7 @@ senders:
 
 ## Dependencies
 
-*   `sensord-core`: Provides the `SenderDriver` abstract base class and other core components.
+*   `datacast-core`: Provides the `SenderDriver` abstract base class and other core components.
 *   `fustor-event-model`: Provides `EventBase` for event data structures.
 *   `httpx`: A next-generation HTTP client for making asynchronous requests.
 *   `pydantic`: For data validation and settings management.

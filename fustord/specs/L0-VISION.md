@@ -5,14 +5,14 @@
 
 ## VISION.SCOPE
 
-**fustord** is a centralized data aggregation and consistency arbitration engine. It serves as the "truth anchor" for distributed data states collected by autonomous **Sensord** nodes.
+**fustord** is a centralized data aggregation and consistency arbitration engine. It serves as the "truth anchor" for distributed data states collected by autonomous **Datacast** nodes.
 
 ### In-Scope
-- **AGGREGATION**: Unified indexing of metadata from multiple heterogeneous **Sensord** sources.
+- **AGGREGATION**: Unified indexing of metadata from multiple heterogeneous **Datacast** sources.
 - **CONSISTENCY**: Multi-source arbitration using Tombstone, Suspect, and Blind-spot mechanisms.
 - **AVAILABILITY**: "Presence is Service" — The API must never return 503; it performs On-Command Fallback scans if data is missing.
-- **RESILIENCE**: fustord and its View Engine must stay operational regardless of individual Sensord failures or network partitions.
-- **ORCHESTRATION**: Centralized fleet management (upgrades, config reloads) of connected Sensord nodes via SCP.
+- **RESILIENCE**: fustord and its View Engine must stay operational regardless of individual Datacast failures or network partitions.
+- **ORCHESTRATION**: Centralized fleet management (upgrades, config reloads) of connected Datacast nodes via SCP.
 - **EXTENSIBILITY**: Support for pluggable View Drivers (FS, Forest, Search, etc.) to project data into different business views.
 
 ### Out-of-Scope
@@ -27,7 +27,7 @@ The fundamental architectural goal of **fustord** is the **absolute decoupling o
 
 - **FUSTORD_SURVIVAL**: Once the fustord process starts, it **MUST NOT** terminate due to ingestion errors, invalid data frames, or malformed protocol packets. It is the indestructible anchor of the system.
 - **VIEW_ISOLATION**: Failure in one View (e.g., a memory leak in a specific plugin) must not affect the stability of the Management API or other unrelated Views.
-- **UMBILICAL_CONTROL**: fustord maintains the "Umbilical Cord" (SCP Tunnel) to every Sensord.
+- **UMBILICAL_CONTROL**: fustord maintains the "Umbilical Cord" (SCP Tunnel) to every Datacast.
 
 ## VISION.PROTOCOL
 
@@ -42,7 +42,7 @@ The fundamental architectural goal of **fustord** is the **absolute decoupling o
 
 ## VISION.LIFECYCLE
 
-管理 Sensord 集群的完整生命周期，包括灰度升级、原子配置分发及僵尸节点检测。
+管理 Datacast 集群的完整生命周期，包括灰度升级、原子配置分发及僵尸节点检测。
 
 ---
 
@@ -50,9 +50,9 @@ The fundamental architectural goal of **fustord** is the **absolute decoupling o
 
 **fustord** 采用 **"中心化协调，去中心化执行"** 的自治模型：
 
-- **COORDINATOR_MINDSET**: fustord 不是 Sensord 的"主人"，而是"仲裁者"。它尊重每一个 Sensord 上报的本地事实，仅在多个事实冲突时根据一致性代数进行裁决。
+- **COORDINATOR_MINDSET**: fustord 不是 Datacast 的"主人"，而是"仲裁者"。它尊重每一个 Datacast 上报的本地事实，仅在多个事实冲突时根据一致性代数进行裁决。
 - **ON_DEMAND_DRIVE**: fustord 的数据抓取是"按需驱动"的。如果缓存中没有数据，Domain Layer 会自动通过 Stability Layer 触发广播扫描。
-- **PEER_NEUTRABILITY**: fustord 对接入的 Sensord 保持中立。
+- **PEER_NEUTRABILITY**: fustord 对接入的 Datacast 保持中立。
 
 ---
 
@@ -70,8 +70,8 @@ The fundamental architectural goal of **fustord** is the **absolute decoupling o
 ## VISION.SUCCESS_CRITERIA
 
 - **ZERO_503**: `fustord` 的查询 API 在高并发和断连场景下依然保持极高可用性。
-- **CONSISTENCY_QUORUM**: 只要集群中存在一个健康的 Leader Sensord，fustord 的视图即可保证最终一致。
-- **FLEET_CONTROL**: 100% 的 Sensord 在线维护（升级、配置、重启）均通过 fustord 控制台完成。
+- **CONSISTENCY_QUORUM**: 只要集群中存在一个健康的 Leader Datacast，fustord 的视图即可保证最终一致。
+- **FLEET_CONTROL**: 100% 的 Datacast 在线维护（升级、配置、重启）均通过 fustord 控制台完成。
 
 ---
 
@@ -80,13 +80,13 @@ The fundamental architectural goal of **fustord** is the **absolute decoupling o
 | Term | Definition |
 |------|------------|
 | fustord | 中央聚合与协调服务进程 |
-| Sensord | 外部自主传感器节点 |
-| Pipe | fustord 与 Sensord 之间的逻辑数据通道 |
-| Source | 数据产出驱动（sensord 侧驱动） |
+| Datacast | 外部自主传感器节点 |
+| Pipe | fustord 与 Datacast 之间的逻辑数据通道 |
+| Source | 数据产出驱动（Datacast 侧驱动） |
 | View | 数据汇聚驱动（fustord 侧驱动） |
 | Session | 基于 Pipe 建立的带租约的业务会话 |
-| SCP | Sensord Control Protocol (控制流协议，用于生存与管理) |
-| SDP | Sensord Data Protocol (数据流协议，用于事件传输) |
+| SCP | Datacast Control Protocol (控制流协议，用于生存与管理) |
+| SDP | Datacast Data Protocol (数据流协议，用于事件传输) |
 | Watermark | 逻辑时钟水位线，用于判断数据时效性 |
 | Leader | 在多源场景下，负责执行补偿扫描的任务承担者 |
 | Follower | 仅执行增量同步，作为 Leader 的热备 |

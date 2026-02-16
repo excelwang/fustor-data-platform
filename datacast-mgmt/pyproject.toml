@@ -1,0 +1,34 @@
+[project]
+name = "datacast-mgmt"
+version = "0.9.1"
+description = "Unified Management (L3) layer for Fustor - Shared protocol and orchestration"
+readme = "README.md"
+requires-python = ">=3.11"
+license = "MIT"
+dependencies = [
+    "datacast-core",
+]
+
+[project.optional-dependencies]
+agent = [
+    "datacast-sdk",
+    "pyyaml>=6.0"
+]
+server = [
+    "fustord-sdk",
+    "fastapi",
+    "pydantic>=2.0.0"
+]
+
+[project.entry-points."datacast.command_processors"]
+default = "datacast_mgmt.agent.processor:CommandProcessor"
+
+[project.entry-points."fustord.management_routers"]
+mgmt = "datacast_mgmt.server:setup"
+
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]

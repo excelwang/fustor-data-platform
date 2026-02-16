@@ -7,8 +7,8 @@ from unittest.mock import MagicMock, patch
 from fustor_source_fs.driver import FSDriver
 from fustor_source_fs.components import _WatchManager
 from fustor_source_fs.scanner import FSScanner
-from sensord_core.models.config import SourceConfig
-from sensord_core.exceptions import DriverError
+from datacast_core.models.config import SourceConfig
+from datacast_core.exceptions import DriverError
 
 @pytest.fixture
 def temp_test_dir(tmp_path):
@@ -26,7 +26,7 @@ def mock_config(temp_test_dir):
 
 @pytest.mark.asyncio
 async def test_missing_root_at_startup(tmp_path):
-    """测试根目录在初始化时不存在，sensord 是否存活"""
+    """测试根目录在初始化时不存在，datacast 是否存活"""
     missing_path = str(tmp_path / "non_existent_root")
     config = SourceConfig(driver="fs", uri=missing_path)
     

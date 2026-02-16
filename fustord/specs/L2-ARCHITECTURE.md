@@ -7,11 +7,11 @@
 
 ## 0. Ecosystem Algebra (The Universal Laws)
 
-> **Binding**: All components (Sensord, Fustord, SDKs).
+> **Binding**: All components (Datacast, Fustord, SDKs).
 
 ### 0.1 The Relational Pair (Duality)
 The Fustor ecosystem is defined by the mapping between **Sources** and **Views**.
-$$ \text{Sensord(Source)} \xrightarrow{SDP \mid SCP} \text{Fustord(View)} $$
+$$ \text{Datacast(Source)} \xrightarrow{SDP \mid SCP} \text{Fustord(View)} $$
 
 ### 0.2 Structural Algebra (n:m Mapping)
 1. **Receiver : Pipe = 1 : N** (Demultiplexing)
@@ -33,7 +33,7 @@ Every node MUST adhere to the **Stability $\succ$ Domain $\succ$ Management** hi
 ## 1. System Overview
 
 **Fustord** is a centralized aggregator and synchronization engine. It acts as the "Server" in the Fustor peer-to-peer model, responsible for:
-- Accepting connections from multiple autonomous **Sensord** nodes.
+- Accepting connections from multiple autonomous **Datacast** nodes.
 - Detecting consistency issues (skew, drift, missing data) across time and space.
 - Serving unified, arbitrated views of the data via API.
 
@@ -66,11 +66,11 @@ Every node MUST adhere to the **Stability $\succ$ Domain $\succ$ Management** hi
 
 ### 2.2 Peer-to-Peer Symmetry
 
-Fustord mirrors Sensord's architecture:
+Fustord mirrors Datacast's architecture:
 
-| Concept | Sensord Side (Source) | Fustord Side (View) |
+| Concept | Datacast Side (Source) | Fustord Side (View) |
 |---------|-----------------------|---------------------|
-| **Pipeline** | `SensordPipe` | `FustordPipe` |
+| **Pipeline** | `DatacastPipe` | `FustordPipe` |
 | **Flow** | Source → Sender | Receiver → View |
 | **Stability** | Active Push (Client) | Passive Ingestion (Server) |
 | **Protocol Carrier** | `SenderHandler` | `Receiver` |
@@ -79,12 +79,12 @@ Fustord mirrors Sensord's architecture:
 
 ## 3. Lexicon Symmetry (Internal Mapping)
 
-| Sensord Concept | Responsibility | Fustord Concept (Aggregator) |
+| Datacast Concept | Responsibility | Fustord Concept (Aggregator) |
 |-----------------|----------------|-----------------------------|
 | **Source** | Local data extraction | **View** |
 | **Sender** | Transport channel | **Receiver** |
-| **SensordPipe** | Source $\rightarrow$ Sender binding | **FustordPipe** |
-| **task_id** | Sensor process/task ID | **session_id** |
+| **DatacastPipe** | Source $\rightarrow$ Sender binding | **FustordPipe** |
+| **task_id** | Datacast process/task ID | **session_id** |
 | **SCP** | Control flow | **Control Channel** |
 | **SDP** | Data flow | **Data Channel** |
 
@@ -108,7 +108,7 @@ graph LR
 ### 4.1 Receiver & Backpressure
 - **Receiver**: Terminates HTTP/TCP connections.
 - **Isolation**: Each `FustordPipe` has a dedicated `asyncio.Queue`.
-- **Backpressure**: If a Queue is full (Consumer slow), Receiver replies with `429 Too Many Requests`. This forces Sensord to slow down (Per-Pipe backpressure).
+- **Backpressure**: If a Queue is full (Consumer slow), Receiver replies with `429 Too Many Requests`. This forces Datacast to slow down (Per-Pipe backpressure).
 
 ### 4.2 Pipeline & Views
 - **1-to-N Mapping**: One `FustordPipe` can dispatch events to multiple `Views`.
@@ -118,10 +118,10 @@ graph LR
 
 ## 5. Session Lifecycle
 
-Fustord manages the lifecycle of connected Sensord nodes via `SessionManager`.
+Fustord manages the lifecycle of connected Datacast nodes via `SessionManager`.
 
 ### 5.1 Handshake (PUT /session)
-- Sensord initiates connection.
+- Datacast initiates connection.
 - Fustord validates `task_id` and credentials.
 - Fustord assigns a `session_id` and negotiates `timeout`.
 
@@ -130,7 +130,7 @@ Fustord manages the lifecycle of connected Sensord nodes via `SessionManager`.
 - **Piggyback Command**: Fustord includes "Commands" (like `scan`, `audit`) in the heartbeat response body.
 
 ### 5.3 Termination
-- **Explicit**: Sensord sends `DELETE /session`.
+- **Explicit**: Datacast sends `DELETE /session`.
 - **Timeout**: If no heartbeat for `timeout` seconds, Fustord marks Session as `stale` or `closed` (depending on View policy).
 
 ---
@@ -150,8 +150,8 @@ Domain/Management services utilize the Stability Layer as a generic "renting" pl
 
 #### 2. Targeted Task (State Mutation)
 - **Purpose**: Control & Lifecycle (e.g., `upgrade`, `reload`, `stop`).
-- **Target**: Specific `Sensord` instance (via `task_id`).
-- **Primitive**: `Stability.unicast(sensord_id)`
+- **Target**: Specific `Datacast` instance (via `task_id`).
+- **Primitive**: `Stability.unicast(datacast_id)`
 - **Success Criteria**: Ack from target.
 - **Failure**: Control Loss.
 
@@ -169,8 +169,8 @@ fustord 对外提供两类 API 接口：
 
 | 功能域 | 协议 | 方向 |
 |--------|------|------|
-| Session 管理 (创建/心跳/销毁) | SCP | Sensord ↔ Fustord |
-| 数据事件批量接收 | SDP | Sensord → Fustord |
+| Session 管理 (创建/心跳/销毁) | SCP | Datacast ↔ Fustord |
+| 数据事件批量接收 | SDP | Datacast → Fustord |
 | View 查询 (目录树/统计) | HTTP | Client → Fustord |
 
 > 具体 API Path、Payload 格式及哨兵巡检接口见 [PROTOCOL_CARRIER.md](./L3-RUNTIME/PROTOCOL_CARRIER.md) 和 [CONSISTENCY.md](./L3-RUNTIME/CONSISTENCY.md)。

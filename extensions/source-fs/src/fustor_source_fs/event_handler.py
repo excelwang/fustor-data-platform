@@ -6,11 +6,11 @@ import stat
 from typing import Any, Dict, Optional
 
 from watchdog.events import FileSystemEventHandler, FileSystemEvent
-from sensord_core.event import UpdateEvent, DeleteEvent
+from datacast_core.event import UpdateEvent, DeleteEvent
 from fustor_schema_fs.models import FSSchemaFields
 from .components import _WatchManager
 
-logger = logging.getLogger("sensord.driver.fs")
+logger = logging.getLogger("datacast.driver.fs")
 
 def _get_relative_path(path: str, root_path: str) -> str:
     """Convert path to be relative to root_path, but ensuring it starts with /."""

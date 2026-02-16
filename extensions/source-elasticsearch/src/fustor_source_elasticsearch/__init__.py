@@ -1,5 +1,5 @@
 """
-Fusensord source driver for Elasticsearch.
+Fudatacast source driver for Elasticsearch.
 """
 import logging
 import threading
@@ -8,12 +8,12 @@ from datetime import datetime
 
 from elasticsearch import Elasticsearch, AsyncElasticsearch, AuthenticationException, AuthorizationException
 
-from sensord_core.drivers import SourceDriver
-from sensord_core.models.config import SourceConfig, PasswdCredential, ApiKeyCredential
-from sensord_core.exceptions import DriverError
-from sensord_core.event import EventBase, InsertEvent
+from datacast_core.drivers import SourceDriver
+from datacast_core.models.config import SourceConfig, PasswdCredential, ApiKeyCredential
+from datacast_core.exceptions import DriverError
+from datacast_core.event import EventBase, InsertEvent
 
-logger = logging.getLogger("sensord.driver.elasticsearch")
+logger = logging.getLogger("datacast.driver.elasticsearch")
 
 class ElasticsearchDriver(SourceDriver):
     _instances: Dict[str, 'ElasticsearchDriver'] = {}

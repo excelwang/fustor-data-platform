@@ -1,7 +1,7 @@
 """
 Test B2: Blind-spot file deletion detected by Audit.
 
-验证无 sensord 客户端删除的文件通过 Audit 被发现，并从内存树移除。
+验证无 datacast 客户端删除的文件通过 Audit 被发现，并从内存树移除。
 参考文档: CONSISTENCY_DESIGN.md - Section 5.3 场景 2 (Audit 报告目录缺少文件)
 """
 import pytest
@@ -20,21 +20,21 @@ from ..fixtures.constants import (
 
 
 class TestBlindSpotFileDeletion:
-    """Test detection of files deleted by client without sensord."""
+    """Test detection of files deleted by client without datacast."""
 
     def test_blind_spot_deletion_detected_by_audit(
         self,
         docker_env,
         fustord_client,
-        setup_sensords,
+        setup_datacasts,
         clean_shared_dir,
         wait_for_audit
     ):
         """
         场景:
-          1. sensord A 创建文件（正常路径，实时同步到 fustord）
-          2. 无 sensord 的客户端 C 删除该文件
-          3. 因为 C 没有 sensord，删除事件不会实时同步
+          1. datacast A 创建文件（正常路径，实时同步到 fustord）
+          2. 无 datacast 的客户端 C 删除该文件
+          3. 因为 C 没有 datacast，删除事件不会实时同步
           4. Audit 发现文件缺失，从内存树移除
         预期:
           - 删除前文件存在于 fustord
@@ -43,7 +43,7 @@ class TestBlindSpotFileDeletion:
         """
         test_file = f"{MOUNT_POINT}/blind_delete_test_{int(time.time()*1000)}.txt"
         
-        # Step 1: Create file from sensord client (realtime sync)
+        # Step 1: Create file from datacast client (realtime sync)
         docker_manager.create_file_in_container(
             CONTAINER_CLIENT_A,
             test_file,
@@ -75,7 +75,7 @@ class TestBlindSpotFileDeletion:
         self,
         docker_env,
         fustord_client,
-        setup_sensords,
+        setup_datacasts,
         clean_shared_dir,
         wait_for_audit
     ):
@@ -84,7 +84,7 @@ class TestBlindSpotFileDeletion:
         """
         test_file = f"{MOUNT_POINT}/blind_delete_list_test_{int(time.time()*1000)}.txt"
         
-        # Create file from sensord, then delete from blind-spot
+        # Create file from datacast, then delete from blind-spot
         docker_manager.create_file_in_container(
             CONTAINER_CLIENT_A,
             test_file,

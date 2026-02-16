@@ -2,7 +2,7 @@
 import random
 import time
 from typing import List, Dict, Any, Optional
-from sensord_core.event import MessageSource, EventType
+from datacast_core.event import MessageSource, EventType
 
 class EventFuzzer:
     """
@@ -58,7 +58,7 @@ class EventFuzzer:
                 "event_type": evt_type,
                 "rows": [row],
                 "message_source": source,
-                "index": int(self.current_time * 1000) # sensord logical time
+                "index": int(self.current_time * 1000) # datacast logical time
             }
             events.append(event)
             

@@ -6,9 +6,9 @@ import tempfile
 from unittest.mock import patch, MagicMock
 import pytest
 from pathlib import Path
-from sensord_core.models.config import PasswdCredential, SourceConfig
+from datacast_core.models.config import PasswdCredential, SourceConfig
 from fustor_source_fs import FSDriver
-from sensord_core.exceptions import DriverError
+from datacast_core.exceptions import DriverError
 
 
 def test_schedule_handles_errno_22_gracefully(monkeypatch):

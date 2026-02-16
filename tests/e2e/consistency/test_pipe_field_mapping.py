@@ -1,6 +1,6 @@
 # tests/e2e/consistency/test_pipe_field_mapping.py
 """
-Integration test for Field Mapping in SensordPipe.
+Integration test for Field Mapping in DatacastPipe.
 """
 import time
 import pytest
@@ -10,12 +10,12 @@ from ..fixtures.constants import MOUNT_POINT, FUSION_ENDPOINT, MEDIUM_TIMEOUT, P
 logger = logging.getLogger("fustor_test")
 
 class TestPipeFieldMapping:
-    """Test field mapping functionality in SensordPipe."""
+    """Test field mapping functionality in DatacastPipe."""
     
     def test_field_mapping_affects_data(
         self, 
         docker_env, 
-        setup_sensords, 
+        setup_datacasts, 
         fustord_client
     ):
         """
@@ -24,12 +24,12 @@ class TestPipeFieldMapping:
         """
         logger.info("Running field mapping test")
         
-        containers = setup_sensords["containers"]
+        containers = setup_datacasts["containers"]
         leader = containers["leader"]
-        view_id = setup_sensords["view_id"]
-        api_key = setup_sensords["api_key"]
+        view_id = setup_datacasts["view_id"]
+        api_key = setup_datacasts["api_key"]
         
-        # 1. Update sensord Config to include fields_mapping
+        # 1. Update datacast Config to include fields_mapping
         # Map: path -> path, modified_time -> modified_time, is_directory -> is_directory, size -> remapped_size
         pipe_config = f"""
 pipes:
@@ -52,33 +52,33 @@ pipes:
 """
         docker_env.create_file_in_container(
             leader, 
-            "/root/.fustor/sensord-config/pipe-task-1.yaml", 
+            "/root/.fustor/datacast-config/pipe-task-1.yaml", 
             pipe_config
         )
         
-        # 2. Restart sensord to apply config
-        logger.info(f"Restarting sensord in {leader} to apply fields_mapping")
+        # 2. Restart datacast to apply config
+        logger.info(f"Restarting datacast in {leader} to apply fields_mapping")
         
         # Reset fustord state to ensure a clean start for the new mapping
         fustord_client.reset()
         
-        # Use the standard ensure_sensord_running function to restart
+        # Use the standard ensure_datacast_running function to restart
         # This handles PID cleanup and environment variable injection correctly
-        setup_sensords["ensure_sensord_running"](leader, api_key, view_id)
+        setup_datacasts["ensure_datacast_running"](leader, api_key, view_id)
         
-        # Wait for sensord to reconnect and become leader
-        logger.info("Waiting for sensord A to become leader...")
+        # Wait for datacast to reconnect and become leader
+        logger.info("Waiting for datacast A to become leader...")
         start_wait = time.time()
         while time.time() - start_wait < MEDIUM_TIMEOUT:
             sessions = fustord_client.get_sessions()
             # Ensure it's the leader and it's client-a
-            leader_session = next((s for s in sessions if s.get("role") == "leader" and "client-a" in s.get("sensord_id", "")), None)
+            leader_session = next((s for s in sessions if s.get("role") == "leader" and "client-a" in s.get("datacast_id", "")), None)
             if leader_session:
-                logger.info(f"sensord A successfully became leader: {leader_session.get('session_id')}")
+                logger.info(f"datacast A successfully became leader: {leader_session.get('session_id')}")
                 break
             time.sleep(POLL_INTERVAL)
         else:
-             pytest.fail(f"sensord A failed to become leader. Current sessions: {fustord_client.get_sessions()}")
+             pytest.fail(f"datacast A failed to become leader. Current sessions: {fustord_client.get_sessions()}")
         
         # 3. Create a file with specific size
         import os.path

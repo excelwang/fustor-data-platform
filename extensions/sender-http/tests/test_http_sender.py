@@ -1,8 +1,8 @@
 import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
 from fustor_sender_http import HTTPSender
-from sensord_core.event import EventBase
-from sensord_core.exceptions import SessionObsoletedError
+from datacast_core.event import EventBase
+from datacast_core.exceptions import SessionObsoletedError
 import httpx
 
 class MockEvent(EventBase):
@@ -94,7 +94,7 @@ async def test_heartbeat_success(sender, mock_fustord_client):
     result = await sender.heartbeat()
     
     assert result["status"] == "ok"
-    mock_fustord_client.send_heartbeat.assert_called_once_with("sess-1", can_realtime=False, sensord_status=None)
+    mock_fustord_client.send_heartbeat.assert_called_once_with("sess-1", can_realtime=False, datacast_status=None)
 
 @pytest.mark.asyncio
 async def test_audit_signals(sender, mock_fustord_client):

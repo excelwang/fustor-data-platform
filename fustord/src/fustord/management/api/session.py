@@ -79,7 +79,7 @@ async def create_session(
     pipe_id: str = Depends(get_pipe_id_from_auth),
 ):
     """
-    Creates a new Pipe Session for an sensord.
+    Creates a new Pipe Session for an datacast.
     Sessions are strictly bound to a Pipe (ingestion channel).
     """
     session_id = str(uuid.uuid4())
@@ -154,12 +154,12 @@ async def heartbeat(
     # 2. Update via Pipe Runtime (broadcasts to all views)
     payload = await request.json()
     can_realtime = payload.get("can_realtime", False)
-    sensord_status = payload.get("sensord_status")
+    datacast_status = payload.get("datacast_status")
     
     success = await pipe.keep_session_alive(
         session_id=session_id,
         can_realtime=can_realtime,
-        sensord_status=sensord_status
+        datacast_status=datacast_status
     )
     
     if not success:
@@ -174,7 +174,7 @@ async def heartbeat(
         session_id=session_id,
         client_ip=request.client.host,
         can_realtime=can_realtime,
-        sensord_status=sensord_status
+        datacast_status=datacast_status
     )
     
     return res

@@ -5,7 +5,7 @@ import heapq
 import logging
 
 from typing import Any, Dict, Tuple, Optional
-from sensord_core.event import MessageSource, EventType
+from datacast_core.event import MessageSource, EventType
 from .state import FSState
 from .tree import TreeManager
 
@@ -166,7 +166,7 @@ class FSArbitrator:
         # Extract lineage info from event metadata (injected by FustordPipe)
         metadata = getattr(event, 'metadata', {}) or {}
         lineage_info = {
-            'last_sensord_id': metadata.get('sensord_id'),
+            'last_datacast_id': metadata.get('datacast_id'),
             'source_uri': metadata.get('source_uri')
         }
         
@@ -199,7 +199,7 @@ class FSArbitrator:
             
             self.state.blind_spot_deletions.discard(path)
             self.state.blind_spot_additions.discard(path)
-            node.known_by_sensord = True
+            node.known_by_Datacast = True
         else:
             # Compensatory path: Snapshot/Audit/On-demand (all stat()-based, Tier 2-3)
             # Same-domain calculation: watermark and mtime are both in NFS time (Spec §5.2)
@@ -212,7 +212,7 @@ class FSArbitrator:
                 # Audit/On-demand discovery → blind spot
                 # This proves the realtime stream missed an event, or our coverage is lacking.
                 self.state.blind_spot_additions.add(path)
-                node.known_by_sensord = False
+                node.known_by_Datacast = False
                 
                 if age < self.hot_file_threshold:
                     node.integrity_suspect = True
@@ -228,11 +228,11 @@ class FSArbitrator:
                     self.state.suspect_list.pop(path, None)
             else:
                 # mtime unchanged.
-                # If this is a SNAPSHOT, we should force known_by_sensord to False
+                # If this is a SNAPSHOT, we should force known_by_Datacast to False
                 # because a fresh scan cannot prove inotify is currently watching correctly.
                 # Audit however can preserve True if mtime hasn't changed.
                 if is_snapshot:
-                    node.known_by_sensord = False
+                    node.known_by_Datacast = False
                 
                 # If cold, clear suspect
                 if age >= self.hot_file_threshold:

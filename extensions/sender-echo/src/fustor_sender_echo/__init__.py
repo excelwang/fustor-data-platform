@@ -5,9 +5,9 @@ import json
 import logging
 from typing import Any, Dict, List, Optional
 
-from sensord_core.transport import Sender
-from sensord_core.models.config import SenderConfig
-from sensord_core.event import EventBase
+from datacast_core.transport import Sender
+from datacast_core.models.config import SenderConfig
+from datacast_core.event import EventBase
 
 
 class EchoDriver(Sender):
@@ -26,7 +26,7 @@ class EchoDriver(Sender):
         super().__init__(sender_id, endpoint, credential, config)
         self.total_rows = 0
         self.total_size = 0
-        self.logger = logging.getLogger(f"sensord.sender.echo.{sender_id}")
+        self.logger = logging.getLogger(f"datacast.sender.echo.{sender_id}")
         self._snapshot_triggered = False
 
     async def connect(self) -> None:

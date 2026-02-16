@@ -1,9 +1,9 @@
 [project]
 name = "fustor-source-mysql"
 version = "0.9.1"
-description = "A MySQL source for Fustor sensord"
+description = "A MySQL source for Fustor datacast"
 requires-python = ">=3.11"
-dependencies = [ "sensord-core", "aiomysql>=0.2.0", "mysql-replication>=1.0.9"]
+dependencies = [ "datacast-core", "aiomysql>=0.2.0", "mysql-replication>=1.0.9"]
 [[project.authors]]
 name = "Huajin Wang"
 email = "wanghuajin999@163.com"
@@ -23,7 +23,7 @@ license = "MIT"
 [project.optional-dependencies]
 dev = [ "pytest>=8.0.0", "ruff>=0.1.0", "mypy>=1.0.0", "pytest-asyncio>=0.23.0"]
 
-[project.entry-points."sensord.drivers.sources"]
+[project.entry-points."datacast.drivers.sources"]
 mysql = "fustor_source_mysql:MysqlDriver"
 
 [tool.setuptools.packages.find]

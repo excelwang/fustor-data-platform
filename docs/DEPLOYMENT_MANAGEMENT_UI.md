@@ -1,14 +1,14 @@
 # Fustor 集中化部署与管理指南 (UI 中心版)
 
-本指南介绍了如何利用 Fustor 集中管理控制台（Management Console）实现全网 sensord 的快速部署、远程配置、热升级及多级视图聚合。
+本指南介绍了如何利用 Fustor 集中管理控制台（Management Console）实现全网 datacast 的快速部署、远程配置、热升级及多级视图聚合。
 
 ## 1. 部署架构说明
 
 本示例展示一个典型的生产级高可用与聚合配置：
-*   **节点组成**：1 个 fustord 核心节点，4 个 sensord 边缘节点（sensord-1~4）。
+*   **节点组成**：1 个 fustord 核心节点，4 个 datacast 边缘节点（datacast-1~4）。
 *   **逻辑拓扑**：
-    *   `view-fs-1` (FS 视图)：负责监听并聚合 **sensord-1** 和 **sensord-2** 的数据。
-    *   `view-fs-2` (FS 视图)：负责监听并聚合 **sensord-3** 和 **sensord-4** 的数据。
+    *   `view-fs-1` (FS 视图)：负责监听并聚合 **datacast-1** 和 **datacast-2** 的数据。
+    *   `view-fs-2` (FS 视图)：负责监听并聚合 **datacast-3** 和 **datacast-4** 的数据。
     *   `multi-view-all` (聚合视图)：将 `view-fs-1` 和 `view-fs-2` 合并为一个统一的逻辑根目录。
 
 ---
@@ -24,29 +24,29 @@ fustord start -D
 ```
 **访问地址**：`http://<fustord-ip>:8102/management`
 
-### 2.2 启动 sensord 骨架
-在所有 sensord 节点，只需安装基础包并确保定义了唯一的 `sensord_id`：
+### 2.2 启动 datacast 骨架
+在所有 datacast 节点，只需安装基础包并确保定义了唯一的 `datacast_id`：
 ```bash
-pip install sensord
-# 修改 ~/.fustor/default.yaml，仅保留 sensord_id 即可：
-# sensord_id: sensord-1
-sensord start -D
+pip install datacast
+# 修改 ~/.fustor/default.yaml，仅保留 datacast_id 即可：
+# datacast_id: datacast-1
+datacast start -D
 ```
-*提示：此时 sensord 已连接 fustord，但处于“空跑”状态，不执行任何同步。*
+*提示：此时 datacast 已连接 fustord，但处于“空跑”状态，不执行任何同步。*
 
 ---
 
 ## 3. 集中化远程配置 (UI 操作)
 
-打开 fustord 管理界面，进入 **"Connected sensords"** 面板。此时你应该能看到已上线的 4 个 sensord。
+打开 fustord 管理界面，进入 **"Connected datacasts"** 面板。此时你应该能看到已上线的 4 个 datacast。
 
-### 3.1 批量注入 sensord 配置
-无需逐台登录 sensord 节点，在 UI 上点击 **"Config"** 按钮即可完成下发：
+### 3.1 批量注入 datacast 配置
+无需逐台登录 datacast 节点，在 UI 上点击 **"Config"** 按钮即可完成下发：
 
-1.  **配置 sensord-1 和 sensord-2**：
-    粘贴以下 YAML 并点击 **"Push Config"**。sensord 将在下一次心跳（约 3s 内）接收配置并自动热加载：
+1.  **配置 datacast-1 和 datacast-2**：
+    粘贴以下 YAML 并点击 **"Push Config"**。datacast 将在下一次心跳（约 3s 内）接收配置并自动热加载：
     ```yaml
-    sensord_id: sensord-1  # 对应节点 ID
+    datacast_id: datacast-1  # 对应节点 ID
     sources:
       src-1:
         driver: fs
@@ -57,12 +57,12 @@ sensord start -D
         uri: "http://<fustord-ip>:8102"
         credential: {key: "your-api-key"}
     pipes:
-      pipe-fs-1:  # sensord-1 和 sensord-2 必须使用相同的 pipe_id
+      pipe-fs-1:  # datacast-1 和 datacast-2 必须使用相同的 pipe_id
         source: src-1
         sender: fustord-main
     ```
 
-2.  **配置 sensord-3 和 sensord-4**：
+2.  **配置 datacast-3 和 datacast-4**：
     执行同样操作，但将 `pipes` 下的 ID 修改为 `pipe-fs-2`。
 
 ---
@@ -72,13 +72,13 @@ sensord start -D
 在 fustord 节点的 `~/.fustor/views-config/` 目录下创建以下配置，定义数据的呈现方式：
 
 ### 4.1 创建基础 FS 视图
-*   **view-fs-1.yaml** (对应 sensord 1&2):
+*   **view-fs-1.yaml** (对应 datacast 1&2):
     ```yaml
     id: view-fs-1
     driver: fs
     driver_params: { root_path: "/mnt/fustord/view1" }
     ```
-*   **view-fs-2.yaml** (对应 sensord 3&4):
+*   **view-fs-2.yaml** (对应 datacast 3&4):
     ```yaml
     id: view-fs-2
     driver: fs
@@ -94,7 +94,7 @@ sensord start -D
       members: ["view-fs-1", "view-fs-2"]
     ```
 
-**生效操作**：在管理界面点击右上角的 **"Reload fustord"**。此时，用户访问 `multi-view-all` 即可同时看到 4 个 sensord 的数据。
+**生效操作**：在管理界面点击右上角的 **"Reload fustord"**。此时，用户访问 `multi-view-all` 即可同时看到 4 个 datacast 的数据。
 
 ---
 
@@ -102,16 +102,16 @@ sensord start -D
 
 ### 5.1 远程版本升级 (Upgrade)
 当 Fustor 发布新版本时：
-1.  在 UI 的 **Connected sensords** 列表中找到目标 sensord。
+1.  在 UI 的 **Connected datacasts** 列表中找到目标 datacast。
 2.  点击 **"Upgrade"** 按钮。
 3.  输入目标版本号（例如 `0.9.1`）。
-4.  **底层原理**：sensord 接收指令后会在 venv 中执行 `pip install` -> 子进程逻辑校验 -> `os.execv` 无缝替换当前进程。升级过程中同步任务会自动重连，无需人工干预。
+4.  **底层原理**：datacast 接收指令后会在 venv 中执行 `pip install` -> 子进程逻辑校验 -> `os.execv` 无缝替换当前进程。升级过程中同步任务会自动重连，无需人工干预。
 
 ### 5.2 远程配置热更新
-如果需要更改 sensord 的采集路径或排除规则：
-1.  点击对应 sensord 的 **"Config"**。
+如果需要更改 datacast 的采集路径或排除规则：
+1.  点击对应 datacast 的 **"Config"**。
 2.  在编辑器中修改 YAML 内容后 **"Push Config"**。
-3.  点击该 sensord 的 **"Reload"** 按钮发送 SIGHUP 信号。sensord 将重新加载配置，当前同步 Session 不会中断。
+3.  点击该 datacast 的 **"Reload"** 按钮发送 SIGHUP 信号。datacast 将重新加载配置，当前同步 Session 不会中断。
 
 ---
 
@@ -126,12 +126,12 @@ sensord start -D
     GET /api/v1/views/view-fs-1/tree?path=/important/data&force_scan=true
     ```
 *   **功能逻辑**：
-    1.  fustord 接收到请求后，通过心跳通道向该视图关联的所有 sensord 发送 `scan` 命令。
-    2.  sensord 收到命令，立即对物理路径 `/important/data` 进行全量索引比对。
+    1.  fustord 接收到请求后，通过心跳通道向该视图关联的所有 datacast 发送 `scan` 命令。
+    2.  datacast 收到命令，立即对物理路径 `/important/data` 进行全量索引比对。
     3.  任何遗漏或不一致的数据将通过高优先级批次立即补推。
 *   **适用场景**：手动拷贝了大量文件未触发 FS 事件、存储系统 Inotify 丢失事件、重要科研数据的一致性最终校验。
 
 ### 6.2 Multi-FS 聚合逻辑
 *   **逻辑合并**：`multi-view-all` 作为一个虚拟层，它会并行请求成员视图（`view-fs-1`, `view-fs-2`）的元数据。
-*   **透明访问**：对于最终用户（如通过 NFS 或 Web 访问），数据仿佛存储在一个巨大的单机文件系统中，无需感知底层的 sensord 分布。
-*   **故障隔离**：如果其中一个视图（或 sensord）离线，Multi-View 依然能返回其余正常视图的数据，并标记故障部分。
+*   **透明访问**：对于最终用户（如通过 NFS 或 Web 访问），数据仿佛存储在一个巨大的单机文件系统中，无需感知底层的 datacast 分布。
+*   **故障隔离**：如果其中一个视图（或 datacast）离线，Multi-View 依然能返回其余正常视图的数据，并标记故障部分。

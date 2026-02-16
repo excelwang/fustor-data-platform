@@ -8,7 +8,7 @@ from typing import Dict, List, Any, Optional, Set, Tuple
 logger = logging.getLogger(__name__)
 
 @dataclass
-class SensordJob:
+class DatacastJob:
     job_id: str
     view_id: str
     path: str
@@ -20,17 +20,17 @@ class SensordJob:
 
 class JobManager:
     """
-    Manages tracking of asynchronous jobs (e.g. scans) sent to sensords.
+    Manages tracking of asynchronous jobs (e.g. scans) sent to datacasts.
     """
     def __init__(self):
-        self._jobs: Dict[str, SensordJob] = {}
+        self._jobs: Dict[str, DatacastJob] = {}
         self._path_to_job_id: Dict[Tuple[str, str], str] = {} # (view_id, path) -> job_id
         self._cleanup_task: Optional[asyncio.Task] = None
 
     async def create_job(self, view_id: str, path: str, session_ids: List[str]) -> str:
         """Create a new job for multiple sessions."""
         job_id = str(uuid.uuid4())[:8]
-        job = SensordJob(
+        job = DatacastJob(
             job_id=job_id,
             view_id=view_id,
             path=path,

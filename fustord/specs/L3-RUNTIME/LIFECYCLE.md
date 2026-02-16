@@ -19,19 +19,19 @@ version: 1.0.0
 2. ViewStateManager assigns lock or puts session in Follower queue.
 3. If Leader disconnects, ViewStateManager promotes first candidate from Follower queue.
 
-### 1.2 故障转移 (Failover Promotion)
-当 Leader 掉线时，fustord 会执行 **First Response Promotion**：
+### 1.2 故障转移 (Lazy Failover Promotion)
+当 Leader 掉线时，**fustord** 并不会立即主动推举新 Leader，而是通过 **Lazy Check** 模型：
 
 1. 检测到 Leader Session 终止。
-2. 释放 View 的 Leader 锁。
-3. 选择**第一个成功获取锁**的 Follower（基于 `try_become_leader` 返回顺序）。
-4. 立即将其提拔为新的 Leader。
+2. 释放 View 的 Leader 锁 (`ViewStateManager.release_leader`)。
+3. **Lazy Trigger**: 剩余的 Followers 在下一次心跳或拉取指令时，调用 `try_become_leader()`。
+4. **First-Come-First-Serve**: 第一个到达的 Follower 成功获取锁并晋升。
 
-> **设计理由**：响应快的节点通常意味着网络延迟低、负载轻，更适合承担 Leader 的 Snapshot/Audit 任务。此策略实现简单且自然地实现了负载均衡。
+> **设计理由**：避免了复杂的分布式推举协议。响应最快的健康节点自然会成为第一个发起心跳的节点，从而自动获得 Leader 地位。
 
-### 1.3 前置依赖：Sensord 角色切换行为 (Prerequisite: Sensord Role Switching)
+### 1.3 前置依赖：Datacast 角色切换行为 (Prerequisite: Datacast Role Switching)
 
-当 sensord 从 Follower 晋升为 Leader 时：
+当 **Datacast** 从 Follower 晋升为 Leader 时：
 
 | 动作 | 行为 | 原因 |
 |------|------|------|
@@ -45,7 +45,7 @@ version: 1.0.0
 | 标志类型 | 示例 | 语义 | 适用场景 |
 |---------|------|------|----------|
 | **瞬态标志** (Transient) | `PipeState.MESSAGE_SYNC` | 表示某个 Task **当前正在运行**。Task 完成、异常退出或重建时，标志会短暂清除。 | 内部控制逻辑 (如是否需要重启 task) |
-| **单调标志** (Monotonic) | `is_realtime_ready` | 表示记录 SensordPipe **曾经成功连接过** EventBus 并处于就绪状态。一旦设为 `True`，除非 SensordPipe 重启不然不会变回 `False`。 | 外部状态判断 (如 Heartbeat `can_realtime`) |
+| **单调标志** (Monotonic) | `is_realtime_ready` | 表示记录 DatacastPipe **曾经成功连接过** EventBus 并处于就绪状态。一旦设为 `True`，除非 DatacastPipe 重启不然不会变回 `False`。 | 外部状态判断 (如 Heartbeat `can_realtime`) |
 
 > [!CAUTION]
 > 避免在外部监控或测试中使用瞬态标志作为"服务就绪"的判据，这会导致因 Task 重启窗口期引发的 Flaky Test。
@@ -54,9 +54,9 @@ version: 1.0.0
 
 Session 超时时间由 **Client-Hint + Server-Default** 共同决定：
 
-1. **Client Hint**: sensord 在 `CreateSessionRequest` 中携带 `session_timeout_seconds` (通常来自本地配置)。
+1. **Client Hint**: Datacast 在 `CreateSessionRequest` 中携带 `session_timeout_seconds` (通常来自本地配置)。
 2. **Server Decision**: fustord 取 `max(client_hint, server_default)` 作为最终超时时间。
-3. **Acknowledgment**: fustord 在响应中返回最终决定的 `session_timeout_seconds`，sensord **必须** 采纳此值作为心跳间隔的基准。
+3. **Acknowledgment**: fustord 在响应中返回最终决定的 `session_timeout_seconds`，Datacast **必须** 采纳此值作为心跳间隔的基准。
 
 
 
@@ -64,7 +64,7 @@ Session 超时时间由 **Client-Hint + Server-Default** 共同决定：
 
 ## [model] Session_State_Machine_Model
 
-fustord 为每一个 **Sensord** 的租赁请求维护一个 Session 状态：
+**fustord** 为每一个 **Datacast** 的租赁请求维护一个 Session 状态：
 
 ```mermaid
 state_machine
@@ -73,8 +73,8 @@ state_machine
     ACTIVE --> STALE: Heartbeat missed once
     STALE --> ACTIVE: Heartbeat recovered
     STALE --> EXPIRED: Heartbeat timeout exceeded
-    ACTIVE --> TERMINATED: DELETE /session
-    EXPIRED --> TERMINATED: Cleanup routine
+    ACTIVE --> TERMINATED: DELETE /session (on_session_closed)
+    EXPIRED --> TERMINATED: Cleanup routine (cleanup_expired_sessions)
     TERMINATED --> [*]
 ```
 
@@ -82,8 +82,8 @@ state_machine
 
 ## [mechanism] Heartbeat_and_Command_Umbilical_Cord
 
-1.  **心跳检测**: fustord 采用被动等候模式。如果距离上次心跳超过 `timeout_seconds`，将 Session 切换为 `EXPIRED`。
-2.  **指令下发**: 所有的业务指令（如 `start_audit`, `do_scan`, `upgrade`）都通过 **SCP** 心跳的 HTTP Response 进行“搭载”分发。
+1.  **心跳检测**: fustord 采用被动等候模式（由 `PipeSessionBridge.keep_alive` 触发）。如果距离上次心跳超过 `timeout_seconds`，将 Session 切换为 `EXPIRED`。
+2.  **指令下发**: 所有的业务指令（如 `start_audit`, `do_scan`）都通过 **SCP** 心跳的 HTTP Response 进行“搭载”分发。
 
 ---
 

@@ -8,8 +8,8 @@ import asyncio
 from unittest.mock import AsyncMock, MagicMock, patch
 
 from fustor_sender_echo import EchoDriver
-from sensord_core.models.config import SenderConfig, PasswdCredential
-from sensord_core.event import UpdateEvent
+from datacast_core.models.config import SenderConfig, PasswdCredential
+from datacast_core.event import UpdateEvent
 
 @pytest.mark.asyncio
 async def test_echo_sender_requests_snapshot_on_first_push():
@@ -79,7 +79,7 @@ async def test_echo_sender_logs_properly():
     # Capture logs
     log_stream = StringIO()
     handler = logging.StreamHandler(log_stream)
-    logger = logging.getLogger(f"sensord.sender.echo.test-echo")
+    logger = logging.getLogger(f"datacast.sender.echo.test-echo")
     logger.addHandler(handler)
     logger.setLevel(logging.INFO) # Ensure INFO logs are captured
     events = [UpdateEvent(event_schema="test", table="test", rows=[{"id": 1, "name": "test"}], fields=["id", "name"])]

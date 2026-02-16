@@ -44,8 +44,8 @@ if SESSION_TIMEOUT < 3 * HEARTBEAT_INTERVAL:
 THROTTLE_INTERVAL_SEC = scaled_duration(5.0, min_val=0.1)   # ~0.25s
 
 # --- FS Thresholds ---
-# HOT_FILE_THRESHOLD: MUST match sensord docker config (hot_file_threshold).
-# If reducing this, also update docker-compose.yml / sensord config.
+# HOT_FILE_THRESHOLD: MUST match datacast docker config (hot_file_threshold).
+# If reducing this, also update docker-compose.yml / datacast config.
 HOT_FILE_THRESHOLD = scaled_duration(1200.0, min_val=60.0)  # 60s
 TEST_TOMBSTONE_TTL = scaled_duration(2.0, min_val=0.5)
 TOMBSTONE_CLEANUP_WAIT = scaled_duration(3.0, min_val=0.5)
@@ -67,7 +67,7 @@ EXTREME_TIMEOUT = 60.0
 
 # --- NFS/Ingestion Delays ---
 NFS_SYNC_DELAY = 3.2    # actimeo=1 + margin
-INGESTION_DELAY = 6.0    # sensord scan + network + fustord process
+INGESTION_DELAY = 6.0    # datacast scan + network + fustord process
 STRESS_DELAY = 10.0      # Heavy operations (was 15s, reduced)
 
 # --- Polling ---

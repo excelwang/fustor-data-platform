@@ -4,7 +4,7 @@ import asyncio
 from typing import Dict, Any, Optional
 from unittest.mock import patch, MagicMock
 
-from sensord_core.drivers import ViewDriver
+from datacast_core.drivers import ViewDriver
 from fustord.domain.view_manager.manager import ViewManager
 from fustord.config.unified import ViewConfig
 

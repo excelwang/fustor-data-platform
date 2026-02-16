@@ -20,16 +20,16 @@ fustord 采用 **被动接收 + 主动校准** 的策略：
 
 | 组件 | 职责 |
 | :--- | :--- |
-| **Sensord (Source)** | **Guarantee**: 负责屏蔽 NFS 抖动，提供经过补偿的 `index` 时间戳。 |
-| **Fustord (View)** | **Arbitration**: 负责维护全局 Watermark，免疫单个 Sensord 的时钟异常。 |
+| **Datacast (Source)** | **Guarantee**: 负责屏蔽 NFS 抖动，提供经过补偿的 `index` 时间戳。 |
+| **Fustord (View)** | **Arbitration**: 负责维护全局 Watermark，免疫单个 Datacast 的时钟异常。 |
 
-### [strategy] Sensord_Contract_and_Expectations
+### [strategy] Datacast_Contract_and_Expectations
 
-fustord **假设** Sensord 发送的事件满足以下契约：
+fustord **假设** Datacast 发送的事件满足以下契约：
 1. **Compensated Index**: `event.index` 是经过漂移补偿的逻辑时间戳，近似于物理时间。
 2. **Monotonicity**: 在单个 Session 内，`index` 严格单调递增。
 
-> **注意**: fustord **不关心** Sensord 内部如何计算 Drift (P99 算法等)，只关心收到的 `index` 是否平滑。
+> **注意**: fustord **不关心** Datacast 内部如何计算 Drift (P99 算法等)，只关心收到的 `index` 是否平滑。
 
 ---
 
@@ -46,11 +46,11 @@ def calculate_global_watermark(samples: List[Sample]) -> Watermark:
 
 ### 3.1 算法输入
 - **`fustord_local_time`**: fustord 本机物理时间 (Trust Anchor)。
-- **`event.mtime`**: 来自不同 Sensord 的原始文件时间。
+- **`event.mtime`**: 来自不同 Datacast 的原始文件时间。
 
 ## [algorithm] Skew_Sampling_Algorithm
 
-**Rationale**: Collect samples of physical vs. logical time offset across all connected sensors.
+**Rationale**: Collect samples of physical vs. logical time offset across all connected datacasts.
 
 ```python
 if mtime and can_sample_skew:
@@ -60,7 +60,7 @@ if mtime and can_sample_skew:
     self._global_histogram[diff] += 1
 ```
 
-- **免疫力**: 使用 fustord Local Time 作为参考系，免疫 sensord 时钟偏差
+- **免疫力**: 使用 fustord Local Time 作为参考系，免疫 Datacast 时钟偏差
 
 ## [algorithm] Mode_Skew_Calculation_Algorithm
 
@@ -109,5 +109,5 @@ def get_watermark(self) -> float:
 | **Tombstone Check** | `mtime > tombstone_ts` | 墓碑覆盖判定 |
 
 ### 3.3 免疫特性 (Immunity)
-- **免疫 Future Timestamp**: 即使某个 Sensord 发来 2050 年的 `mtime`，由于它是个例，不会成为 Mode (众数)，因此会被算法忽略。
-- **免疫 Stagnation**: Watermark 随 fustord 本地时间流逝$而自动推进，不依赖 Sensord 持续发送事件。
+- **免疫 Future Timestamp**: 即使某个 Datacast 发来 2050 年的 `mtime`，由于它是个例，不会成为 Mode (众数)，因此会被算法忽略。
+- **免疫 Stagnation**: Watermark 随 fustord 本地时间流逝$而自动推进，不依赖 Datacast 持续发送事件。

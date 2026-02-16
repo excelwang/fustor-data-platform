@@ -17,7 +17,7 @@ This idea formalizes the shift from a "Command-Response" model to a "Neutral Add
 
 ### L1: Contracts (Rules)
 - **NEUTRALITY**: The `SessionManager` MUST NOT contain string literals or logic related to `scan`, `snapshot`, `job_id`, or `path`.
-- **ADDRESSING_ONLY**: Every packet sent from fustord to sensord MUST be either `unicast(target_id)` or `broadcast(view_id)`.
+- **ADDRESSING_ONLY**: Every packet sent from fustord to datacast MUST be either `unicast(target_id)` or `broadcast(view_id)`.
 - **PAYLOAD_OPACITY**: L1 MUST treat all command payloads as opaque dictionaries.
 
 ### L2: Architecture (Components)
@@ -27,7 +27,7 @@ This idea formalizes the shift from a "Command-Response" model to a "Neutral Add
 ### L3: Implementation (Details)
 - Refactor `SessionManager.queue_command` to `SessionManager.dispatch(header, payload)`.
 - Remove `pending_scans` and `_path_to_job_id` from `SessionManager`.
-- Implement `sensord-core/pipe/addressing.py` to define the binary header format for neutral routing.
+- Implement `datacast-core/pipe/addressing.py` to define the binary header format for neutral routing.
 
 ## Rationale
 This approach aligns with **VISION.LAYER_MODEL** (Stability Underneath). By stripping L1 of business awareness, we reduce its complexity and bugs. If a new data type (e.g., SQL sync) is added, L1 remains unchanged. If the management UI crashes, the "Addressing Primitives" continue to facilitate data sync.

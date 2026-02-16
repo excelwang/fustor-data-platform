@@ -1,8 +1,8 @@
 # tests/e2e/consistency/test_hb1_heartbeat_timeout.py
 """
-Test HB1: Heartbeat Timeout - sensord recovers after session expires naturally.
+Test HB1: Heartbeat Timeout - datacast recovers after session expires naturally.
 
-验证 sensord 在长时间由于网络或其他原因无法发送心跳，导致会话在 fustord 端超时后，
+验证 datacast 在长时间由于网络或其他原因无法发送心跳，导致会话在 fustord 端超时后，
 能够检测到会话过期并自动重新创建会话。
 """
 import time
@@ -21,34 +21,34 @@ from ..fixtures.constants import (
 logger = logging.getLogger(__name__)
 
 class TestHeartbeatTimeout:
-    """Test sensord's ability to recover from naturally expired sessions."""
+    """Test datacast's ability to recover from naturally expired sessions."""
 
-    def test_sensord_recovers_after_timeout(
+    def test_datacast_recovers_after_timeout(
         self,
-        setup_sensords,
+        setup_datacasts,
         fustord_client
     ):
         """
         Scenario:
-          1. sensord A is running with an active session.
-          2. Pause sensord A container to stop heartbeats.
+          1. datacast A is running with an active session.
+          2. Pause datacast A container to stop heartbeats.
           3. Wait for session timeout (3s + buffer).
-          4. Unpause sensord A container.
-          5. Verify sensord A detects session loss and creates a new one.
+          4. Unpause datacast A container.
+          5. Verify datacast A detects session loss and creates a new one.
         """
         logger.info("Starting heartbeat timeout recovery test")
         
-        # 1. Get current sensord A session
+        # 1. Get current datacast A session
         sessions = fustord_client.get_sessions()
-        sensord_a = next((s for s in sessions if "client-a" in s.get("sensord_id", "")), None)
-        assert sensord_a is not None, "sensord A must have a session initially"
+        datacast_a = next((s for s in sessions if "client-a" in s.get("datacast_id", "")), None)
+        assert datacast_a is not None, "datacast A must have a session initially"
         
-        old_session_id = sensord_a["session_id"]
+        old_session_id = datacast_a["session_id"]
         logger.info(f"Initial session ID: {old_session_id}")
         
-        # 2. Pause sensord A to stop everything (including heartbeats)
+        # 2. Pause datacast A to stop everything (including heartbeats)
         logger.info(f"Pausing container {CONTAINER_CLIENT_A}...")
-        docker_manager.exec_in_container(CONTAINER_CLIENT_A, ["sh", "-c", "kill -STOP $(cat /root/.fustor/sensord.pid)"])
+        docker_manager.exec_in_container(CONTAINER_CLIENT_A, ["sh", "-c", "kill -STOP $(cat /root/.fustor/datacast.pid)"])
         
         # 3. Wait for session timeout in fustord
         # fustord timeout is SESSION_TIMEOUT. Replace hard sleep with polling.
@@ -66,19 +66,19 @@ class TestHeartbeatTimeout:
             fail_msg=f"Session {old_session_id} did not expire within timeout"
         )
         
-        # 4. Resume sensord A
+        # 4. Resume datacast A
         logger.info(f"Resuming container {CONTAINER_CLIENT_A}...")
-        docker_manager.exec_in_container(CONTAINER_CLIENT_A, ["sh", "-c", "kill -CONT $(cat /root/.fustor/sensord.pid)"])
+        docker_manager.exec_in_container(CONTAINER_CLIENT_A, ["sh", "-c", "kill -CONT $(cat /root/.fustor/datacast.pid)"])
         
-        # 5. Wait for sensord A to detect error and recover
-        logger.info("Waiting for sensord A to detect timeout and recover...")
+        # 5. Wait for datacast A to detect error and recover
+        logger.info("Waiting for datacast A to detect timeout and recover...")
         
         start_wait = time.time()
         new_session_id = None
         
         while time.time() - start_wait < MEDIUM_TIMEOUT:
             # OPTIMIZATION: Check for early failure by reading log file directly
-            logs_res = docker_manager.exec_in_container(CONTAINER_CLIENT_A, ["cat", "/root/.fustor/logs/sensord.log"])
+            logs_res = docker_manager.exec_in_container(CONTAINER_CLIENT_A, ["cat", "/root/.fustor/logs/datacast.log"])
             logs = logs_res.stdout + logs_res.stderr
             
             # Aggressive Fast-Fail (BUT skip known non-fatal exceptions)
@@ -86,26 +86,26 @@ class TestHeartbeatTimeout:
             fatal_patterns = ["SyntaxError", "AttributeError", "FATAL", "Unhandled exception", "Traceback (most recent call last)"]
             for pattern in fatal_patterns:
                 if pattern in logs:
-                    logger.error(f"sensord A CRITICAL ERROR detected in sensord.log:\n{logs}")
-                    pytest.fail(f"sensord A failed with {pattern}")
+                    logger.error(f"datacast A CRITICAL ERROR detected in datacast.log:\n{logs}")
+                    pytest.fail(f"datacast A failed with {pattern}")
             
             # Check if process is still alive
             ps_res = docker_manager.exec_in_container(CONTAINER_CLIENT_A, ["ps", "aux"])
-            if "sensord" not in ps_res.stdout and "python" not in ps_res.stdout:
-                logger.error(f"sensord A process DIED during recovery. Logs:\n{logs}")
-                pytest.fail("sensord A process died during recovery")
+            if "datacast" not in ps_res.stdout and "python" not in ps_res.stdout:
+                logger.error(f"datacast A process DIED during recovery. Logs:\n{logs}")
+                pytest.fail("datacast A process died during recovery")
 
             sessions = fustord_client.get_sessions()
-            sensord_a_sessions = [s for s in sessions if "client-a" in s.get("sensord_id", "")]
-            if sensord_a_sessions:
-                new_session_id = sensord_a_sessions[0]["session_id"]
+            datacast_a_sessions = [s for s in sessions if "client-a" in s.get("datacast_id", "")]
+            if datacast_a_sessions:
+                new_session_id = datacast_a_sessions[0]["session_id"]
                 if new_session_id != old_session_id:
-                    logger.info(f"sensord A recovered with new session ID: {new_session_id}")
+                    logger.info(f"datacast A recovered with new session ID: {new_session_id}")
                     break
             time.sleep(POLL_INTERVAL)
             
-        assert new_session_id is not None, "sensord A did not create a new session after timeout"
-        assert new_session_id != old_session_id, "sensord A should have a DIFFERENT session ID"
+        assert new_session_id is not None, "datacast A did not create a new session after timeout"
+        assert new_session_id != old_session_id, "datacast A should have a DIFFERENT session ID"
         
         # 6. Verify Cluster Health (Proposal B.1)
         recovered_sessions = fustord_client.get_sessions()

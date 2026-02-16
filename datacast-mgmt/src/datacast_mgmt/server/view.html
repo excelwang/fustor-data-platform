@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Datacast Management UI</title>
+    <style>
+        :root {
+            --bg: #0f172a;
+            --card: #1e293b;
+            --primary: #38bdf8;
+            --text: #f8fafc;
+            --muted: #94a3b8;
+        }
+
+        body {
+            font-family: 'Inter', system-ui, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: 2rem;
+        }
+
+        h1 {
+            font-weight: 800;
+            color: var(--primary);
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .card {
+            background: var(--card);
+            padding: 1.5rem;
+            border-radius: 12px;
+            border: 1px solid #334155;
+        }
+
+        .badge {
+            background: #0ea5e9;
+            padding: 0.2rem 0.6rem;
+            border-radius: 999px;
+            font-size: 0.8rem;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Datacast Dashboard</h1>
+    <div class="grid" id="pipes-container">
+        <p>Loading pipes...</p>
+    </div>
+    <script>
+        async function loadPipes() {
+            try {
+                const res = await fetch('/mgmt/pipes');
+                const data = await res.json();
+                const container = document.getElementById('pipes-container');
+                container.innerHTML = Object.entries(data).map(([id, info]) => `
+                    <div class="card">
+                        <h3>${id} <span class="badge">${info.status || 'Active'}</span></h3>
+                        <p style="color: var(--muted)">Source: ${info.source_uri || 'Internal'}</p>
+                        <p>Events: ${info.statistics?.events_processed || 0}</p>
+                    </div>
+                `).join('');
+            } catch (e) {
+                console.error("Failed to load pipes", e);
+            }
+        }
+        loadPipes();
+        setInterval(loadPipes, 5000);
+    </script>
+</body>
+
+</html>

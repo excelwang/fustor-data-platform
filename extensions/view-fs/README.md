@@ -7,7 +7,7 @@
 - **一致性保护 (Consistency Protection)**: 
   - **Tombstone List**: 记录被实时删除的文件，防止落后的快照/审计消息使其“复活”。
   - **Suspect List**: 标记正在写入或变更中的热点文件，待其冷却后正式转正。
-  - **Blind-spot List**: 标记在无 sensord 节点处发生的文件变更。
+  - **Blind-spot List**: 标记在无 datacast 节点处发生的文件变更。
 - **高性能查询**: 针对千万级节点优化的内存哈希索引，支持 $O(1)$ 路径寻址。
 
 ## API 端点

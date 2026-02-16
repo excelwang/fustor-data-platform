@@ -4,7 +4,7 @@ from typing import Optional
 class fustordGlobalConfig(BaseModel):
     """
     Global configuration for the fustord service.
-    Relocated from sensord_core.
+    Relocated from datacast_core.
     """
     host: str = Field(default="0.0.0.0", description="管理 API 监听地址")
     port: int = Field(default=8101, description="管理 API 监听端口")

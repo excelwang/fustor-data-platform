@@ -15,10 +15,10 @@ if str(_it_dir) not in sys.path:
     sys.path.insert(0, str(_it_dir))
 
 from utils import docker_manager
-from .sensords import (
+from .datacasts import (
     CONTAINER_CLIENT_A, 
     CONTAINER_CLIENT_B,
-    ensure_sensord_running,
+    ensure_datacast_running,
     MOUNT_POINT
 )
 from .constants import (
@@ -44,9 +44,9 @@ def wait_for_audit(fustord_client):
 
 
 @pytest.fixture(scope="function")
-def leader_follower_sensords(setup_sensords, fustord_client):
+def leader_follower_datacasts(setup_datacasts, fustord_client):
     """
-    Ensure we have a stable leader and follower sensord set up.
+    Ensure we have a stable leader and follower datacast set up.
     
     Returns:
         dict: {
@@ -54,8 +54,8 @@ def leader_follower_sensords(setup_sensords, fustord_client):
             "follower": container_id_of_follower
         }
     """
-    api_key = setup_sensords["api_key"]
-    view_id = setup_sensords["view_id"]
+    api_key = setup_datacasts["api_key"]
+    view_id = setup_datacasts["view_id"]
     client_A = CONTAINER_CLIENT_A
     client_B = CONTAINER_CLIENT_B
 
@@ -64,10 +64,10 @@ def leader_follower_sensords(setup_sensords, fustord_client):
     leader = next((s for s in sessions if s.get("role") == "leader"), None)
     
     is_clean = False
-    if leader and "client-a" in leader.get("sensord_id", ""):
-        # sensord A is leader. Check sensord B presence.
-        sensord_b = next((s for s in sessions if "client-b" in s.get("sensord_id", "")), None)
-        if sensord_b and sensord_b.get("role") == "follower":
+    if leader and "client-a" in leader.get("datacast_id", ""):
+        # datacast A is leader. Check datacast B presence.
+        datacast_b = next((s for s in sessions if "client-b" in s.get("datacast_id", "")), None)
+        if datacast_b and datacast_b.get("role") == "follower":
             is_clean = True
             
     if is_clean:
@@ -81,7 +81,7 @@ def leader_follower_sensords(setup_sensords, fustord_client):
     
     # Force reset: Stop everyone
     for container in [client_A, client_B]:
-        docker_manager.cleanup_sensord_state(container)
+        docker_manager.cleanup_datacast_state(container)
 
     # Wait for sessions to vanish
     logger.info("Waiting for stale sessions to expire...")
@@ -92,26 +92,26 @@ def leader_follower_sensords(setup_sensords, fustord_client):
         time.sleep(POLL_INTERVAL)
         
     # 1. Start Client A
-    logger.info("Restarting sensord A...")
-    ensure_sensord_running(CONTAINER_CLIENT_A, api_key, view_id)
+    logger.info("Restarting datacast A...")
+    ensure_datacast_running(CONTAINER_CLIENT_A, api_key, view_id)
     
     # Wait for A to become leader - use polling
     start_wait = time.time()
     while time.time() - start_wait < AGENT_READY_TIMEOUT:
         leader = fustord_client.get_leader_session()
-        if leader and "client-a" in leader.get("sensord_id", ""):
+        if leader and "client-a" in leader.get("datacast_id", ""):
             break
         time.sleep(POLL_INTERVAL)
 
     # 2. Start Client B
-    logger.info("Restarting sensord B...")
-    ensure_sensord_running(CONTAINER_CLIENT_B, api_key, view_id)
+    logger.info("Restarting datacast B...")
+    ensure_datacast_running(CONTAINER_CLIENT_B, api_key, view_id)
     
     # Wait for B - use polling
     start_wait = time.time()
     while time.time() - start_wait < AGENT_READY_TIMEOUT:
         sessions = fustord_client.get_sessions()
-        if any("client-b" in s.get("sensord_id", "") for s in sessions):
+        if any("client-b" in s.get("datacast_id", "") for s in sessions):
             break
         time.sleep(POLL_INTERVAL)
     
@@ -123,18 +123,18 @@ def leader_follower_sensords(setup_sensords, fustord_client):
     }
 
 @pytest.fixture
-def reset_leadership(setup_sensords, fustord_client):
+def reset_leadership(setup_datacasts, fustord_client):
     """
     Fixture to manually trigger a leadership reset.
     """
-    api_key = setup_sensords["api_key"]
-    view_id = setup_sensords["view_id"]
+    api_key = setup_datacasts["api_key"]
+    view_id = setup_datacasts["view_id"]
     
     async def _reset():
         logger.warning("Forcing leadership reset via fixture...")
         # Stop everyone
         for container in [CONTAINER_CLIENT_A, CONTAINER_CLIENT_B]:
-            docker_manager.cleanup_sensord_state(container)
+            docker_manager.cleanup_datacast_state(container)
 
         # Wait for sessions to vanish
         start_cleanup = time.time()
@@ -144,19 +144,19 @@ def reset_leadership(setup_sensords, fustord_client):
             time.sleep(POLL_INTERVAL)
 
         # Restart A then B
-        ensure_sensord_running(CONTAINER_CLIENT_A, api_key, view_id)
-        # Polling for sensord A
+        ensure_datacast_running(CONTAINER_CLIENT_A, api_key, view_id)
+        # Polling for datacast A
         start = time.time()
         while time.time() - start < AGENT_READY_TIMEOUT:
             if fustord_client.get_leader_session(): break
             time.sleep(POLL_INTERVAL)
 
-        ensure_sensord_running(CONTAINER_CLIENT_B, api_key, view_id)
-        # Polling for sensord B
+        ensure_datacast_running(CONTAINER_CLIENT_B, api_key, view_id)
+        # Polling for datacast B
         start = time.monotonic()
         while time.monotonic() - start < AGENT_READY_TIMEOUT:
             sessions = fustord_client.get_sessions()
-            if any("client-b" in s.get("sensord_id", "") for s in sessions): break
+            if any("client-b" in s.get("datacast_id", "") for s in sessions): break
             time.sleep(POLL_INTERVAL)
 
         logger.info("Leadership reset via fixture complete.")

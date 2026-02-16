@@ -3,7 +3,7 @@ name = "fustord-sdk"
 version = "0.9.1"
 description = "SDK for Fustor fustord service"
 license = "MIT"
-dependencies = ["sensord-core", "httpx", "pydantic"]
+dependencies = ["datacast-core", "httpx", "pydantic"]
 
 [build-system]
 requires = [ "setuptools>=61.0"]

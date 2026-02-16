@@ -9,11 +9,11 @@ version: 1.0.0
 
 ## [overview] Consistency_Arbitration_Overview
 
-**Rationale**: Define how Fustord reconciles conflicting data streams from multiple sensors on shared storage.
+**Rationale**: Define how Fustord reconciles conflicting data streams from multiple datacasts on shared storage.
 
 ### 1.1 目标场景
 
-多台计算服务器通过 NFS 挂载同一共享目录。部分服务器部署了 sensord，部分没有（盲区）。
+多台计算服务器通过 NFS 挂载同一共享目录。部分服务器部署了 Datacast，部分没有（盲区）。
 
 ```
                     ┌─────────────────────────────┐
@@ -25,7 +25,7 @@ version: 1.0.0
           │                        │                        │
     ┌─────▼─────┐            ┌─────▼─────┐            ┌─────▼─────┐
     │ Server A  │            │ Server B  │            │ Server C  │
-    │  sensord ✅ │            │  sensord ✅ │            │  sensord ❌ │
+    │  Datacast ✅ │            │  Datacast ✅ │            │  Datacast ❌ │
     └─────┬─────┘            └─────┬─────┘            └─────┬─────┘
           │                        │                        │
           └────────────────────────┼────────────────────────┘
@@ -39,9 +39,9 @@ version: 1.0.0
 
 | 挑战 | 描述 |
 |------|------|
-| **inotify 本地性** | sensord 只能感知本机发起的文件操作 |
+| **inotify 本地性** | Datacast 只能感知本机发起的文件操作 |
 | **NFS 缓存滞后** | 不同客户端看到的目录状态可能有秒级甚至分钟级的延迟 |
-| **感知盲区** | 没有部署 sensord 的节点产生的文件变更无法实时感知 |
+| **感知盲区** | 没有部署 Datacast 的节点产生的文件变更无法实时感知 |
 | **时序冲突** | 快照/审计扫描期间发生的实时变更可能导致数据矛盾 |
 
 ### 1.3 设计目标
@@ -51,14 +51,14 @@ version: 1.0.0
 | **实时性优先** | Realtime 消息具有最高优先级 |
 | **盲区可发现** | 通过定时审计发现盲区变更，并明确标记 |
 | **视图即真相** | fustord 内存树是经过仲裁后的最终状态 |
-| **IO 可控** | 只有 Leader sensord 执行 Snapshot/Audit |
+| **IO 可控** | 只有 Leader Datacast 执行 Snapshot/Audit |
 
 ### 1.4 Path Normalization Contract (路径归一化契约)
 
-为确保多 sensord (尤其是 Shared Storage 场景) 视图的一致合并，所有 Source Driver **必须** 遵循以下路径生成规则：
+为确保多 Datacast (尤其是 Shared Storage 场景) 视图的一致合并，所有 Source Driver **必须** 遵循以下路径生成规则：
 1.  **Relative Path**: 输出路径必须相对于配置的 `root_path` / `uri`。
 2.  **Leading Slash**: 归一化后的路径必须以 `/` 开头 (例如 `/foo/bar.txt`)。
-    - sensord A (`/mnt/data`) 和 sensord B (`/home/user/share`) 监控同一 NFS 目录时，必须都能生成相同的 `/foo/bar.txt` 键值。
+    - Datacast A (`/mnt/data`) 和 Datacast B (`/home/user/share`) 监控同一 NFS 目录时，必须都能生成相同的 `/foo/bar.txt` 键值。
 3.  **Consistency**: Realtime, Snapshot, Audit 三种模式生成的路径必须完全一致。
 
 ---
@@ -74,23 +74,23 @@ version: 1.0.0
 
 ### 2.2 Leader 选举
 
-- **先到先得**：第一个建立 Session 的 SensordPipe 成为 Leader
-- **故障转移**：仅当 Leader 心跳超时或断开后，fustord 才释放 Leader 锁
-- **实现**：通过 `ViewStateManager` 管理 Leader 锁，`SessionManager` 管理会话生命周期
+- **先到先得**：第一个建立 Session 的 **DatacastPipe** 尝试获取锁。
+- **故障转移**：仅当 Leader 心跳超时或断开后，fustord 才释放 Leader 锁。
+- **实现**：通过 `ViewStateManager` 管理视图级别的 Leader 锁，`PipeSessionBridge` 维护会话生命周期与指令通道。
 
 ---
 
 ## [definition] Message_Types_and_Sources
 
-sensord 向 fustord 发送的消息分为三类，通过 `message_source` 字段区分：
+Datacast 向 fustord 发送的消息分为三类，通过 `message_source` 字段区分：
 
 | 类型 | 来源 | 说明 |
 |------|------|------|
 | `realtime` | inotify 事件 | 单个文件的增删改，优先级最高 |
-| `snapshot` | SensordPipe 启动时全量扫描 | 初始化内存树 |
+| `snapshot` | DatacastPipe 启动时全量扫描 | 初始化内存树 |
 | `audit` | 定时审计扫描 | 发现盲区变更 |
 
-### 3.1 Audit 快速扫描算法 (sensord 端)
+### 3.1 Audit 快速扫描算法 (Datacast 端)
 
 利用 POSIX 语义：创建/删除文件只更新**直接父目录**的 mtime。
 
@@ -163,7 +163,7 @@ fustord 通过 `FSState` 类维护以下状态：
 | `size` | `int` | 文件大小（字节） |
 | `last_updated_at` | `float` | fustord 本地物理时间戳，记录最后确认时刻 |
 | `integrity_suspect` | `bool` | 是否为可疑热文件 (由原子写标记或时效判定) |
-| `known_by_sensord` | `bool` | 监控质量证明（Monitoring Quality Attestation）。仅由 Realtime 事件确认为 True，表示该节点当前状态已知由 sensord 实时监控。 |
+| `known_by_Datacast` | `bool` | 监控质量证明（Monitoring Quality Attestation）。仅由 Realtime 事件确认为 True，表示该节点当前状态已知由 Datacast 实时监控。 |
 | `audit_skipped` | `bool` | (仅目录) 是否在审计中因静默被跳过 |
 
 ### 4.2 墓碑表 (Tombstone List)
@@ -224,8 +224,8 @@ Blind-spot 是**信息型记录**，用于标记"仅通过补偿源（Audit/Snap
   - Audit 再次看到文件时从 `blind_spot_deletions` 移除
   - **Session 生命周期控制**：`on_session_start` 时清空列表以重新发现盲区
 
-> **重要限制**：on_demand 扫描（由 fustord 向 sensord 发起的目录遍历命令）**无法产生 Realtime 级别的确认**。
-> on_demand 本质上是 sensord 对指定路径执行一次目录遍历，其数据与 Audit/Snapshot 同源（补偿型），
+> **重要限制**：on_demand 扫描（由 fustord 向 Datacast 发起的目录遍历命令）**无法产生 Realtime 级别的确认**。
+> on_demand 本质上是 Datacast 对指定路径执行一次目录遍历，其数据与 Audit/Snapshot 同源（补偿型），
 > 因此无法用于清除 blind-spot 标记。Blind-spot 只能通过以下途径清除：
 > 1. 自然产生的 Realtime inotify/watchdog 事件
 > 2. 下一轮完整 Audit 周期（Audit 再次扫描到该路径时移除）
@@ -243,7 +243,7 @@ Blind-spot 是**信息型记录**，用于标记"仅通过补偿源（Audit/Snap
 | `REALTIME` | Tier 1 因果性 | 内核 inotify/watchdog | 文件操作直接触发 | ✅ | ✅ |
 | `SNAPSHOT` | Tier 2 基线型 | `os.stat()` 全量遍历 | Leader 当选后一次性 | ❌ | ❌ |
 | `AUDIT` | Tier 3 补偿型 | `os.stat()` 全量遍历 | 定期调度 | ❌ | ❌ |
-| `ON_DEMAND_JOB` | Tier 3 补偿型 | `os.stat()` 目录遍历 | fustord 请求 sensord 扫描 | ❌ | ❌ |
+| `ON_DEMAND_JOB` | Tier 3 补偿型 | `os.stat()` 目录遍历 | fustord 请求 Datacast 扫描 | ❌ | ❌ |
 
 #### 行为权限矩阵
 
@@ -255,20 +255,20 @@ Blind-spot 是**信息型记录**，用于标记"仅通过补偿源（Audit/Snap
 | 创建 Blind-spot | — | — | ✅ | ✅ |
 | 更新 `last_updated_at` | ✅ | ❌ | ❌ | ❌ |
 | 参与 Clock Skew 采样 | ✅ | ❌ | ❌ | ❌ |
-| 设置 `known_by_sensord` | `True` | `False` (保留原值) | `False` (遗漏时设为False) | `False` (遗漏时设为False) |
+| 设置 `known_by_Datacast` | `True` | `False` (保留原值) | `False` (遗漏时设为False) | `False` (遗漏时设为False) |
 | 触发 Tombstone 重生检测 | ✅ | ✅ | ✅ | ✅ |
 
 > [!IMPORTANT]
 > **监控质量证明 (Monitoring Quality Attestation) 哲学**：
-> `known_by_sensord`（API 中体现为 `sensord_missing`）是一个**非对称证据系统**：
-> 1. **反证能力**：若为 `False`，可确凿证明该文件发生过“带外修改”或 sensord 监控遗漏。
+> `known_by_Datacast`（API 中体现为 `Datacast_missing`）是一个**非对称证据系统**：
+> 1. **反证能力**：若为 `False`，可确凿证明该文件发生过“带外修改”或 Datacast 监控遗漏。
 > 2. **非预见性**：若为 `True`，仅代表最近一次变更被捕获，不保证未来盲区服务器的写入能被感知。
 > 因此，Snapshot, Audit, On-Demand 等轮询源**严禁**将此标志设为 `True`，因为它们无法证明 inotify Watcher 的实时覆盖。
 
 > [!CAUTION]
 > **On-demand 不等于 Realtime**。On-demand 使用 `os.stat()` 读取文件属性，与 Audit 完全同源。
-> NFS 环境下，盲区（inotify 未覆盖的目录）中的新文件可能通过 NFS 同步出现在 sensord 本地，
-> on-demand `stat()` 会看到这些文件，但这并不意味着 sensord 的 inotify watcher 正在监控该路径。
+> NFS 环境下，盲区（inotify 未覆盖的目录）中的新文件可能通过 NFS 同步出现在 Datacast 本地，
+> on-demand `stat()` 会看到这些文件，但这并不意味着 Datacast 的 inotify watcher 正在监控该路径。
 > 因此 on-demand 发现的文件必须标记为 blind-spot，不能清除任何已有的 blind-spot 或 suspect 标记。
 
 ---
@@ -289,7 +289,7 @@ if event.message_source == MessageSource.REALTIME:
         # 更新内存树
         tree_manager.update_node(payload, path)
         node.last_updated_at = time.time()  # 物理时间戳
-        node.known_by_sensord = True
+        node.known_by_Datacast = True
         
         # 一致性状态维护
         is_atomic = payload.get('is_atomic_write', True)
@@ -402,7 +402,7 @@ if event.message_source == MessageSource.AUDIT:
     mtime_changed = (existing is None) or (abs(old_mtime - mtime) > FLOAT_EPSILON)
     if mtime_changed:
         blind_spot_additions.add(path)
-        node.known_by_sensord = False # 发现变更但缺失 Realtime 事件，判定为监控遗漏
+        node.known_by_Datacast = False # 发现变更但缺失 Realtime 事件，判定为监控遗漏
     
     # Suspect 判定（同域计算）
     watermark = logical_clock.get_watermark()
@@ -451,7 +451,7 @@ for path in audit_seen_paths:
 
 **问题背景**：
 - **$T_1$ (Audit 开始)**：fustord 记录 `last_audit_start`
-- **$T_2$ (实时创建)**：sensord 发现 `cp -p` 创建的新文件，mtime 为一年前
+- **$T_2$ (实时创建)**：Datacast 发现 `cp -p` 创建的新文件，mtime 为一年前
 - **$T_2$ (fustord 同步)**：fustord 接受文件，记录 `last_updated_at = T_2`
 - **$T_3$ (Audit 判定)**：审计扫描列表（物理扫描在 $T_2$ 前完成）中没有该文件
 
@@ -468,7 +468,7 @@ for path in audit_seen_paths:
 
 | 轨道 | 定义 | 来源 | 核心用途 |
 | :--- | :--- | :--- | :--- |
-| **Physical Time** | 全局物理流逝参考 | fustord/sensord 本地时钟 | 1. 事件索引 (index)<br>2. LRU 归一化<br>3. 陈旧证据保护<br>4. Tombstone TTL 清理 |
+| **Physical Time** | 全局物理流逝参考 | fustord/Datacast 本地时钟 | 1. 事件索引 (index)<br>2. LRU 归一化<br>3. 陈旧证据保护<br>4. Tombstone TTL 清理 |
 | **Logical Clock (Watermark)** | NFS 数据域逻辑时间 | 统计校准合成 | 1. Data Age 计算<br>2. Suspect 状态判定<br>3. 墓碑逻辑时间戳 |
 
 ### 6.2 应用场景裁决表
@@ -483,25 +483,25 @@ for path in audit_seen_paths:
 
 ### 6.3 NFS Clock Drift Compensation (NFS 时钟漂移补偿)
 
-由于 sensord 运行在物理机上的时钟可能与 NFS Server 的时钟（即文件 mtime 的来源）存在偏差，为了保证物理时间戳（index）与逻辑时间戳（mtime）的可比性，Source Driver 必须执行漂移补偿。
+由于 Datacast 运行在物理机上的时钟可能与 NFS Server 的时钟（即文件 mtime 的来源）存在偏差，为了保证物理时间戳（index）与逻辑时间戳（mtime）的可比性，Source Driver 必须执行漂移补偿。
 
 **机制 (Shadow Reference Frame)**：
-- **Sampling**: SensordPipe 启动时执行 Pre-scan，收集所有目录的 recursive mtime。
+- **Sampling**: DatacastPipe 启动时执行 Pre-scan，收集所有目录的 recursive mtime。
 - **Reference Selection**: 选取 P99 分位的 mtime 作为 `latest_mtime_stable` (排除未来时间或极端异常值)。
 - **Drift Calculation**: `drift = latest_mtime_stable - time.time()`。这里假设最活跃的目录 mtime 极其接近 NFS Server 当前时间。
 - **Correction**: 生成事件时，物理时间戳 `index` = `(time.time() + drift) * 1000`。
-- **目的**: 确保 fustord 收到的事件 `index` 大致对齐到 NFS 的时间轴，防止因 SensordPipe 时钟大幅落后导致事件被误判为"陈旧"而被丢弃。
+- **目的**: 确保 fustord 收到的事件 `index` 大致对齐到 NFS 的时间轴，防止因 DatacastPipe 时钟大幅落后导致事件被误判为"陈旧"而被丢弃。
 
 ---
 
 ## [lifecycle] Consistency_Audit_Lifecycle_Workflow
 
-SensordPipe 通过 API 发送生命周期信号，触发 fustord 的一致性处理：
+DatacastPipe 通过 API 发送生命周期信号，触发 fustord 的一致性处理：
 
 | API | 时机 | fustord 动作 |
 |-----|------|-------------|
-| `POST /consistency/audit/start` | 审计开始 | 调用 `handle_audit_start()`，记录 `last_audit_start = time.time()` |
-| `POST /consistency/audit/end` | 审计结束 | 等待队列排空后调用 `handle_audit_end()`，执行 Missing 判定和 Tombstone 清理 |
+| `POST /consistency/audit/start` | 审计开始 | 调用 `handle_audit_start()`，通过 `ViewManager` 记录 `last_audit_start` |
+| `POST /consistency/audit/end` | 审计结束 | 调用 `handle_audit_end()`，执行 Missing 判定和 Tombstone 清理 |
 
 **Audit-End 处理流程**：
 1. 等待事件队列排空（最多 10 秒）
@@ -517,13 +517,13 @@ SensordPipe 通过 API 发送生命周期信号，触发 fustord 的一致性处
 
 **Steps**:
 1. Scan internal suspect list for due entries.
-2. Dispatch `suspect_check` commands to relevant sensors via SCP.
+2. Dispatch `suspect_check` commands to relevant datacasts via SCP.
 3. Receive stability feedback via SDP.
 4. Update node's `integrity_suspect` flag based on feedback.
 - **Sentinels (Every 5 minutes)**: Short cycle integrity check.
 - **Audit (Every 12 hours)**: Long cycle complete consistency check.
 - **目的**：验证 Suspect List 中文件的 mtime 稳定性
-- **实现**：sensord 调用 `FSDriver.perform_sentinel_check()` 获取文件最新状态
+- **实现**：Datacast 调用 `FSDriver.perform_sentinel_check()` 获取文件最新状态
 
 ### API
 
@@ -570,8 +570,9 @@ GET /api/v1/views/{view_id}/tree?path=/data/logs&force-real-time=true
 
 **处理流程**：
 1. fustord 接收请求，挂起 HTTP 响应
-2.通过 Heartbeat Response 向 Leader SensordPipe 下发 `scan` 命令
-3. SensordPipe 执行 `scan_path("/data/logs")` 并推送事件
+1. fustord 接收请求，挂起 HTTP 响应。
+2. 通过 `PipeSessionBridge.store.queue_command()` 向 Leader **DatacastPipe** 下发 `scan` 命令。
+3. **DatacastPipe** 在下一次心跳中获取并执行 `scan_path()`。
 4. fustord 接收事件更新视图
 5. (可选) fustord 返回更新后的结果或超时
 ```

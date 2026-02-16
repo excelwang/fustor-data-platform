@@ -24,26 +24,26 @@ class TestOnCommandFallback:
         self,
         docker_env,
         fustord_client,
-        setup_sensords,
+        setup_datacasts,
         clean_shared_dir
     ):
         """
         场景: 
         1. 正常启动环境。
-        2. 在 NFS 上创建一个新文件 (sensord 可能尚未同步)。
+        2. 在 NFS 上创建一个新文件 (datacast 可能尚未同步)。
         3. 发送带 `on_demand_scan=true` 的 API 请求。
            - 这会导致 ViewDriver 抛出 TypeError (未知参数)。
            - FallbackDriverWrapper 捕获异常，打印 Warning。
            - 调用 `on_command_fallback`。
-           - `on_command_fallback` 使用修复后的 `scan` 命令调用 sensord。
-        4. 验证 sensord 收到命令并执行扫描，文件最终出现在视图中。
+           - `on_command_fallback` 使用修复后的 `scan` 命令调用 datacast。
+        4. 验证 datacast 收到命令并执行扫描，文件最终出现在视图中。
         5. 验证 fustord 日志确认触发了 Fallback。
         """
         from ..utils import docker_manager
         
         # 1. 确保环境就绪
         assert fustord_client.wait_for_view_ready(timeout=VIEW_READY_TIMEOUT), "View did not become ready"
-        assert fustord_client.wait_for_sensord_ready("client-a", timeout=SHORT_TIMEOUT), "sensord A not ready"
+        assert fustord_client.wait_for_datacast_ready("client-a", timeout=SHORT_TIMEOUT), "datacast A not ready"
 
         # 2. 创建测试文件
         test_file_name = f"fallback_test_{int(time.time())}.txt"
@@ -82,10 +82,10 @@ class TestOnCommandFallback:
         found = fustord_client.wait_for_file_in_tree(test_file_rel, timeout=MEDIUM_TIMEOUT)
         assert found, "File should appear after fallback scan"
         
-        # 6. 验证 sensord 日志确认收到正确的 'scan' 命令
-        print("[Test] Verifying sensord logs for 'scan' command...")
-        sensord_log = docker_manager.exec_in_container(CONTAINER_CLIENT_A, ["cat", "/root/.fustor/logs/sensord.log"]).stdout
+        # 6. 验证 datacast 日志确认收到正确的 'scan' 命令
+        print("[Test] Verifying datacast logs for 'scan' command...")
+        datacast_log = docker_manager.exec_in_container(CONTAINER_CLIENT_A, ["cat", "/root/.fustor/logs/datacast.log"]).stdout
         # PipeCommandMixin logs: "Received command 'scan'"
-        assert "Received command 'scan'" in sensord_log, "sensord should have received 'scan' command (Verify P0-3 fix)"
+        assert "Received command 'scan'" in datacast_log, "datacast should have received 'scan' command (Verify P0-3 fix)"
         
         print("[Test] P0-3 On-Command Fallback verified successfully.")

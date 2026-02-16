@@ -1,4 +1,4 @@
-sensord_id: "sensord-2"
+datacast_id: "datacast-2"
 sources:
   fs-source:
     driver: fs
@@ -7,7 +7,7 @@ senders:
   fustord:
     driver: fustord
     uri: "http://fustord:18888"
-    credential: { key: "key-sensord-2" }
+    credential: { key: "key-datacast-2" }
 pipes:
   sync-pipe:
     source: fs-source

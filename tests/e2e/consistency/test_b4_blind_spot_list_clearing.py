@@ -28,7 +28,7 @@ class TestBlindSpotListPersistence:
         self,
         docker_env,
         fustord_client,
-        setup_sensords,
+        setup_datacasts,
         clean_shared_dir,
         wait_for_audit
     ):
@@ -107,16 +107,16 @@ class TestBlindSpotListPersistence:
         assert test_file_b_rel in paths_2, "New file B should be in blind-spot list"
         assert test_file_c_rel in paths_2, "Untouched file C should PERSIST in blind-spot list (Persistence Check)"
 
-    def test_sensord_missing_flag_cleared_after_realtime_update(
+    def test_Datacast_missing_flag_cleared_after_realtime_update(
         self,
         docker_env,
         fustord_client,
-        setup_sensords,
+        setup_datacasts,
         clean_shared_dir,
         wait_for_audit
     ):
         """
-        场景: 盲区文件被 sensord 客户端重新 touch，sensord_missing 标记应被清除
+        场景: 盲区文件被 datacast 客户端重新 touch，Datacast_missing 标记应被清除
         参考: CONSISTENCY_DESIGN.md - Section 5.1 (Realtime 从 Blind-spot List 移除)
         """
         from ..conftest import CONTAINER_CLIENT_A
@@ -136,12 +136,12 @@ class TestBlindSpotListPersistence:
         marker_file_rel = "/" + os.path.relpath(marker_file, MOUNT_POINT)
         assert fustord_client.wait_for_file_in_tree(marker_file_rel, timeout=LONG_TIMEOUT) is not None
         
-        # Verify sensord_missing is set
+        # Verify Datacast_missing is set
         test_file_rel = "/" + os.path.relpath(test_file, MOUNT_POINT)
-        assert fustord_client.wait_for_flag(test_file_rel, "sensord_missing", True, timeout=SHORT_TIMEOUT), \
-            "File should eventually be marked sensord_missing"
+        assert fustord_client.wait_for_flag(test_file_rel, "Datacast_missing", True, timeout=SHORT_TIMEOUT), \
+            "File should eventually be marked Datacast_missing"
         
-        # Touch file from sensord client (triggers realtime update)
+        # Touch file from datacast client (triggers realtime update)
         # Use append to ensure content modification event (IN_MODIFY) is triggered, simpler than relying on ATTRIB
         docker_manager.exec_in_container(
             CONTAINER_CLIENT_A, 
@@ -151,7 +151,7 @@ class TestBlindSpotListPersistence:
         # Wait for realtime update (poll for flag cleared)
         # Increase timeout and add retry/reinforcement
         try:
-             assert fustord_client.wait_for_flag(test_file_rel, "sensord_missing", False, timeout=MEDIUM_TIMEOUT)
+             assert fustord_client.wait_for_flag(test_file_rel, "Datacast_missing", False, timeout=MEDIUM_TIMEOUT)
         except AssertionError:
              # Retry with manual event injection if environment is flaky (inotify issues)
              print("Environment Inotify failure suspected. Injecting manual Realtime event...")
@@ -195,5 +195,5 @@ class TestBlindSpotListPersistence:
                  print(f"Manual injection failed: {resp.status_code} {resp.text}")
              
              # Wait again
-             assert fustord_client.wait_for_flag(test_file_rel, "sensord_missing", False, timeout=SHORT_TIMEOUT), \
-                "sensord_missing flag should be cleared after manual realtime event injection"
+             assert fustord_client.wait_for_flag(test_file_rel, "Datacast_missing", False, timeout=SHORT_TIMEOUT), \
+                "Datacast_missing flag should be cleared after manual realtime event injection"

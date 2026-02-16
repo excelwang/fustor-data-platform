@@ -99,21 +99,21 @@ class BridgeLifecycleMixin:
         session_id: str,
         client_ip: Optional[str] = None,
         can_realtime: bool = False,
-        sensord_status: Optional[Dict[str, Any]] = None
+        datacast_status: Optional[Dict[str, Any]] = None
     ) -> Dict[str, Any]:
         """Keep session alive (heartbeat)."""
         # 1. Update local store
         count = self.store.record_heartbeat(
             session_id=session_id,
             can_realtime=can_realtime,
-            sensord_status=sensord_status
+            datacast_status=datacast_status
         )
         
         if count == 0:
             return {"status": "error", "message": f"Session {session_id} expired", "session_id": session_id}
         
         # 2. Update pipe stats/lifecycle
-        await self._pipe.keep_session_alive(session_id, can_realtime=can_realtime, sensord_status=sensord_status)
+        await self._pipe.keep_session_alive(session_id, can_realtime=can_realtime, datacast_status=datacast_status)
         
         # 3. Periodic leader verification
         if count % self._LEADER_VERIFY_INTERVAL == 0:

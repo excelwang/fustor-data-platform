@@ -1,6 +1,6 @@
 # fustor-receiver-http
 
-HTTP Receiver for Fustor fustord - implements the transport layer for receiving events from sensords.
+HTTP Receiver for Fustor fustord - implements the transport layer for receiving events from datacasts.
 
 ## Overview
 

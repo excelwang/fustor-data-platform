@@ -50,7 +50,7 @@ def create_fs_router(get_driver_func, check_snapshot_func, get_view_id_dep, chec
         max_depth: Optional[int] = Query(None, description="最大递归深度 (1 表示仅当前目录及其直接子级)"),
         only_path: bool = Query(False, description="是否仅返回路径结构，排除元数据"),
         dry_run: bool = Query(False, description="压测模式：跳过逻辑处理以测量框架延迟"),
-        on_demand_scan: bool = Query(False, description="触发sensord端按需扫描（补偿型 Tier 3, 见 CONSISTENCY_DESIGN §4.5）"),
+        on_demand_scan: bool = Query(False, description="触发datacast端按需扫描（补偿型 Tier 3, 见 CONSISTENCY_DESIGN §4.5）"),
         view_id: str = Depends(get_view_id_dep)
     ) -> Optional[Dict[str, Any]]:
         """获取指定路径起始的目录结构树。"""
@@ -166,7 +166,7 @@ def create_fs_router(get_driver_func, check_snapshot_func, get_view_id_dep, chec
         request: SuspectUpdateRequest,
         view_id: str = Depends(get_view_id_dep)
     ) -> Dict[str, Any]:
-        """Update suspect files with their current mtimes from sensord's Sentinel Sweep."""
+        """Update suspect files with their current mtimes from datacast's Sentinel Sweep."""
         driver = await get_driver_func(view_id)
         if not driver:
             raise HTTPException(status_code=404, detail="View Driver not initialized")

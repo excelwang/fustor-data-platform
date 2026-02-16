@@ -1,4 +1,4 @@
-"Fusensord source driver for MySQL."
+"Fudatacast source driver for MySQL."
 import time
 import pymysql
 from pymysql.cursors import SSCursor
@@ -15,12 +15,12 @@ import threading
 import json
 import os
 
-from sensord_core.drivers import SourceDriver
-from sensord_core.models.config import SourceConfig, PasswdCredential
-from sensord_core.exceptions import DriverError
-from sensord_core.event import EventBase, InsertEvent, UpdateEvent, DeleteEvent
+from datacast_core.drivers import SourceDriver
+from datacast_core.models.config import SourceConfig, PasswdCredential
+from datacast_core.exceptions import DriverError
+from datacast_core.event import EventBase, InsertEvent, UpdateEvent, DeleteEvent
 
-logger = logging.getLogger("sensord.driver.mysql")
+logger = logging.getLogger("datacast.driver.mysql")
 
 class MysqlDriver(SourceDriver):
     _instances: Dict[str, 'MysqlDriver'] = {}
@@ -281,14 +281,14 @@ class MysqlDriver(SourceDriver):
                     close()
 
     @classmethod
-    async def create_sensord_user(cls, **kwargs) -> Tuple[bool, str]:
+    async def create_datacast_user(cls, **kwargs) -> Tuple[bool, str]:
         uri = kwargs.get("uri")
         admin_creds_dict = kwargs.get("admin_creds", {})
-        sensord_user_dict = kwargs.get("credential", {})
-        if not uri or not admin_creds_dict or not sensord_user_dict:
+        datacast_user_dict = kwargs.get("credential", {})
+        if not uri or not admin_creds_dict or not datacast_user_dict:
             return (False, "缺少 'uri', 'admin_creds', 或 'credential' 参数")
         admin_creds = PasswdCredential(**admin_creds_dict)
-        sensord_user = PasswdCredential(**sensord_user_dict)
+        datacast_user = PasswdCredential(**datacast_user_dict)
         
         conn = None
         try:
@@ -296,18 +296,18 @@ class MysqlDriver(SourceDriver):
             async with conn.cursor() as cursor:
                 await cursor.execute(
                     "CREATE USER IF NOT EXISTS %s@%s IDENTIFIED BY %s",
-                    (sensord_user.user, '%', sensord_user.passwd or '')
+                    (datacast_user.user, '%', datacast_user.passwd or '')
                 )
                 await cursor.execute(
                     "GRANT REPLICATION SLAVE, REPLICATION CLIENT, SELECT ON *.* TO %s@%s",
-                    (sensord_user.user, '%')
+                    (datacast_user.user, '%')
                 )
                 await cursor.execute("FLUSH PRIVILEGES")
-            logger.info(f"User '{sensord_user.user}' is ready for replication.")
-            return True, f"用户 '{sensord_user.user}' 已成功创建或验证。"
+            logger.info(f"User '{datacast_user.user}' is ready for replication.")
+            return True, f"用户 '{datacast_user.user}' 已成功创建或验证。"
         except Exception as e:
-            logger.error(f"Failed to create or grant privileges to user '{sensord_user.user}': {e}", exc_info=True)
-            return False, f"创建或授权用户 '{sensord_user.user}' 失败: {e}"
+            logger.error(f"Failed to create or grant privileges to user '{datacast_user.user}': {e}", exc_info=True)
+            return False, f"创建或授权用户 '{datacast_user.user}' 失败: {e}"
         finally:
             if conn is not None:
                 close = getattr(conn, "close", None)
@@ -318,11 +318,11 @@ class MysqlDriver(SourceDriver):
     async def check_privileges(cls, **kwargs) -> Tuple[bool, str]:
         uri = kwargs.get("uri")
         admin_creds_dict = kwargs.get("admin_creds", {})
-        sensord_user_dict = kwargs.get("credential", {})
-        if not uri or not admin_creds_dict or not sensord_user_dict:
+        datacast_user_dict = kwargs.get("credential", {})
+        if not uri or not admin_creds_dict or not datacast_user_dict:
             return (False, "缺少 'uri', 'admin_creds', 或 'credential' 参数")
         admin_creds = PasswdCredential(**admin_creds_dict)
-        sensord_user = PasswdCredential(**sensord_user_dict)
+        datacast_user = PasswdCredential(**datacast_user_dict)
         
         conn = None
         try:
@@ -330,19 +330,19 @@ class MysqlDriver(SourceDriver):
             async with conn.cursor() as cursor:
                 await cursor.execute(
                     "SELECT Repl_slave_priv, Repl_client_priv, Select_priv FROM mysql.user WHERE User = %s AND Host = %s",
-                    (sensord_user.user, '%')
+                    (datacast_user.user, '%')
                 )
                 result = await cursor.fetchone()
                 if not result or result[0] != 'Y' or result[1] != 'Y' or result[2] != 'Y':
-                    msg = f"用户 '{sensord_user.user}' 缺少必要的权限 (REPLICATION SLAVE, REPLICATION CLIENT, SELECT)。"
+                    msg = f"用户 '{datacast_user.user}' 缺少必要的权限 (REPLICATION SLAVE, REPLICATION CLIENT, SELECT)。"
                     logger.error(msg)
                     return False, msg
 
-            logger.info(f"User '{sensord_user.user}' privileges verified")
-            return True, f"用户 '{sensord_user.user}' 权限充足。"
+            logger.info(f"User '{datacast_user.user}' privileges verified")
+            return True, f"用户 '{datacast_user.user}' 权限充足。"
         except Exception as e:
-            logger.error(f"MySQL check_user_privileges failed for user '{sensord_user.user}': {e}", exc_info=True)
-            return False, f"检查用户 '{sensord_user.user}' 权限失败: {e}"
+            logger.error(f"MySQL check_user_privileges failed for user '{datacast_user.user}': {e}", exc_info=True)
+            return False, f"检查用户 '{datacast_user.user}' 权限失败: {e}"
         finally:
             if conn is not None:
                 close = getattr(conn, "close", None)

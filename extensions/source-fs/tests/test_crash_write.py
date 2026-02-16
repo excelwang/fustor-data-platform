@@ -10,8 +10,8 @@ import signal
 
 import pytest
 
-from sensord_core.models.config import PasswdCredential, SourceConfig
-from sensord_core.event import UpdateEvent
+from datacast_core.models.config import PasswdCredential, SourceConfig
+from datacast_core.event import UpdateEvent
 from fustor_source_fs import FSDriver
 
 

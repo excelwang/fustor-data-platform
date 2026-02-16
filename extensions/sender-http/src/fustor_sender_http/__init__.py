@@ -1,8 +1,8 @@
 """
-Fustor HTTP Sender - Transport layer for sensord to fustord communication.
+Fustor HTTP Sender - Transport layer for datacast to fustord communication.
 
 This package implements the HTTP transport protocol for sending events
-from Fustor sensord to Fustor fustord.
+from Fustor datacast to Fustor fustord.
 """
 try:
     from ._version import version as __version__
@@ -13,10 +13,10 @@ import logging
 from typing import Any, Dict, List, Optional
 
 import httpx
-from sensord_core.transport import Sender
-from sensord_core.exceptions import fustordConnectionError
-from sensord_core.event import EventBase
-from sensord_core.exceptions import SessionObsoletedError
+from datacast_core.transport import Sender
+from datacast_core.exceptions import fustordConnectionError
+from datacast_core.event import EventBase
+from datacast_core.exceptions import SessionObsoletedError
 
 
 class HTTPSender(Sender):
@@ -159,7 +159,7 @@ class HTTPSender(Sender):
             self.logger.error(f"[{source_type}] Failed to send {len(events)} events: {e}")
             return {"success": False, "error": "Push failed"}
     
-    async def heartbeat(self, can_realtime: bool = False, sensord_status: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    async def heartbeat(self, can_realtime: bool = False, datacast_status: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         """
         Send a heartbeat to maintain session.
         
@@ -171,7 +171,7 @@ class HTTPSender(Sender):
             return {"status": "error", "message": "Session ID not set"}
         
         try:
-            result = await self.client.send_heartbeat(self.session_id, can_realtime=can_realtime, sensord_status=sensord_status)
+            result = await self.client.send_heartbeat(self.session_id, can_realtime=can_realtime, datacast_status=datacast_status)
             
             if result and result.get("status") == "ok":
                 self.logger.debug("Heartbeat sent successfully.")

@@ -1,7 +1,7 @@
 import logging
 from typing import Optional, Tuple
 from fustord.domain.view_state_manager import view_state_manager
-from sensord_core.exceptions import ViewNotReadyError
+from datacast_core.exceptions import ViewNotReadyError
 
 logger = logging.getLogger(__name__)
 
@@ -20,7 +20,7 @@ async def check_view_readiness(view_id: str) -> bool:
     state = await view_state_manager.get_state(view_id)
     
     if not state or not state.authoritative_session_id:
-        raise ViewNotReadyError(f"View '{view_id}': No active leader session. Ensure at least one sensord is running.")
+        raise ViewNotReadyError(f"View '{view_id}': No active leader session. Ensure at least one datacast is running.")
         
     is_snapshot_complete = await view_state_manager.is_snapshot_complete(view_id)
     if not is_snapshot_complete:

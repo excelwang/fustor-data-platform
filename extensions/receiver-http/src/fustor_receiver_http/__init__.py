@@ -1,5 +1,5 @@
 """
-Fustor HTTP Receiver - Transport layer for fustord to receive events from sensords.
+Fustor HTTP Receiver - Transport layer for fustord to receive events from datacasts.
 
 This package implements the HTTP transport protocol for receiving events
 on the fustord side. Each HTTPReceiver starts its own independent HTTP server
@@ -16,8 +16,8 @@ import uvicorn
 from fastapi import APIRouter, Depends, HTTPException, status, Request
 from pydantic import BaseModel
 
-from sensord_core.transport import Receiver
-from sensord_core.event import EventBase, EventType, MessageSource
+from datacast_core.transport import Receiver
+from datacast_core.event import EventBase, EventType, MessageSource
 
 try:
     from fustord.management.auth.dependencies import get_view_id_from_api_key
@@ -65,7 +65,7 @@ class HeartbeatResponse(BaseModel):
 
 # --- Session Handler Protocol ---
 
-from sensord_core.models.states import SessionInfo
+from datacast_core.models.states import SessionInfo
 
 
 # Type aliases for callbacks
@@ -342,20 +342,20 @@ class HTTPReceiver(Receiver):
         @router.post("/{session_id}/heartbeat", response_model=HeartbeatResponse)
         async def heartbeat(session_id: str, request: Request):
             """Send a heartbeat to maintain session."""
-            # Extract can_realtime and sensord_status from payload (if any)
+            # Extract can_realtime and datacast_status from payload (if any)
             try:
                 payload = await request.json()
                 can_realtime = payload.get("can_realtime", False)
-                sensord_status = payload.get("sensord_status")
+                datacast_status = payload.get("datacast_status")
             except Exception:
                 can_realtime = False
-                sensord_status = None
+                datacast_status = None
 
             logger.debug(f"Received heartbeat for session {session_id}, can_realtime={can_realtime}")
 
             if receiver._on_heartbeat:
                 try:
-                    result = await receiver._on_heartbeat(session_id, can_realtime, sensord_status)
+                    result = await receiver._on_heartbeat(session_id, can_realtime, datacast_status)
                     if result and result.get("status") == "error":
                         raise HTTPException(
                             status_code=419,
@@ -483,6 +483,6 @@ __all__ = [
 ]
 
 # Register with global registry
-from sensord_core.transport.receiver import ReceiverRegistry
+from datacast_core.transport.receiver import ReceiverRegistry
 ReceiverRegistry.register("http", HTTPReceiver)
 

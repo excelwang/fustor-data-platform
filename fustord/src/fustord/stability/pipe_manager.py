@@ -3,8 +3,8 @@ import asyncio
 import logging
 from typing import Dict, List, Optional, Any
 
-from sensord_core.transport.receiver import Receiver
-from sensord_core.stability import BasePipeManager, StartResult
+from datacast_core.transport.receiver import Receiver
+from datacast_core.stability import BasePipeManager, StartResult
 from .pipe import FustordPipe
 from .mixins.manager_lifecycle import ManagerLifecycleMixin
 from .mixins.manager_callbacks import ManagerCallbacksMixin
@@ -116,12 +116,12 @@ class FustordPipeManager(BasePipeManager[FustordPipe], ManagerLifecycleMixin, Ma
             pipe = self.pool.get(id)
             if pipe:
                 await pipe.start()
-                return StartResult(sensord_pipe_id=id, success=True)
+                return StartResult(datacast_pipe_id=id, success=True)
             else:
-                return StartResult(sensord_pipe_id=id, success=False, error="Initialization failed silently")
+                return StartResult(datacast_pipe_id=id, success=False, error="Initialization failed silently")
         except Exception as e:
             logger.error(f"Failed to start pipe {id}: {e}")
-            return StartResult(sensord_pipe_id=id, success=False, error=str(e))
+            return StartResult(datacast_pipe_id=id, success=False, error=str(e))
 
     async def stop_one(self, id: str, **kwargs):
         pipe = self.pool.pop(id, None)

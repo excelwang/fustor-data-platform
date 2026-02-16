@@ -87,10 +87,10 @@ class SessionEventsMixin:
         self.statistics["sessions_closed"] += 1
         logger.info(f"Session {session_id} closed acknowledgement in pipe {self.id}")
     
-    async def keep_session_alive(self, session_id: str, can_realtime: bool = False, sensord_status: Optional[Dict[str, Any]] = None) -> bool:
+    async def keep_session_alive(self, session_id: str, can_realtime: bool = False, datacast_status: Optional[Dict[str, Any]] = None) -> bool:
         """Update last activity for a session (stats only)."""
-        if sensord_status:
-            self._last_sensord_status = sensord_status
+        if datacast_status:
+            self._last_datacast_status = datacast_status
         return True 
 
     async def get_session_role(self, session_id: str) -> str:

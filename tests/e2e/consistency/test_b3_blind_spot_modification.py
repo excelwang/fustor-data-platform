@@ -1,7 +1,7 @@
 """
 Test B3: Blind-spot file modification detected by Audit.
 
-验证无 sensord 客户端修改文件时，Audit 通过 mtime 仲裁更新内存树。
+验证无 datacast 客户端修改文件时，Audit 通过 mtime 仲裁更新内存树。
 参考文档: CONSISTENCY_DESIGN.md - Section 5.3 场景 1 (Audit 报告存在文件 X)
 """
 import pytest
@@ -22,20 +22,20 @@ logger = logging.getLogger("fustor_test")
 
 
 class TestBlindSpotFileModification:
-    """Test detection of file modifications by client without sensord."""
+    """Test detection of file modifications by client without datacast."""
 
     def test_blind_spot_modification_updates_mtime(
         self,
         docker_env,
         fustord_client,
-        setup_sensords,
+        setup_datacasts,
         clean_shared_dir,
         wait_for_audit
     ):
         """场景: 盲区修改更新 mtime"""
         test_file = f"{MOUNT_POINT}/blind_modify_test_{int(time.time()*1000)}.txt"
         
-        # Step 1: Create file from sensord client
+        # Step 1: Create file from datacast client
         docker_manager.create_file_in_container(
             CONTAINER_CLIENT_A,
             test_file,
@@ -100,21 +100,21 @@ class TestBlindSpotFileModification:
         assert success, \
             f"fustord mtime should match filesystem mtime {new_fs_mtime} after Audit. Got {mtime_after_audit}"
 
-    def test_blind_spot_modification_marks_sensord_missing(
+    def test_blind_spot_modification_marks_Datacast_missing(
         self,
         docker_env,
         fustord_client,
-        setup_sensords,
+        setup_datacasts,
         clean_shared_dir,
         wait_for_audit
     ):
-        """场景: 盲区修改的文件标记为 sensord_missing"""
+        """场景: 盲区修改的文件标记为 Datacast_missing"""
         import logging
         logger = logging.getLogger("fustor_test")
 
         test_file = f"{MOUNT_POINT}/blind_modify_flag_test_{int(time.time()*1000)}.txt"
         
-        # Create from sensord, modify from blind-spot
+        # Create from datacast, modify from blind-spot
         docker_manager.create_file_in_container(
             CONTAINER_CLIENT_A,
             test_file,
@@ -125,9 +125,9 @@ class TestBlindSpotFileModification:
         
         # Initial file check
         flags_initial = fustord_client.check_file_flags(test_file_rel)
-        if flags_initial["sensord_missing"]:
-            logger.warning("Filesystem creation missed by sensord A (flaky inotify). Injecting manual event to establish baseline.")
-            # Inject manual creation event to clear sensord_missing
+        if flags_initial["Datacast_missing"]:
+            logger.warning("Filesystem creation missed by datacast A (flaky inotify). Injecting manual event to establish baseline.")
+            # Inject manual creation event to clear Datacast_missing
             session = fustord_client.get_leader_session()
             if session:
                 session_id = session['session_id']
@@ -155,11 +155,11 @@ class TestBlindSpotFileModification:
                 fustord_client.session.post(url, json=batch_payload)
                 
                 # Wait for flag to clear
-                assert fustord_client.wait_for_flag(test_file_rel, "sensord_missing", False, timeout=SHORT_TIMEOUT), \
-                    "Failed to establish baseline: sensord_missing could not be cleared."
+                assert fustord_client.wait_for_flag(test_file_rel, "Datacast_missing", False, timeout=SHORT_TIMEOUT), \
+                    "Failed to establish baseline: Datacast_missing could not be cleared."
         
         flags_initial = fustord_client.check_file_flags(test_file_rel)
-        assert flags_initial["sensord_missing"] is False, "Baseline failed: sensord should know the file."
+        assert flags_initial["Datacast_missing"] is False, "Baseline failed: datacast should know the file."
         
         # Modify from blind-spot
         time.sleep(NFS_SYNC_DELAY) # Ensure mtime distinct
@@ -177,6 +177,6 @@ class TestBlindSpotFileModification:
         wait_for_audit()
         wait_for_audit()
         
-        # Check sensord_missing flag after modification
-        assert fustord_client.wait_for_flag(test_file_rel, "sensord_missing", True, timeout=SHORT_TIMEOUT), \
-            "sensord_missing flag should be set after blind modification"
+        # Check Datacast_missing flag after modification
+        assert fustord_client.wait_for_flag(test_file_rel, "Datacast_missing", True, timeout=SHORT_TIMEOUT), \
+            "Datacast_missing flag should be set after blind modification"

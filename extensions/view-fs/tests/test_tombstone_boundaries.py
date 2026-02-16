@@ -6,7 +6,7 @@ from fustor_view_fs.arbitrator import FSArbitrator
 from fustor_view_fs.audit import AuditManager
 from fustor_view_fs.state import FSState
 from fustor_view_fs.tree import TreeManager
-from sensord_core.event import EventBase, EventType, MessageSource
+from datacast_core.event import EventBase, EventType, MessageSource
 
 class TestTombstoneBoundaries:
     """

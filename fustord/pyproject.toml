@@ -12,7 +12,7 @@ dependencies = [
     "pydantic-settings",
     "httpx",
     "orjson",
-    "sensord-core"
+    "datacast-core"
 ]
 [[project.authors]]
 name = "Huajin Wang"
@@ -31,16 +31,16 @@ license = "MIT"
 [project.optional-dependencies]
 fs = ["fustor-view-fs", "fustor-schema-fs"]
 forest = ["fustor-view-fs-forest", "fustor-view-fs", "fustor-schema-fs"]
-mgmt = ["fustord-mgmt"]
+mgmt = ["datacast-mgmt[server]"]
 # Recommended installation for FS use cases
-default = ["fustor-view-fs", "fustor-receiver-http", "fustor-schema-fs", "fustord-mgmt"]
+default = ["fustor-view-fs", "fustor-receiver-http", "fustor-schema-fs", "datacast-mgmt[server]"]
 # Full install
 all = [
     "fustor-view-fs",
     "fustor-view-fs-forest",
     "fustor-receiver-http",
     "fustor-schema-fs",
-    "fustord-mgmt"
+    "datacast-mgmt[server]"
 ]
 dev = [ "pytest>=8.0.0", "ruff>=0.1.0", "mypy>=1.0.0", "pytest-asyncio>=0.23.0"]
 

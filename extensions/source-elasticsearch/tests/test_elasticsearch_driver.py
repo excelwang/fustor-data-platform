@@ -2,8 +2,8 @@ import pytest
 from unittest.mock import MagicMock, AsyncMock
 
 from fustor_source_elasticsearch import ElasticsearchDriver
-from sensord_core.models.config import SourceConfig, PasswdCredential
-from sensord_core.event import InsertEvent
+from datacast_core.models.config import SourceConfig, PasswdCredential
+from datacast_core.event import InsertEvent
 
 @pytest.fixture
 def es_config():
@@ -40,7 +40,7 @@ async def test_get_available_fields(mocker):
             "mappings": {
                 "properties": {
                     "message": {"type": "text"},
-                    "sensord": {"properties": {"id": {"type": "keyword"}}}
+                    "datacast": {"properties": {"id": {"type": "keyword"}}}
                 }
             }
         }
@@ -55,7 +55,7 @@ async def test_get_available_fields(mocker):
 
     expected_properties = {
         "message": {"type": "text"},
-        "sensord.id": {"type": "keyword"},
+        "datacast.id": {"type": "keyword"},
         "_id": {"type": "keyword"},
         "_index": {"type": "keyword"}
     }

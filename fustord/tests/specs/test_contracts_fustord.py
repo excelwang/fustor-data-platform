@@ -1,12 +1,12 @@
 import unittest
 import asyncio
 from unittest.mock import MagicMock, AsyncMock, patch
-from sensord_core.utils import verify_spec
+from datacast_core.utils import verify_spec
 from fustord.stability.pipe import FustordPipe
-from sensord_core.event import EventBase
+from datacast_core.event import EventBase
 
-from sensord_core.pipe import SensorPipe, PipeState
-from sensord_core.event import EventBase
+from datacast_core.pipe import DatacastPipe, PipeState
+from datacast_core.event import EventBase
 
 class TestFustordContracts(unittest.TestCase):
     """
@@ -28,7 +28,7 @@ class TestFustordContracts(unittest.TestCase):
         pipe._handlers_ready.set()
         
         event_dict = {
-            "source": "sensor1",
+            "source": "datacast1",
             "type": "UPDATE",
             "path": "/a/b",
             "data": {"val": 1},
@@ -111,7 +111,7 @@ class TestFustordContracts(unittest.TestCase):
         pipe._handlers_ready.set()
         
         event_dict = {
-            "source": "sensor1",
+            "source": "datacast1",
             "type": "UPDATE",
             "path": "/x",
             "data": {"v": 1},
@@ -137,7 +137,7 @@ class TestFustordContracts(unittest.TestCase):
     @verify_spec("CONTRACTS.LIFECYCLE")
     def test_lifecycle_contracts(self):
         """
-        fustord MUST detect Sensord zombies.
+        fustord MUST detect Datacast zombies.
         """
         # ASSERTION INTENT: Verify zombie detection logic
         pipe = FustordPipe("test_pipe", {"view_ids": ["view1"]})

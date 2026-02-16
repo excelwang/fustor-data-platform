@@ -1,9 +1,9 @@
 [project]
 name = "fustor-sender-openapi"
 version = "0.9.1"
-description = "An OpenAPI sender for Fustor sensord"
+description = "An OpenAPI sender for Fustor datacast"
 requires-python = ">=3.11"
-dependencies = [ "sensord-core"]
+dependencies = [ "datacast-core"]
 [[project.authors]]
 name = "Huajin Wang"
 email = "wanghuajin999@163.com"
@@ -20,7 +20,7 @@ Homepage = "https://github.com/excelwang/fustor/tree/master/extensions/sender-op
 
 license = "MIT"
 
-[project.entry-points."sensord.drivers.senders"]
+[project.entry-points."datacast.drivers.senders"]
 openapi = "fustor_sender_openapi:OpenApiDriver"
 
 

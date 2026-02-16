@@ -1,9 +1,9 @@
 [project]
 name = "fustor-source-elasticsearch"
 version = "0.9.1"
-description = "An Elasticsearch source for Fustor sensord"
+description = "An Elasticsearch source for Fustor datacast"
 requires-python = ">=3.11"
-dependencies = [ "elasticsearch>=9.2.0", "sensord-core"]
+dependencies = [ "elasticsearch>=9.2.0", "datacast-core"]
 [[project.authors]]
 name = "Huajin Wang"
 email = "wanghuajin999@163.com"
@@ -20,7 +20,7 @@ Homepage = "https://github.com/excelwang/fustor/tree/master/extensions/source-el
 
 license = "MIT"
 
-[project.entry-points."sensord.drivers.sources"]
+[project.entry-points."datacast.drivers.sources"]
 elasticsearch = "fustor_source_elasticsearch:ElasticsearchDriver"
 
 [tool.setuptools.packages.find]

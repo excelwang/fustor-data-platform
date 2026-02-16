@@ -2,7 +2,7 @@ import os
 import pytest
 import time
 from fustor_source_fs import FSDriver
-from sensord_core.models.config import SourceConfig
+from datacast_core.models.config import SourceConfig
 
 @pytest.fixture
 def fs_driver(tmp_path):

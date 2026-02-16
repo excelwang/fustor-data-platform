@@ -69,7 +69,7 @@ class FallbackDriverWrapper:
                 try:
                     return await attr(*args, **kwargs)
                 except Exception as e:
-                    # In Gap P0-3, we fallback to on-demand sensord scan on failure
+                    # In Gap P0-3, we fallback to on-demand datacast scan on failure
                     if runtime_objects.on_command_fallback:
                         try:
                             return await runtime_objects.on_command_fallback(self._view_id, kwargs)
@@ -97,7 +97,7 @@ class FallbackDriverWrapper:
             # Check if fallback handler is registered (it should be if fustord-mgmt is installed)
             if hasattr(runtime_objects, "on_command_fallback") and runtime_objects.on_command_fallback:
                 # Log only if it's NOT a ViewNotReadyError (which is expected during startup)
-                from sensord_core.exceptions import ViewNotReadyError
+                from datacast_core.exceptions import ViewNotReadyError
                 if not isinstance(e, ViewNotReadyError):
                     logger.warning(f"View {self._view_id} primary failed ({e}), triggering On-Command Fallback...")
                 else:
@@ -117,7 +117,7 @@ class FallbackDriverWrapper:
                     raise e
             else:
                 # No fallback capability
-                from sensord_core.exceptions import ViewNotReadyError
+                from datacast_core.exceptions import ViewNotReadyError
                 if isinstance(e, ViewNotReadyError):  # Use custom exception, not string matching
                      raise HTTPException(
                         status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
@@ -181,7 +181,7 @@ def make_readiness_checker(view_name: str) -> Callable:
         
         # 1. Centralized Check
         from fustord.stability.readiness import check_view_readiness
-        from sensord_core.exceptions import ViewNotReadyError
+        from datacast_core.exceptions import ViewNotReadyError
         
         try:
             await check_view_readiness(view_name)
@@ -335,7 +335,7 @@ def setup_view_routers():
         "/{view_id}/jobs", 
         list_view_jobs, 
         methods=["GET"],
-        summary="List sensord jobs for a view",
+        summary="List datacast jobs for a view",
         response_model=Dict[str, Any]
     )
     view_router.add_api_route(
@@ -356,7 +356,7 @@ def setup_view_routers():
 
 
 async def list_view_jobs(view_id: str, authorized_view_id: str = Depends(get_view_id_from_auth)):
-    """List sensord jobs for a specific view."""
+    """List datacast jobs for a specific view."""
     if authorized_view_id != view_id:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN, 
@@ -368,7 +368,7 @@ async def list_view_jobs(view_id: str, authorized_view_id: str = Depends(get_vie
 
 
 async def get_view_job_status(view_id: str, job_id: str, authorized_view_id: str = Depends(get_view_id_from_auth)):
-    """Get status of a specific sensord job in a view."""
+    """Get status of a specific datacast job in a view."""
     if authorized_view_id != view_id:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN, 
@@ -381,7 +381,7 @@ async def get_view_job_status(view_id: str, job_id: str, authorized_view_id: str
     if not job:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"sensord job '{job_id}' not found"
+            detail=f"datacast job '{job_id}' not found"
         )
         
     return job
@@ -409,7 +409,7 @@ async def list_view_sessions(view_id: str, authorized_view_id: str = Depends(get
         session_list.append({
             "session_id": s["session_id"],
             "task_id": s.get("task_id"),
-            "sensord_id": s.get("task_id", "").split(":")[0] if s.get("task_id") and ":" in s["task_id"] else s.get("task_id"),
+            "datacast_id": s.get("task_id", "").split(":")[0] if s.get("task_id") and ":" in s["task_id"] else s.get("task_id"),
             "client_ip": s.get("client_ip"),
             "source_uri": s.get("source_uri"),
             "last_activity": s.get("last_activity"),

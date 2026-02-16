@@ -7,7 +7,7 @@ import logging
 from io import StringIO
 from unittest.mock import patch
 import pytest
-from sensord_core.models.config import PasswdCredential, SourceConfig
+from datacast_core.models.config import PasswdCredential, SourceConfig
 from fustor_source_fs import FSDriver
 
 
@@ -61,7 +61,7 @@ def test_pre_scan_logs_safe_paths():
             import io
             log_capture_string = io.StringIO()
             ch = logging.StreamHandler(log_capture_string)
-            logger = logging.getLogger("sensord.driver.fs")
+            logger = logging.getLogger("datacast.driver.fs")
             logger.addHandler(ch)
             
             # Force the pre-scan to happen - this triggers the logging that was failing
@@ -70,5 +70,5 @@ def test_pre_scan_logs_safe_paths():
             # Check that no UnicodeEncodeError was raised during the process
             assert driver._pre_scan_completed == True
         finally:
-            logger = logging.getLogger("sensord.driver.fs")
+            logger = logging.getLogger("datacast.driver.fs")
             logger.handlers.clear()

@@ -7,11 +7,11 @@ import logging
 import time
 from typing import Any, Dict, List, Optional, TYPE_CHECKING
 
-from sensord_core.pipe import SensorPipe, PipeState
-from sensord_core.pipe.handler import ViewHandler
+from datacast_core.pipe import DatacastPipe, PipeState
+from datacast_core.pipe.handler import ViewHandler
 
 if TYPE_CHECKING:
-    from sensord_core.pipe.context import PipeContext
+    from datacast_core.pipe.context import PipeContext
 
 from .mixins.handler_dispatch import HandlerDispatchMixin
 from .mixins.session_events import SessionEventsMixin
@@ -24,7 +24,7 @@ class FustordPipe(
     HandlerDispatchMixin,
     SessionEventsMixin,
     IngestionMixin,
-    SensorPipe
+    DatacastPipe
 ):
     """
     fustord-side Pipe for receiving and processing events.

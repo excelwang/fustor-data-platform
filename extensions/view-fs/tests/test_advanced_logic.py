@@ -3,7 +3,7 @@ import asyncio
 import time
 import unittest
 from fustor_view_fs import FSViewDriver
-from sensord_core.event import UpdateEvent, MessageSource, DeleteEvent
+from datacast_core.event import UpdateEvent, MessageSource, DeleteEvent
 
 @pytest.fixture
 def parser():

@@ -13,57 +13,51 @@ version: 1.0.0
 
 **Rationale**: Abstract complex management tasks into simple protocol-level "rents" for unicast or broadcast delivery.
 
-在 **fustord** 中，所有的管理行为（升级、扫描、重启）统一抽象为对 **SCP (Sensord Control Protocol)** 寻址原语的租用。
+在 **fustord** 中，所有的管理行为（升级、扫描、重启）统一抽象为对 **SCP (Datacast Control Protocol)** 寻址原语的租用。
 
 ### 1.1 广播寻址 (Broadcast)
-- **API**: `SessionManager.broadcast(payload, view_id=None)`
-- **语义**: 将 payload 下发给所有关联了该 `view_id` 的 **Sensord**。若未指定 `view_id`，则广播至全量活跃节点。
+- **Mechanism**: `ViewDriver.trigger_on_demand_scan(path)` -> `JobManager.create_job()` -> `PipeSessionStore.queue_command()`
+- **语义**: 将 payload（通常是 `scan` 指令）下发给所有订阅了该 `view_id` 的 **Datacast**。
 - **场景**: 强制全网扫描（On-Command Find）。
 
 ### 1.2 单播寻址 (Unicast)
-- **API**: `SessionManager.unicast(payload, sensord_id)`
-- **语义**: 精准触达指定的某个 **Sensord**。
+- **Mechanism**: `PipeSessionStore.queue_command(session_id, payload)`
+- **语义**: 精准触达指定的某个 **Datacast** 正在运行的特定 Session。
 - **场景**: 灰度升级、特定节点的配置重载。
 
 ---
 
-## [interface] Task_Orchestrator_Interface_Definition
+## [interface] Job_and_Bridge_Coordination
 
-**Rationale**: Provide a clean service boundary for the management layer to interact with the stability layer's session pool.
+**Rationale**: Decouple task initiation from the delivery mechanism.
 
+### 2.1 Job Manager
+`JobManager` 负责管理跨 Session 的异步任务状态（如扫描进度）。
 ```python
-# Task Orchestrator interface
-class ITaskOrchestrator:
-    async def view_broadcast(self, view_id: str, cmd: Dict): ...
-    async def sensord_targeted_dispatch(self, sensord_id: str, cmd: Dict): ...
+class JobManager:
+    async def create_job(self, view_id: str, path: str, sessions: List[str]) -> str: ...
+    async def complete_job_for_session(self, view_id: str, session_id: str, path: str): ...
 ```
 
-建议封装通用的 `TaskOrchestrator` 服务，隔离分发细节：
-
+### 2.2 Pipe Session Bridge
+`PipeSessionBridge` 负责维护单次 Session 的指令队列。
 ```python
-class TaskOrchestrator:
-    async def view_broadcast(self, view_id: str, cmd: Dict) -> List[Dict]:
-        """
-        全量广播逻辑：用于回退扫描。
-        1. 确定 ViewID 关联的所有 Session
-        2. Stability.broadcast()
-        3. 汇聚结果
-        """
-        pass
-
-    async def sensord_targeted_dispatch(self, sensord_id: str, cmd: Dict) -> Dict:
-        """
-        精准选路逻辑：用于升级/停止。
-        1. 确定 sensordID 关联的 Session (优先 Leader)
-        2. Stability.unicast()
-        """
-        pass
+class PipeSessionBridge:
+    # 指令入队
+    def queue_command(self, session_id: str, cmd: Dict):
+        self.store.queue_command(session_id, cmd)
+    
+    # 心跳带出指令 (搭載响应模式)
+    async def keep_alive(self, session_id: str) -> Dict:
+        commands = self.store.get_and_clear_commands(session_id)
+        return {"status": "ok", "commands": commands}
 ```
 
 ---
 
 ## [mechanism] Command_Piggyback_Dispatch_Model
 
-由于 **Sensord** 与 **fustord** 之间通常是基于 HTTP 的 Pull 模型（心跳由 Sensord 发起），指令分发采用 **搭载响应模式**：
-1. `SessionManager` 将待发指令存入目标 Session 的指令队列。
-2. 当 **Sensord** 下一次 POST 心跳时，指令队列中的 Payload 被作为响应体返回。
+由于 **Datacast** 与 **fustord** 之间基于 HTTP 的 Pull 模型（心跳由 Datacast 发起），指令分发采用 **搭载响应模式**：
+1. **Producer**: 管理逻辑（如 `FSViewDriver`）调用 `pipe.session_bridge.store.queue_command()`。
+2. **Buffer**: 通用 `session_id` 寻址，指令存在于 `PipeSessionStore` 的内存队列中。
+3. **Consumer**: 当 **Datacast** 下一次 POST 心跳时，`keep_alive` 逻辑取出队列中的所有 Payload，作为响应体返回给 Datacast 执行。

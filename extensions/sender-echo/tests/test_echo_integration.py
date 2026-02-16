@@ -4,7 +4,7 @@ Integration test to verify that the echo sender can trigger snapshot sync.
 import asyncio
 import pytest
 from fustor_sender_echo import EchoDriver
-from sensord_core.event import UpdateEvent
+from datacast_core.event import UpdateEvent
 
 @pytest.mark.asyncio
 async def test_echo_pipe_instance_triggers_snapshot():

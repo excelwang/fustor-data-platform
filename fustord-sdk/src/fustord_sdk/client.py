@@ -3,7 +3,7 @@ import httpx
 import logging
 from typing import Optional, List, Dict, Any
 
-logger = logging.getLogger("sensord.sdk")
+logger = logging.getLogger("datacast.sdk")
 
 def contains_surrogate_characters(text: str) -> bool:
     """Check if text contains surrogate characters."""
@@ -66,7 +66,7 @@ class fustordClient:
     # --- Management API ---
 
     async def get_dashboard(self) -> Dict[str, Any]:
-        """Return a full overview of all views, pipes, sessions, and connected sensords."""
+        """Return a full overview of all views, pipes, sessions, and connected datacasts."""
         response = await self.client.get(f"{self._management_path}/dashboard")
         response.raise_for_status()
         return response.json()
@@ -90,23 +90,23 @@ class fustordClient:
         response.raise_for_status()
         return response.json()
 
-    async def get_sensord_config(self, sensord_id: str, trigger: bool = False, filename: str = "default.yaml") -> Dict[str, Any]:
-        """Get the cached configuration of an sensord."""
+    async def get_DatacastConfig(self, datacast_id: str, trigger: bool = False, filename: str = "default.yaml") -> Dict[str, Any]:
+        """Get the cached configuration of an datacast."""
         params = {"trigger": str(trigger).lower(), "filename": filename}
-        response = await self.client.get(f"{self._management_path}/sensords/{sensord_id}/config", params=params)
+        response = await self.client.get(f"{self._management_path}/datacasts/{datacast_id}/config", params=params)
         response.raise_for_status()
         return response.json()
 
-    async def update_sensord_config_structured(self, sensord_id: str, config: Dict[str, Any], filename: str = "default.yaml") -> Dict[str, Any]:
-        """Update sensord config via structured JSON."""
+    async def update_DatacastConfig_structured(self, datacast_id: str, config: Dict[str, Any], filename: str = "default.yaml") -> Dict[str, Any]:
+        """Update datacast config via structured JSON."""
         payload = {**config, "filename": filename}
-        response = await self.client.post(f"{self._management_path}/sensords/{sensord_id}/config/structured", json=payload)
+        response = await self.client.post(f"{self._management_path}/datacasts/{datacast_id}/config/structured", json=payload)
         response.raise_for_status()
         return response.json()
 
-    async def send_sensord_command(self, sensord_id: str, command: Dict[str, Any]) -> Dict[str, Any]:
-        """Queue a command for a specific sensord."""
-        response = await self.client.post(f"{self._management_path}/sensords/{sensord_id}/command", json=command)
+    async def send_datacast_command(self, datacast_id: str, command: Dict[str, Any]) -> Dict[str, Any]:
+        """Queue a command for a specific datacast."""
+        response = await self.client.post(f"{self._management_path}/datacasts/{datacast_id}/command", json=command)
         response.raise_for_status()
         return response.json()
 
@@ -196,15 +196,15 @@ class fustordClient:
             logger.error(f"An error occurred during event push: {e}")
             return False
 
-    async def send_heartbeat(self, session_id: str, can_realtime: bool = False, sensord_status: Optional[Dict[str, Any]] = None) -> Optional[Dict[str, Any]]:
+    async def send_heartbeat(self, session_id: str, can_realtime: bool = False, datacast_status: Optional[Dict[str, Any]] = None) -> Optional[Dict[str, Any]]:
         """
         Sends a heartbeat to the fustord service to keep the session alive.
         Returns the response dict if successful, None otherwise.
         """
         try:
             params = {"can_realtime": can_realtime}
-            if sensord_status:
-                params["sensord_status"] = sensord_status
+            if datacast_status:
+                params["datacast_status"] = datacast_status
             response = await self.client.post(f"{self._session_path}/{session_id}/heartbeat", json=params)
             response.raise_for_status()
             return response.json()

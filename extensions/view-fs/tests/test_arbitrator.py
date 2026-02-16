@@ -6,7 +6,7 @@ from unittest.mock import MagicMock
 from fustor_view_fs.arbitrator import FSArbitrator
 from fustor_view_fs.state import FSState
 from fustor_view_fs.tree import TreeManager
-from sensord_core.event import MessageSource, EventType, EventBase
+from datacast_core.event import MessageSource, EventType, EventBase
 
 @pytest.fixture
 def fs_state():
@@ -53,7 +53,7 @@ async def test_arbitrator_realtime_upsert(arbitrator, fs_state):
     assert node is not None
     assert node.size == 100
     assert node.modified_time == 1000.0
-    assert node.known_by_sensord is True
+    assert node.known_by_Datacast is True
 
 @pytest.mark.asyncio
 async def test_arbitrator_tombstone_protection(arbitrator, fs_state):

@@ -1,6 +1,6 @@
 # fustor-sender-http
 
-HTTP Sender for Fustor sensord - implements the transport layer for sensord to fustord communication.
+HTTP Sender for Fustor datacast - implements the transport layer for datacast to fustord communication.
 
 ## Overview
 
@@ -40,7 +40,7 @@ await sender.close()
 ## Entry Points
 
 This package registers itself as:
-- `sensord.drivers.senders:fustord` - Standard sender registry
+- `datacast.drivers.senders:fustord` - Standard sender registry
 
 ## Migration from fustor-sender-fustord
 
