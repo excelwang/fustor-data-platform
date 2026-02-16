@@ -1,7 +1,7 @@
 
 """
 Integration tests for advanced deployment scenarios.
-- Fan-Out (1 Agent -> Multi Views)
+- Fan-Out (1 sensord -> Multi Views)
 - Aggregation (Multi Pipes -> Single View)
 - HA Dynamic Adjustment (Config Reload)
 """
@@ -22,7 +22,7 @@ logger = logging.getLogger("fustor_test")
 
 # Paths inside containers (processed config, NOT templates)
 FUSION_PROCESSED_CONFIG_DIR = "/root/.fustor/fusion-config"
-AGENT_PROCESSED_CONFIG_DIR = "/root/.fustor/agent-config"
+AGENT_PROCESSED_CONFIG_DIR = "/root/.fustor/sensord-config"
 
 
 @pytest.fixture
@@ -68,16 +68,16 @@ def extra_fusion_config():
 
 
 @pytest.fixture
-def extra_agent_config():
-    """Create extra YAML config files in Agent's processed config directory.
+def extra_sensord_config():
+    """Create extra YAML config files in sensord's processed config directory.
     
-    Similar to extra_fusion_config but targets Agent containers.
+    Similar to extra_fusion_config but targets sensord containers.
     Cleans up on teardown.
     """
     created_files = []  # list of (container, container_path) tuples
     
     def _create(container_name, filename, content):
-        """Create a YAML config file directly in Agent container.
+        """Create a YAML config file directly in sensord container.
         
         Args:
             container_name: Container name
@@ -92,7 +92,7 @@ def extra_agent_config():
             "docker", "exec", container_name,
             "sh", "-c", f"cat > {container_path} << 'YAML_EOF'\n{yaml_str}\nYAML_EOF"
         ])
-        logger.info(f"Created Agent extra config in {container_name}: {container_path}")
+        logger.info(f"Created sensord extra config in {container_name}: {container_path}")
         created_files.append((container_name, container_path))
     
     yield _create
@@ -101,7 +101,7 @@ def extra_agent_config():
     for container, path in created_files:
         try:
             subprocess.call(["docker", "exec", container, "rm", "-f", path])
-            logger.info(f"Removed Agent extra config {path} from {container}")
+            logger.info(f"Removed sensord extra config {path} from {container}")
         except Exception as e:
             logger.warning(f"Could not remove {path} from {container}: {e}")
 
@@ -109,10 +109,10 @@ def extra_agent_config():
 class TestAdvancedDeployments:
 
     def test_fan_out_deployment(
-        self, docker_env, setup_agents, fusion_client, extra_fusion_config
+        self, docker_env, setup_sensords, fusion_client, extra_fusion_config
     ):
         """
-        Test Scenario: Fan-Out (One Agent -> Multiple Views)
+        Test Scenario: Fan-Out (One sensord -> Multiple Views)
         
         The default config already defines the 'archive-fanout' view.
         This test overrides the pipe config to fan-out events to BOTH views.
@@ -144,7 +144,7 @@ class TestAdvancedDeployments:
             "Fusion did not become ready after restart with fan-out config"
         
         # Write data via leader
-        containers = setup_agents["containers"]
+        containers = setup_sensords["containers"]
         leader = containers["leader"]
         timestamp = int(time.time())
         filename = f"fanout_{timestamp}.txt"
@@ -166,14 +166,14 @@ class TestAdvancedDeployments:
             fusion_client.view_id = original_view
 
     def test_aggregation_deployment(
-        self, docker_env, setup_agents, fusion_client, 
-        extra_fusion_config, extra_agent_config
+        self, docker_env, setup_sensords, fusion_client, 
+        extra_fusion_config, extra_sensord_config
     ):
         """
         Test Scenario: Aggregation (Multiple Pipes -> Single View)
         
         Create a second pipe (pipe-agg) that feeds into the same view.
-        Agent monitors a separate directory via this second pipe.
+        sensord monitors a separate directory via this second pipe.
         """
         view_id = os.environ.get("TEST_VIEW_ID", "integration-test-ds")
         agg_pipe_id = "pipe-agg"
@@ -192,11 +192,11 @@ class TestAdvancedDeployments:
             }
         })
         
-        # 2. Add new source + pipe to Agent (leader)
-        containers = setup_agents["containers"]
+        # 2. Add new source + pipe to sensord (leader)
+        containers = setup_sensords["containers"]
         leader = containers["leader"]
         
-        extra_agent_config(leader, "extra_agg.yaml", {
+        extra_sensord_config(leader, "extra_agg.yaml", {
             "sources": {
                 agg_source_id: {
                     "driver": "fs",
@@ -214,16 +214,16 @@ class TestAdvancedDeployments:
         # 3. Create the aggregated directory
         docker_env.exec_in_container(leader, ["mkdir", "-p", "/mnt/shared/aggregated"])
         
-        # 4. Restart Fusion and reload Agent
+        # 4. Restart Fusion and reload sensord
         subprocess.check_call(["docker", "restart", CONTAINER_FUSION])
         logger.info("Waiting for Fusion to reload with aggregation config...")
         assert fusion_client.wait_for_view_ready(timeout=EXTREME_TIMEOUT), \
             "Fusion did not become ready after restart with aggregation config"
         
-        # Reload agent config via SIGHUP
-        docker_env.exec_in_container(leader, ["pkill", "-HUP", "-f", "fustor-agent"])
-        logger.info("Sent SIGHUP to agent for config reload. Waiting...")
-        time.sleep(10)  # Give agent time to reload config and reconnect
+        # Reload sensord config via SIGHUP
+        docker_env.exec_in_container(leader, ["pkill", "-HUP", "-f", "fustor-sensord"])
+        logger.info("Sent SIGHUP to sensord for config reload. Waiting...")
+        time.sleep(10)  # Give sensord time to reload config and reconnect
         
         # 5. Write to aggregated source directory
         timestamp = int(time.time())
@@ -238,7 +238,7 @@ class TestAdvancedDeployments:
             f"Aggregated file not found in view {view_id}"
 
     def test_ha_dynamic_adjustment(
-        self, docker_env, setup_agents, fusion_client, extra_fusion_config
+        self, docker_env, setup_sensords, fusion_client, extra_fusion_config
     ):
         """
         Test Scenario: HA Cluster Configuration Reload

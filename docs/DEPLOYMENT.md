@@ -1,6 +1,6 @@
 # Fustor 平台部署安装指南
 
-本文档旨在指导管理员从零开始部署 Fustor 数据融合存储平台，包括 **Fusion（服务端）** 和 **Agent（采集端）** 的安装、配置与启动。
+本文档旨在指导管理员从零开始部署 Fustor 数据融合存储平台，包括 **Fusion（服务端）** 和 **sensord（采集端）** 的安装、配置与启动。
 
 ## 1. 环境准备
 
@@ -29,7 +29,7 @@ Fustor 使用统一的主目录来存放配置、日志和持久化数据。
 ~/.fustor/
 ├── fusion-config/       # Fusion 服务端配置文件
 │   └── default.yaml     # 核心配置文件，包含全局设置和默认
-├── agent-config/        # Agent 采集端配置文件
+├── sensord-config/        # sensord 采集端配置文件
 │   └── default.yaml     # 核心配置文件，包含日志和全局设置
 ├── logs/                # 运行日志
 └── data/                # 持久化数据存储
@@ -63,14 +63,14 @@ logging: "INFO"         # 日志级别: DEBUG, INFO, WARNING, ERROR, CRITICAL
 host: "0.0.0.0"         # 管理 API 绑定地址
 port: 8101              # 管理 API 端口
 
-# 1. 定义接收器 (Receiver): 用于接收 Agent 推送的数据
+# 1. 定义接收器 (Receiver): 用于接收 sensord 推送的数据
 receivers:
   http-main:
     driver: http          # 使用 HTTP 协议
     bind_host: "0.0.0.0"
     port: 18888           # 数据接收端口 (不同于管理端口)
     api_keys:
-      - key: "agent-ingestion-key" # 用于推送数据的 Key
+      - key: "sensord-ingestion-key" # 用于推送数据的 Key
         pipe_id: "research-sync"   # 绑定到指定的 Pipe ID
 
 # 2. 定义视图 (View): 定义数据的存储和展示方式
@@ -109,25 +109,25 @@ fustor-fusion start -D
 
 ---
 
-## 4. 部署 Agent (采集端)
+## 4. 部署 sensord (采集端)
 
-Agent 部署在数据源所在的机器上，负责监听数据源变更并推送给 Fusion。
+sensord 部署在数据源所在的机器上，负责监听数据源变更并推送给 Fusion。
 
 ### 4.1 安装
 
 ```bash
 # 推荐使用 uv
-uv pip install fustor-agent fustor-source-fs fustor-sender-http
+uv pip install fustor-sensord fustor-source-fs fustor-sender-http
 
 # 或使用 pip
-pip install fustor-agent fustor-source-fs fustor-sender-http
+pip install fustor-sensord fustor-source-fs fustor-sender-http
 ```
 
 ### 4.2 配置
 
-在 `~/.fustor/agent-config/` 目录下创建配置文件（例如 `default.yaml`）。
+在 `~/.fustor/sensord-config/` 目录下创建配置文件（例如 `default.yaml`）。
 
-# 样例配置 (`~/.fustor/agent-config/default.yaml`):
+# 样例配置 (`~/.fustor/sensord-config/default.yaml`):
 
 ```yaml
 # 0. 全局设置 (可选)
@@ -152,7 +152,7 @@ senders:
     batch_size: 1000      # 批量发送条数
     timeout_sec: 30       # 请求超时时间
     credential:
-      key: "agent-ingestion-key" # 必须与 Fusion receivers 配置中的 key 一致
+      key: "sensord-ingestion-key" # 必须与 Fusion receivers 配置中的 key 一致
 
 # 3. 定义同步管道 (Pipe): 绑定源与目标
 pipes:
@@ -168,10 +168,10 @@ pipes:
 
 ```bash
 # 前台启动 (仅加载 default.yaml)
-fustor-agent start
+fustor-sensord start
 
 # 后台启动
-fustor-agent start -D
+fustor-sensord start -D
 ```
 
 ---
@@ -187,16 +187,16 @@ Fustor 支持在不重启服务的情况下动态更新配置。
 # 重载 Fusion 配置
 fustor-fusion reload
 
-# 重载 Agent 配置
-fustor-agent reload
+# 重载 sensord 配置
+fustor-sensord reload
 ```
 
 ### 5.2 运行机制
 *   **信号触发**: CLI 命令本质上是向后台进程发送了 `SIGHUP` 信号。
 *   **增量更新**: 系统会计算配置差异，自动启动新增加的管道，停止已禁用的组件关联的管道，并更新全局参数（如日志级别），整个过程中已存在的活动连接不受影响。
 
-*   **Agent 报错 "Connection refused"**: 检查 `senders` 配置中的 IP 和端口是否正确，确保 Fusion 服务器防火墙允许 18888 端口（Receiver 端口）通过。
-*   **Fusion 报错 "Unauthorized"**: 检查 Agent 的 `api_key` 是否与 Fusion `receivers` 配置中的 Key 完全一致。
+*   **sensord 报错 "Connection refused"**: 检查 `senders` 配置中的 IP 和端口是否正确，确保 Fusion 服务器防火墙允许 18888 端口（Receiver 端口）通过。
+*   **Fusion 报错 "Unauthorized"**: 检查 sensord 的 `api_key` 是否与 Fusion `receivers` 配置中的 Key 完全一致。
 *   **配置未生效**: 确保配置文件扩展名为 `.yaml`。对于非 `default.yaml` 的配置，如果在启动时未明确指定文件，需在修改后运行 `reload` 命令或手动重启。默认情况下，`start` 不带参数仅会激活 `default.yaml` 中的管道。
 
 ---
@@ -237,10 +237,10 @@ fustor-agent reload
 | :--- | :--- | :--- | :--- |
 | `receiver` | string | (必填) | 关联的 Receiver ID |
 | `views` | list[str] | `[]` | 数据分发的目标 View ID 列表 |
-| `allow_concurrent_push` | bool | `true` | 是否允许 Agent 并发推送数据 |
+| `allow_concurrent_push` | bool | `true` | 是否允许 sensord 并发推送数据 |
 | `session_timeout_seconds` | int | `30` | 会话超时时间(秒) |
 
-### 6.3 Agent 配置参数
+### 6.3 sensord 配置参数
 
 **数据源 (`sources` 节)**
 | 参数名 | 类型 | 默认值 | 说明 |
@@ -264,7 +264,7 @@ fustor-agent reload
 | `timeout_sec` | int | `30` | 网络请求超时时间(秒) |
 | `disabled` | bool | `false` | 是否禁用此发送器 |
 
-**Agent 管道 (`pipes` 节)**
+**sensord 管道 (`pipes` 节)**
 | 参数名 | 类型 | 默认值 | 说明 |
 | :--- | :--- | :--- | :--- |
 | `source` | string | (必填) | 关联的 Source ID |

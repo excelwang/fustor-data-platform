@@ -14,19 +14,19 @@ from fixtures.constants import (
 logger = logging.getLogger("fustor_test")
 
 @pytest.mark.asyncio
-async def test_i8_hot_reload_add_source(reset_fusion_state, setup_agents, fusion_client):
+async def test_i8_hot_reload_add_source(reset_fusion_state, setup_sensords, fusion_client):
     """
     Test the Dynamic Scaling / Hot Reload workflow:
-    1. Start with standard Agent A (Source 1) -> Fusion (View 1).
+    1. Start with standard sensord A (Source 1) -> Fusion (View 1).
     2. Hot-add a Multi-FS view aggregating [View 1].
-    3. Hot-add a new Source 2 on Agent A.
+    3. Hot-add a new Source 2 on sensord A.
     4. Hot-add View 2 (for Source 2) on Fusion and add to Multi-FS view.
     5. Verify Source 2 data appears in Multi-FS view.
     """
-    env = setup_agents
+    env = setup_sensords
     api_key_base = env["api_key"]
     
-    # 0. Prepare new source directory on Agent A
+    # 0. Prepare new source directory on sensord A
     new_mount_point = "/tmp/extra_source"
     docker_manager.exec_in_container(CONTAINER_CLIENT_A, ["mkdir", "-p", new_mount_point])
     new_file_path = f"{new_mount_point}/new_file.txt"
@@ -135,14 +135,14 @@ async def test_i8_hot_reload_add_source(reset_fusion_state, setup_agents, fusion
         
         time.sleep(5) # Extra buffer for startup
         
-        logger.info("=== Step 3: Modifying Agent Config ===")
-        # Agent config modification worked previously, so we keep targeting runtime config or verify?
-        # Agent restart logic worked, implying config persisted or wasn't overwritten.
-        # But to be safe, let's target /config/agent-config/default.yaml if possible?
+        logger.info("=== Step 3: Modifying sensord Config ===")
+        # sensord config modification worked previously, so we keep targeting runtime config or verify?
+        # sensord restart logic worked, implying config persisted or wasn't overwritten.
+        # But to be safe, let's target /config/sensord-config/default.yaml if possible?
         # Entrypoint check showed it runs conditionally. Assuming previous logic was OK.
-        # Actually, let's stick to previous logic for Agent as it worked.
+        # Actually, let's stick to previous logic for sensord as it worked.
         
-        def update_agent(data):
+        def update_sensord(data):
             # 1. New Source
             data.setdefault("sources", {})
             data["sources"]["source-extra"] = {
@@ -168,19 +168,19 @@ async def test_i8_hot_reload_add_source(reset_fusion_state, setup_agents, fusion
                 "audit_interval_sec": 5, # Fast audit for test
             }
             
-        update_yaml_in_container(CONTAINER_CLIENT_A, "/root/.fustor/agent-config/default.yaml", update_agent)
+        update_yaml_in_container(CONTAINER_CLIENT_A, "/root/.fustor/sensord-config/default.yaml", update_sensord)
         
-        logger.info("=== Step 4: Reloading Agent (SIGHUP) ===")
+        logger.info("=== Step 4: Reloading sensord (SIGHUP) ===")
         # Attempt SIGHUP reload using CLI
-        res = docker_manager.exec_in_container(CONTAINER_CLIENT_A, ["fustor-agent", "reload"])
+        res = docker_manager.exec_in_container(CONTAINER_CLIENT_A, ["fustor-sensord", "reload"])
         logger.info(f"Reload Output: {res.stdout.strip()}")
         if res.returncode != 0:
              logger.warning(f"Reload CLI failed: {res.stderr.strip()}. Tying pkill...")
-             docker_manager.exec_in_container(CONTAINER_CLIENT_A, ["pkill", "-HUP", "-f", "fustor-agent"])
+             docker_manager.exec_in_container(CONTAINER_CLIENT_A, ["pkill", "-HUP", "-f", "fustor-sensord"])
 
         time.sleep(2) # Wait for reload processing
         
-        # Wait for agent to connect and push data
+        # Wait for sensord to connect and push data
         time.sleep(5)
         
         logger.info("=== Step 5: Verification ===")

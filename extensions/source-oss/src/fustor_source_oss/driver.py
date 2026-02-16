@@ -139,7 +139,7 @@ class OssSourceDriver(SourceDriver):
                             
                             # Filter for objects modified AFTER the last_known_position
                             # We use '>=' to potentially include items modified in the same second as the last checkpoint
-                            # The consumer (Agent) should handle exact duplicates if any.
+                            # The consumer (sensord) should handle exact duplicates if any.
                             if obj_timestamp >= last_known_position:
                                 new_or_modified_objects.append(s3_obj)
                                 if obj_timestamp > current_max_timestamp:

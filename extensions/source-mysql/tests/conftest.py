@@ -3,7 +3,7 @@ import pytest_asyncio
 import os
 import pymysql
 
-from fustor_agent.app import App
+from sensord.app import App
 
 @pytest_asyncio.fixture(scope="function")
 async def test_db_setup(test_app_instance: App):

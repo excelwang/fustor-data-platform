@@ -31,7 +31,7 @@ Usage:
     bridge = PipeSessionBridge(pipe, session_manager)
     
     # Create session goes through both systems
-    session_id = await bridge.create_session(task_id="agent:pipe", ...)
+    session_id = await bridge.create_session(task_id="sensord:pipe", ...)
 """
 import asyncio
 import logging
@@ -55,7 +55,7 @@ class PipeSessionStore:
     
     def __init__(self, view_ids: List[str]):
         self.view_ids = view_ids
-        # {session_id: {agent_id, source_uri}}
+        # {session_id: {sensord_id, source_uri}}
         self.lineage_cache: Dict[str, Dict[str, str]] = {}
         # {election_key: set(session_id)}
         self.leader_cache: Dict[str, set] = {}
@@ -156,7 +156,7 @@ class PipeSessionBridge:
         Create a session in both Pipe and SessionManager.
         
         Args:
-            task_id: Agent task ID
+            task_id: sensord task ID
             client_ip: Client IP address
             session_timeout_seconds: Session timeout
             allow_concurrent_push: Whether to allow concurrent push
@@ -240,7 +240,7 @@ class PipeSessionBridge:
         if source_uri:
             lineage["source_uri"] = source_uri
         if task_id:
-            lineage["agent_id"] = task_id.split(":")[0] if ":" in task_id else task_id
+            lineage["sensord_id"] = task_id.split(":")[0] if ":" in task_id else task_id
             
         self.store.add_session(session_id, lineage)
 
@@ -279,7 +279,7 @@ class PipeSessionBridge:
         session_id: str,
         client_ip: Optional[str] = None,
         can_realtime: bool = False,
-        agent_status: Optional[Dict[str, Any]] = None
+        sensord_status: Optional[Dict[str, Any]] = None
     ) -> Dict[str, Any]:
         """
         Keep session alive (heartbeat).
@@ -287,8 +287,8 @@ class PipeSessionBridge:
         Args:
             session_id: The session to keep alive
             client_ip: Client IP for tracking
-            can_realtime: Whether the agent is ready for realtime events
-            agent_status: Status report from the agent
+            can_realtime: Whether the sensord is ready for realtime events
+            sensord_status: Status report from the sensord
             
         Returns:
             Heartbeat response with role, tasks, etc.
@@ -307,7 +307,7 @@ class PipeSessionBridge:
                 session_id=session_id,
                 client_ip=client_ip,
                 can_realtime=can_realtime,
-                agent_status=agent_status
+                sensord_status=sensord_status
             )
             if alive:
                 # Merge commands from all views (one pipe, multiple views)
@@ -326,7 +326,7 @@ class PipeSessionBridge:
         await self._pipe.keep_session_alive(
             session_id, 
             can_realtime=can_realtime, 
-            agent_status=agent_status
+            sensord_status=sensord_status
         )
         
         # 3. Try to become leader (Follower promotion) if not known leader
@@ -440,7 +440,7 @@ class PipeSessionBridge:
         timeout: float = 5.0
     ) -> Dict[str, Any]:
         """
-        Send a command to the agent and wait for a response.
+        Send a command to the sensord and wait for a response.
         
         This enables synchronous-like API behavior over the async pipe.
         
@@ -470,7 +470,7 @@ class PipeSessionBridge:
             # 3. Queue command for next heartbeat (legacy mechanism)
             # OR send directly if we had a push channel (future optimization)
             # Currently we piggy-back on heartbeat response via session_manager
-            # Flatten params into the command dict for Agent compatibility
+            # Flatten params into the command dict for sensord compatibility
             command_payload = {
                 "id": cmd_id,
                 "type": command,

@@ -38,7 +38,7 @@ class PipeState(IntFlag):
 
 class FustorPipe(ABC):
     """
-    Abstract base class for all Fustor Pipes (Agent or Fusion).
+    Abstract base class for all Fustor Pipes (sensord or Fusion).
     
     A FustorPipe orchestrates:
     - Session lifecycle management
@@ -46,7 +46,7 @@ class FustorPipe(ABC):
     - Heartbeat and timeout handling
     - Error recovery
     
-    Agent FustorPipe: Source -> Sender
+    sensord FustorPipe: Source -> Sender
     Fusion FustorPipe: Receiver -> View(s)
     """
     

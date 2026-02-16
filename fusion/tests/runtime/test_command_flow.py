@@ -63,7 +63,7 @@ async def test_fusion_command_queue_flow():
     assert await global_sm.has_pending_job(view_id, path) is True
     
     # 7. Simulate Scan Completion
-    await global_sm.complete_agent_job(view_id, session_id, path, job_id=job_id)
+    await global_sm.complete_sensord_job(view_id, session_id, path, job_id=job_id)
     
     # 8. Verify Scan Pending is Cleared
     assert await global_sm.has_pending_job(view_id, path) is False

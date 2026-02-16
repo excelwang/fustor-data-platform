@@ -13,18 +13,18 @@ echo "Mounting NFS share..."
 mount -t nfs -o "${MOUNT_OPTIONS}" "${NFS_SERVER}:${NFS_PATH}" "${MOUNT_POINT}"
 echo "NFS mounted at ${MOUNT_POINT}"
 
-# Start Agent if enabled
+# Start sensord if enabled
 if [ "${AGENT_ENABLED}" = "true" ]; then
-    echo "Starting Fustor Agent (${AGENT_ID})..."
+    echo "Starting Fustor sensord (${AGENT_ID})..."
     
-    # Create agent configuration
-    mkdir -p /data/agent
-    cat > /data/agent/config.yaml << EOF
-agent:
+    # Create sensord configuration
+    mkdir -p /data/sensord
+    cat > /data/sensord/config.yaml << EOF
+sensord:
   id: "${AGENT_ID}"
   host: "0.0.0.0"
   port: ${AGENT_PORT}
-  data_dir: "/data/agent"
+  data_dir: "/data/sensord"
 
 sources:
   shared-fs:
@@ -45,10 +45,10 @@ senders:
       view_id: "${VIEW_ID}"
 EOF
 
-    # Start agent in background
-    fustor-agent start --config /data/agent/config.yaml &
+    # Start sensord in background
+    fustor-sensord start --config /data/sensord/config.yaml &
     AGENT_PID=$!
-    echo "Agent started with PID ${AGENT_PID}"
+    echo "sensord started with PID ${AGENT_PID}"
 fi
 
 # Keep container running

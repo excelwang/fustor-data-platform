@@ -1,7 +1,7 @@
 """
 Test E1: Leader failover when leader crashes.
 
-验证当 Leader Agent 宕机后，Follower 接管成为新 Leader。
+验证当 Leader sensord 宕机后，Follower 接管成为新 Leader。
 参考文档: CONSISTENCY_DESIGN.md - Section 3.3 (Follower 在 Leader 会话超时后可升级为 Leader)
 """
 import pytest
@@ -13,24 +13,24 @@ from ..fixtures.constants import SHORT_TIMEOUT, MEDIUM_TIMEOUT, EXTREME_TIMEOUT,
 
 
 class TestLeaderFailover:
-    """Test leader failover when leader agent crashes."""
+    """Test leader failover when leader sensord crashes."""
 
     def test_follower_becomes_leader_after_crash(
         self,
         docker_env,
         fusion_client,
-        setup_agents,
+        setup_sensords,
         reset_leadership
     ):
         """
         场景:
-          1. Agent A 是 Leader，Agent B 是 Follower
-          2. Agent A 的容器停止（模拟崩溃）
+          1. sensord A 是 Leader，sensord B 是 Follower
+          2. sensord A 的容器停止（模拟崩溃）
           3. Fusion 检测到 Leader 会话超时
-          4. Agent B 升级为新 Leader
+          4. sensord B 升级为新 Leader
         预期:
-          - Agent B 成为 Leader
-          - Agent B 获得 Snapshot/Audit 权限
+          - sensord B 成为 Leader
+          - sensord B 获得 Snapshot/Audit 权限
         """
         # Verify initial state: A is leader, B is follower
         sessions = fusion_client.get_sessions()
@@ -38,23 +38,23 @@ class TestLeaderFailover:
         leader_session = None
         follower_session = None
         for s in sessions:
-            aid = s.get("agent_id", "")
+            aid = s.get("sensord_id", "")
             if aid.startswith("client-a"):
                 leader_session = s
             elif aid.startswith("client-b"):
                 follower_session = s
         
-        assert leader_session is not None, "Agent A session should exist"
-        assert leader_session.get("role") == "leader", "Agent A should be leader initially"
+        assert leader_session is not None, "sensord A session should exist"
+        assert leader_session.get("role") == "leader", "sensord A should be leader initially"
         
         if follower_session:
-            assert follower_session.get("role") == "follower", "Agent B should be follower initially"
+            assert follower_session.get("role") == "follower", "sensord B should be follower initially"
         
-        # Stop Agent A container immediately (simulate crash, no grace period)
+        # Stop sensord A container immediately (simulate crash, no grace period)
         docker_manager.stop_container(CONTAINER_CLIENT_A, timeout=0)
         
         try:
-            # Poll for Agent B to become the new leader
+            # Poll for sensord B to become the new leader
             # Session timeout is 5s (from docker-compose), cleanup runs every 1s
             # So we need to wait at most ~6-7s, but use MEDIUM_TIMEOUT for safety
             timeout_wait = MEDIUM_TIMEOUT
@@ -65,7 +65,7 @@ class TestLeaderFailover:
             while time.time() - start < timeout_wait:
                 sessions_after = fusion_client.get_sessions()
                 for s in sessions_after:
-                    if s.get("role") == "leader" and s.get("agent_id", "").startswith("client-b"):
+                    if s.get("role") == "leader" and s.get("sensord_id", "").startswith("client-b"):
                         new_leader = s
                         break
                 if new_leader:
@@ -73,7 +73,7 @@ class TestLeaderFailover:
                 time.sleep(1.0)
             
             assert new_leader is not None, \
-                f"Agent B should become leader within {timeout_wait}s. Sessions: {fusion_client.get_sessions()}"
+                f"sensord B should become leader within {timeout_wait}s. Sessions: {fusion_client.get_sessions()}"
             
             # Verify new leader has proper permissions
             assert new_leader.get("can_snapshot") is True, \
@@ -82,12 +82,12 @@ class TestLeaderFailover:
                 "New leader should have audit permission"
             
         finally:
-            # Restart Agent A container and agent process for other tests
+            # Restart sensord A container and sensord process for other tests
             docker_manager.start_container(CONTAINER_CLIENT_A)
-            setup_agents["ensure_agent_running"](
+            setup_sensords["ensure_sensord_running"](
                 CONTAINER_CLIENT_A, 
-                setup_agents["api_key"], 
-                setup_agents["view_id"]
+                setup_sensords["api_key"], 
+                setup_sensords["view_id"]
             )
             time.sleep(SHORT_TIMEOUT)  # Wait for restart
 
@@ -95,7 +95,7 @@ class TestLeaderFailover:
         self,
         docker_env,
         fusion_client,
-        setup_agents,
+        setup_sensords,
         clean_shared_dir
     ):
         """
@@ -143,12 +143,12 @@ class TestLeaderFailover:
                 pytest.fail("View failed to become ready after failover (New Leader Snapshot timed out)")
             
             # Data should still be accessible
-            # After failover, Agent B should perform Audit and report the missing file
+            # After failover, sensord B should perform Audit and report the missing file
             # or at least not delete it if it was already synced.
-            # Wait for the file to be present in Fusion's tree (giving it time for Agent B audit)
+            # Wait for the file to be present in Fusion's tree (giving it time for sensord B audit)
             found_after = fusion_client.wait_for_file_in_tree(
                 file_path=test_file_rel,
-                timeout=EXTREME_TIMEOUT  # Allow time for Agent B promotion + Audit cycle
+                timeout=EXTREME_TIMEOUT  # Allow time for sensord B promotion + Audit cycle
             )
             
             assert found_after is not None, \
@@ -156,9 +156,9 @@ class TestLeaderFailover:
             
         finally:
             docker_manager.start_container(CONTAINER_CLIENT_A)
-            setup_agents["ensure_agent_running"](
+            setup_sensords["ensure_sensord_running"](
                 CONTAINER_CLIENT_A, 
-                setup_agents["api_key"], 
-                setup_agents["view_id"]
+                setup_sensords["api_key"], 
+                setup_sensords["view_id"]
             )
             time.sleep(SHORT_TIMEOUT)

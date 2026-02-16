@@ -1,8 +1,8 @@
 # packages/core/src/fustor_core/pipe/sender.py
 """
-Sender Handler abstraction for Agent Pipes.
+Sender Handler abstraction for sensord Pipes.
 
-A Sender handler transmits events from Agent to Fusion.
+A Sender handler transmits events from sensord to Fusion.
 This is the counterpart to SourceHandler.
 """
 from abc import ABC, abstractmethod
@@ -20,7 +20,7 @@ class SenderHandler(Handler):
     Base class for sender handlers (data transmitters).
     
     Sender handlers transmit events to remote Fusion instances.
-    They are used on the Agent side.
+    They are used on the sensord side.
     
     This is the V2 architecture replacement for the driver-based
 

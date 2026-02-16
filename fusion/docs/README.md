@@ -1,6 +1,6 @@
 # Fustor Fusion 存储引擎服务
 
-Fusion 是 Fustor 平台的核心存储与查询引擎。它负责接收来自 Agent 的异步事件流，并在内存中构建高效的元数据哈希索引，为上层应用提供极速的结构化查询能力。
+Fusion 是 Fustor 平台的核心存储与查询引擎。它负责接收来自 sensord 的异步事件流，并在内存中构建高效的元数据哈希索引，为上层应用提供极速的结构化查询能力。
 
 ## 核心特性
 
@@ -66,7 +66,7 @@ driver_params:
 
 ### 2. 数据摄取 API (Ingestion)
 
-主要供 Agent 或 Pusher 使用。
+主要供 sensord 或 Pusher 使用。
 
 #### **POST `/ingestor-api/v1/events/`**
 批量推送事件数据。
@@ -82,13 +82,13 @@ driver_params:
 
 ### 3. 会话管理 API (Sessions)
 
-用于维护 Agent 与 Fusion 之间的同步契约。
+用于维护 sensord 与 Fusion 之间的同步契约。
 
 #### **POST `/ingestor-api/v1/sessions/`**
 创建新的同步会话。
 
 *   **参数**: `task_id` (唯一任务标识)。
-*   **特性**: 采用 **先到先得 (First-Come-First-Serve)** 模式，第一个建立 Session 的 Agent 成为 Leader。
+*   **特性**: 采用 **先到先得 (First-Come-First-Serve)** 模式，第一个建立 Session 的 sensord 成为 Leader。
 
 ---
 
@@ -109,24 +109,24 @@ driver_params:
 
 ### 1. Leader 会话锁 (Leader Session Lock)
 Fusion 遵循 **"先到先得 (First-Come-First-Serve)"** 机制：
-*   第一个建立 Session 的 Agent 成为 Leader，拥有 Snapshot/Audit/Sentinel 权限。
-*   后续连接的 Agent 自动成为 Follower，仅执行 Realtime Sync。
+*   第一个建立 Session 的 sensord 成为 Leader，拥有 Snapshot/Audit/Sentinel 权限。
+*   后续连接的 sensord 自动成为 Follower，仅执行 Realtime Sync。
 *   仅当 Leader 心跳超时或断开后，Fusion 才释放 Leader 锁。
 
 ### 2. 一致性仲裁 (Consistency Arbitration)
 Fusion 维护以下状态：
 *   **Tombstone List**：记录被 Realtime 删除的文件，防止 Snapshot/Audit 使其"复活"
 *   **Suspect List**：标记可能正在写入的文件 (`integrity_suspect: true`)
-*   **Blind-spot List**：标记在无 Agent 客户端发生变更的文件 (`agent_missing: true`)
+*   **Blind-spot List**：标记在无 sensord 客户端发生变更的文件 (`sensord_missing: true`)
 
 仲裁原则：**Realtime 优先，Mtime 仲裁**。详见 `docs/CONSISTENCY_DESIGN.md`。
 
 ### 3. 心跳存续依赖 (Heartbeat Availability Dependency)
-为了防止权威 Agent 崩溃导致视图陈旧（Stale Data Risk）：
-*   **硬链接可用性**：一旦权威 Agent 的 **心跳丢失 (Heartbeat Timeout)**，Fusion 必须立即将对应的 View 状态切换为 **503 Service Unavailable**。
+为了防止权威 sensord 崩溃导致视图陈旧（Stale Data Risk）：
+*   **硬链接可用性**：一旦权威 sensord 的 **心跳丢失 (Heartbeat Timeout)**，Fusion 必须立即将对应的 View 状态切换为 **503 Service Unavailable**。
 *   **逻辑理由**：心跳丢失意味着实时事件流（inotify）可能已中断，此时 Fusion 看到的树结构不再是对物理事实的准确感知。
 
 ## 性能优化建议
 
-*   **批量推送**: 建议 Agent 每 1000 行聚合为一个 Event 发送，以最大化摄取效率。
+*   **批量推送**: 建议 sensord 每 1000 行聚合为一个 Event 发送，以最大化摄取效率。
 *   **深度控制**: 在 UI 展示时，建议带上 `max_depth=1` 参数进行分页或按需加载，避免单次传输过大的 JSON 树。

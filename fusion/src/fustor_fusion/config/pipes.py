@@ -124,7 +124,7 @@ class PipesConfigLoader:
                 if not data:
                     continue
                 
-                # Fusion specific: we might need to distinguish Agent vs Fusion configs
+                # Fusion specific: we might need to distinguish sensord vs Fusion configs
                 # For now, if it has 'receiver' or 'views', it's likely a Fusion pipe config
                 if 'receiver' in data or 'views' in data:
                     config = FusionPipeConfig(**data)

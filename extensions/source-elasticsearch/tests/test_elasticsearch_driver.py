@@ -40,7 +40,7 @@ async def test_get_available_fields(mocker):
             "mappings": {
                 "properties": {
                     "message": {"type": "text"},
-                    "agent": {"properties": {"id": {"type": "keyword"}}}
+                    "sensord": {"properties": {"id": {"type": "keyword"}}}
                 }
             }
         }
@@ -55,7 +55,7 @@ async def test_get_available_fields(mocker):
 
     expected_properties = {
         "message": {"type": "text"},
-        "agent.id": {"type": "keyword"},
+        "sensord.id": {"type": "keyword"},
         "_id": {"type": "keyword"},
         "_index": {"type": "keyword"}
     }

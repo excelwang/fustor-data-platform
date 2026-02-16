@@ -26,15 +26,15 @@
     uv sync --extra dev
     ```
 
-4.  **启动开发服务器 (示例: Agent 服务)**
+4.  **启动开发服务器 (示例: sensord 服务)**
     ```bash
-    uvicorn agent.src.fustor_agent.app:app --reload --port 8100
+    uvicorn sensord.src.sensord.app:app --reload --port 8100
     ```
-    *   要启动其他服务（如 Fusion），请替换 `agent.src.fustor_agent.app:app` 为对应服务的入口点。
+    *   要启动其他服务（如 Fusion），请替换 `sensord.src.sensord.app:app` 为对应服务的入口点。
 
 ## 2. 技术栈
 - **核心框架**: FastAPI, SQLAlchemy 2.0 (Async), Pydantic v2
-- **数据库**: PostgreSQL 15+ (Fusion), JSON File State (Agent)
+- **数据库**: PostgreSQL 15+ (Fusion), JSON File State (sensord)
 - **包管理**: uv
 
 ## 3. 测试
@@ -53,5 +53,5 @@
 ## 5. 深度文档链接
 
 *   **[核心架构设计 (ARCHITECTURE.md)](./ARCHITECTURE.md)**: 了解 Fustor 的顶层设计和服务交互。
-*   **[驱动开发指南 (DRIVER_DEVELOPMENT.md)](./DRIVER_DEVELOPMENT.md)**: 学习如何为 Agent 编写新的 Source 和 Pusher 插件。
-*   **[Agent 内部机制 (AGENT_INTERNALS.md)](./AGENT_INTERNALS.md)**: 深入了解 Agent 的状态管理、缓存和调试方法。
+*   **[驱动开发指南 (DRIVER_DEVELOPMENT.md)](./DRIVER_DEVELOPMENT.md)**: 学习如何为 sensord 编写新的 Source 和 Pusher 插件。
+*   **[sensord 内部机制 (AGENT_INTERNALS.md)](./AGENT_INTERNALS.md)**: 深入了解 sensord 的状态管理、缓存和调试方法。

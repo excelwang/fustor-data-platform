@@ -1,6 +1,6 @@
 # fustor-sender-http
 
-HTTP Sender for Fustor Agent - implements the transport layer for Agent to Fusion communication.
+HTTP Sender for Fustor sensord - implements the transport layer for sensord to Fusion communication.
 
 ## Overview
 
@@ -41,7 +41,7 @@ await sender.close()
 
 This package registers itself as:
 - `fustor.senders:http` - New sender registry
-- `fustor_agent.drivers.senders:fusion` - Legacy sender registry (backward compat)
+- `sensord.drivers.senders:fusion` - Legacy sender registry (backward compat)
 
 ## Migration from fustor-sender-fusion
 

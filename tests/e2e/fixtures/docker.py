@@ -51,9 +51,9 @@ def get_env_hash():
     # Add all package pyproject.toml files
     files_to_hash.extend(glob.glob(str(_it_dir.parent / "extensions/*/pyproject.toml")))
     files_to_hash.extend(glob.glob(str(_it_dir.parent / "core/pyproject.toml")))
-    files_to_hash.extend(glob.glob(str(_it_dir.parent / "agent-sdk/pyproject.toml")))
+    files_to_hash.extend(glob.glob(str(_it_dir.parent / "sensord-sdk/pyproject.toml")))
     files_to_hash.extend(glob.glob(str(_it_dir.parent / "fusion-sdk/pyproject.toml")))
-    files_to_hash.extend(glob.glob(str(_it_dir.parent / "agent/pyproject.toml")))
+    files_to_hash.extend(glob.glob(str(_it_dir.parent / "sensord/pyproject.toml")))
     files_to_hash.extend(glob.glob(str(_it_dir.parent / "fusion/pyproject.toml")))
     
     hasher = hashlib.md5()

@@ -5,7 +5,7 @@ Modular fixtures for integration tests.
 This package splits the monolithic conftest.py into focused modules:
 - docker.py: Docker environment management
 - fusion.py: Fusion client and configuration
-- agents.py: Agent setup and configuration
+- sensords.py: sensord setup and configuration
 - leadership.py: Leadership management and audit control
 """
 import sys
@@ -19,7 +19,7 @@ if str(_it_dir) not in sys.path:
 
 from .docker import docker_env, clean_shared_dir
 from .fusion import fusion_client, test_api_key, test_view
-from .agents import setup_agents
+from .sensords import setup_sensords
 from .leadership import reset_leadership, wait_for_audit
 
 __all__ = [
@@ -30,8 +30,8 @@ __all__ = [
     "fusion_client", 
     "test_api_key",
     "test_view",
-    # Agents
-    "setup_agents",
+    # sensords
+    "setup_sensords",
     # Leadership
     "reset_leadership",
     "wait_for_audit",

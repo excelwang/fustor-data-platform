@@ -1,5 +1,5 @@
 """
-Fuagent source driver for Elasticsearch.
+Fusensord source driver for Elasticsearch.
 """
 import logging
 import threading
@@ -13,7 +13,7 @@ from fustor_core.models.config import SourceConfig, PasswdCredential, ApiKeyCred
 from fustor_core.exceptions import DriverError
 from fustor_core.event import EventBase, InsertEvent
 
-logger = logging.getLogger("fustor_agent.driver.elasticsearch")
+logger = logging.getLogger("sensord.driver.elasticsearch")
 
 class ElasticsearchDriver(SourceDriver):
     _instances: Dict[str, 'ElasticsearchDriver'] = {}

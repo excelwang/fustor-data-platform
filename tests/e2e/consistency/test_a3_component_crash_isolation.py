@@ -30,7 +30,7 @@ class TestComponentCrashIsolation:
         self,
         docker_env,
         fusion_client,
-        setup_agents,
+        setup_sensords,
         clean_shared_dir,
         wait_for_audit
     ):
@@ -62,21 +62,21 @@ class TestComponentCrashIsolation:
             timeout=SHORT_TIMEOUT
         ), "Readable file should be synced despite sibling permission error"
 
-        # 4. Agent should be alive (use PID file for reliable detection)
-        check_agent = docker_manager.exec_in_container(
+        # 4. sensord should be alive (use PID file for reliable detection)
+        check_sensord = docker_manager.exec_in_container(
             CONTAINER_CLIENT_A,
-            ["sh", "-c", "kill -0 $(cat /root/.fustor/agent.pid)"]
+            ["sh", "-c", "kill -0 $(cat /root/.fustor/sensord.pid)"]
         )
-        assert check_agent.returncode == 0, \
-            "Agent 进程应在遇到 PermissionError 后存活 (specs/05-Stability.md §1.2)"
+        assert check_sensord.returncode == 0, \
+            "sensord 进程应在遇到 PermissionError 后存活 (specs/05-Stability.md §1.2)"
 
         # 5. Verify error was logged (Spec requires "记录错误并跳过")
         logs_res = docker_manager.exec_in_container(
-            CONTAINER_CLIENT_A, ["cat", "/root/.fustor/logs/agent.log"]
+            CONTAINER_CLIENT_A, ["cat", "/root/.fustor/logs/sensord.log"]
         )
         logs = (logs_res.stdout + logs_res.stderr).lower()
         assert "permission" in logs or "error" in logs or "warning" in logs or "skip" in logs, \
-            "Agent 应记录 PermissionError (Error/Warning) 到日志 (specs/05-Stability.md §1.2)"
+            "sensord 应记录 PermissionError (Error/Warning) 到日志 (specs/05-Stability.md §1.2)"
 
         # Cleanup
         docker_manager.exec_in_container(CONTAINER_CLIENT_A, ["chmod", "755", unreadable_dir])
@@ -85,12 +85,12 @@ class TestComponentCrashIsolation:
         self,
         docker_env,
         fusion_client,
-        setup_agents,
+        setup_sensords,
         clean_shared_dir
     ):
         """
         Scenario: Sender/Pipe Component Isolation (Fusion 不可用).
-        验证 Agent Pipe 在 Fusion 不可用时不崩溃，恢复后自动续传。
+        验证 sensord Pipe 在 Fusion 不可用时不崩溃，恢复后自动续传。
         Spec 依据: specs/05-Stability.md §1.1 (连接重试: 指数退避)
         """
         assert fusion_client.wait_for_view_ready(timeout=MEDIUM_TIMEOUT)
@@ -111,13 +111,13 @@ class TestComponentCrashIsolation:
             # 等待足够时间让 Sender 尝试发送并失败
             time.sleep(10)
 
-            # 3. 验证 Agent 进程存活（Pipe 未因连接错误而崩溃）
-            check_agent = docker_manager.exec_in_container(
+            # 3. 验证 sensord 进程存活（Pipe 未因连接错误而崩溃）
+            check_sensord = docker_manager.exec_in_container(
                 CONTAINER_CLIENT_A,
-                ["sh", "-c", "cat /root/.fustor/agent.pid && kill -0 $(cat /root/.fustor/agent.pid)"]
+                ["sh", "-c", "cat /root/.fustor/sensord.pid && kill -0 $(cat /root/.fustor/sensord.pid)"]
             )
-            assert check_agent.returncode == 0, \
-                "Agent 进程应在 Fusion 不可用时存活 (specs/05-Stability.md §1.1)"
+            assert check_sensord.returncode == 0, \
+                "sensord 进程应在 Fusion 不可用时存活 (specs/05-Stability.md §1.1)"
 
         finally:
             # 4. 恢复 Fusion
@@ -131,7 +131,7 @@ class TestComponentCrashIsolation:
         self,
         docker_env,
         fusion_client,
-        setup_agents,
+        setup_sensords,
         clean_shared_dir
     ):
         """
@@ -178,7 +178,7 @@ class TestComponentCrashIsolation:
         self,
         docker_env,
         fusion_client,
-        setup_agents,
+        setup_sensords,
         clean_shared_dir
     ):
         """

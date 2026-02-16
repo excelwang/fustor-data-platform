@@ -356,19 +356,19 @@ class FusionClient:
         except requests.HTTPError:
             suspect = False
 
-        # Check agent_missing from blind-spots API
+        # Check sensord_missing from blind-spots API
         # Note: This is less efficient but correct per new API design
         blind_spots = self.get_blind_spots()
-        agent_missing = False
+        sensord_missing = False
         
         # Check in additions list
         for f in blind_spots.get("additions", []):
             if f.get("path") == file_path:
-                agent_missing = True
+                sensord_missing = True
                 break
                 
         return {
-            "agent_missing": agent_missing,
+            "sensord_missing": sensord_missing,
             "integrity_suspect": suspect
         }
 
@@ -455,21 +455,21 @@ class FusionClient:
                 time.sleep(interval)
         return False
 
-    def wait_for_agent_ready(self, agent_id: str, timeout: float = AGENT_READY_TIMEOUT, interval: float = POLL_INTERVAL) -> bool:
-        """Wait for an agent to be registered and reporting can_realtime=True."""
+    def wait_for_sensord_ready(self, sensord_id: str, timeout: float = AGENT_READY_TIMEOUT, interval: float = POLL_INTERVAL) -> bool:
+        """Wait for an sensord to be registered and reporting can_realtime=True."""
         import logging
         logger = logging.getLogger(__name__)
         start = time.time()
         while time.time() - start < timeout:
             try:
                 sessions = self.get_sessions()
-                logger.debug(f"wait_for_agent_ready({agent_id}): Current sessions: {[{'agent_id': s.get('agent_id'), 'can_realtime': s.get('can_realtime')} for s in sessions]}")
-                agent_session = next((s for s in sessions if agent_id in s.get("agent_id", "")), None)
-                if agent_session and agent_session.get("can_realtime"):
-                    logger.info(f"Agent {agent_id} is READY (session={agent_session.get('session_id')})")
+                logger.debug(f"wait_for_sensord_ready({sensord_id}): Current sessions: {[{'sensord_id': s.get('sensord_id'), 'can_realtime': s.get('can_realtime')} for s in sessions]}")
+                sensord_session = next((s for s in sessions if sensord_id in s.get("sensord_id", "")), None)
+                if sensord_session and sensord_session.get("can_realtime"):
+                    logger.info(f"sensord {sensord_id} is READY (session={sensord_session.get('session_id')})")
                     return True
             except Exception as e:
-                logger.debug(f"Error in wait_for_agent_ready: {e}")
+                logger.debug(f"Error in wait_for_sensord_ready: {e}")
                 pass
             time.sleep(interval)
         return False

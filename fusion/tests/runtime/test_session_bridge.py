@@ -109,7 +109,7 @@ class TestPipeSessionBridgeInit:
         """get_session_info should get info from pipe."""
         mock_pipe._active_sessions["sess-1"] = {
             "role": "leader",
-            "task_id": "agent:sync"
+            "task_id": "sensord:sync"
         }
         
         info = await session_bridge.get_session_info("sess-1")

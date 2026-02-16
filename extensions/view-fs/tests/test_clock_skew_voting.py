@@ -5,7 +5,7 @@ Validates LogicalClock's Mode-based skew election:
   1. Majority skew wins
   2. Outlier skew is rejected
   3. Audit events don't pollute skew samples
-  4. Clock survives mixed-skew agents
+  4. Clock survives mixed-skew sensords
 """
 import pytest
 from unittest.mock import patch
@@ -19,24 +19,24 @@ from fustor_core.clock import LogicalClock
 
 def test_majority_skew_wins():
     """
-    When multiple agents contribute different skews,
+    When multiple sensords contribute different skews,
     Mode selects the skew with the most samples.
     
-    Agent B (5 samples, skew=100):  Fusion=2000, mtime=1900
-    Agent A (2 samples, skew=-500): Fusion=2000, mtime=2500
-    → Mode = 100 (Agent B wins)
+    sensord B (5 samples, skew=100):  Fusion=2000, mtime=1900
+    sensord A (2 samples, skew=-500): Fusion=2000, mtime=2500
+    → Mode = 100 (sensord B wins)
     """
     with patch('time.time', return_value=2000.0):
         clock = LogicalClock(initial_time=0.001)
         
-        # Agent B: 5 realtime events (skew = 2000 - 1900 = 100)
+        # sensord B: 5 realtime events (skew = 2000 - 1900 = 100)
         for _ in range(5):
             clock.update(1900.0, can_sample_skew=True)
         
         assert clock.get_skew() == 100.0
         assert clock.get_watermark() == 1900.0
         
-        # Agent A: 2 outlier events (skew = 2000 - 2500 = -500)
+        # sensord A: 2 outlier events (skew = 2000 - 2500 = -500)
         for _ in range(2):
             clock.update(2500.0, can_sample_skew=True)
         

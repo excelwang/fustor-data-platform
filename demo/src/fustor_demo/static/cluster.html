@@ -41,8 +41,8 @@
             </div>
             <div class="flex gap-4">
                 <div class="bg-slate-800 px-4 py-2 rounded-lg border border-slate-700">
-                    <span class="text-xs text-slate-500 block uppercase font-semibold">Live Agents</span>
-                    <span class="text-xl font-mono">{{ agents.length }}</span>
+                    <span class="text-xs text-slate-500 block uppercase font-semibold">Live sensords</span>
+                    <span class="text-xl font-mono">{{ sensords.length }}</span>
                 </div>
                 <div class="bg-slate-800 px-4 py-2 rounded-lg border border-slate-700">
                     <span class="text-xs text-slate-500 block uppercase font-semibold">Fusion Core</span>
@@ -67,29 +67,29 @@
                         </div>
                     </div>
 
-                    <!-- Agent Nodes -->
-                    <div v-for="(agent, idx) in agents" :key="agent.id" 
-                         :style="getNodeStyle(idx, agents.length)"
+                    <!-- sensord Nodes -->
+                    <div v-for="(sensord, idx) in sensords" :key="sensord.id" 
+                         :style="getNodeStyle(idx, sensords.length)"
                          class="absolute flex flex-col items-center transition-all duration-500">
-                        <div :class="agent.role === 'leader' ? 'bg-amber-500' : 'bg-indigo-500'" 
+                        <div :class="sensord.role === 'leader' ? 'bg-amber-500' : 'bg-indigo-500'" 
                              class="w-16 h-16 rounded-xl flex items-center justify-center shadow-lg border-2 border-slate-900 node-pulse relative">
                             <i class="bi bi-box-fill text-2xl"></i>
                         </div>
                         <div class="mt-3 text-center">
-                            <div class="text-xs font-bold font-mono">{{ agent.name }}</div>
+                            <div class="text-xs font-bold font-mono">{{ sensord.name }}</div>
                             <div class="text-[9px] uppercase tracking-wider px-2 py-0.5 rounded mt-1" 
-                                 :class="agent.role === 'leader' ? 'bg-amber-500/20 text-amber-400' : 'bg-indigo-500/20 text-indigo-400'">
-                                {{ agent.role }}
+                                 :class="sensord.role === 'leader' ? 'bg-amber-500/20 text-amber-400' : 'bg-indigo-500/20 text-indigo-400'">
+                                {{ sensord.role }}
                             </div>
-                            <div class="text-[8px] text-slate-500 font-mono">{{ agent.ip }}</div>
+                            <div class="text-[8px] text-slate-500 font-mono">{{ sensord.ip }}</div>
                         </div>
                     </div>
 
                     <!-- Flow Lines -->
                     <svg class="absolute inset-0 w-full h-full pointer-events-none">
-                        <line v-for="(agent, idx) in agents" :key="'l-'+idx"
+                        <line v-for="(sensord, idx) in sensords" :key="'l-'+idx"
                               :x1="50 + '%' " :y1="50 + '%'"
-                              :x2="getNodePos(idx, agents.length).x" :y2="getNodePos(idx, agents.length).y"
+                              :x2="getNodePos(idx, sensords.length).x" :y2="getNodePos(idx, sensords.length).y"
                               stroke="#334155" stroke-width="2" class="data-flow" />
                     </svg>
                 </div>
@@ -142,10 +142,10 @@
         createApp({
             data() {
                 return {
-                    agents: [],
+                    sensords: [],
                     events: [],
                     sourceSummary: [
-                        { name: 'Total Agent Nodes', icon: 'bi-server', color: 'bg-sky-500/20 text-sky-400', count: 0, type: 'nodes' },
+                        { name: 'Total sensord Nodes', icon: 'bi-server', color: 'bg-sky-500/20 text-sky-400', count: 0, type: 'nodes' },
                         { name: 'Unified Files Count', icon: 'bi-files', color: 'bg-emerald-500/20 text-emerald-400', count: 0, type: 'files' }
                     ]
                 }
@@ -158,10 +158,10 @@
                         
                         if (data.error) throw new Error(data.error);
 
-                        // 1. Map real sessions to agents
-                        this.agents = data.sessions.map(s => ({
+                        // 1. Map real sessions to sensords
+                        this.sensords = data.sessions.map(s => ({
                             id: s.session_id,
-                            name: 'Agent-' + s.agent_id.substring(0, 4),
+                            name: 'sensord-' + s.sensord_id.substring(0, 4),
                             role: s.role,
                             ip: s.client_ip
                         }));
@@ -176,7 +176,7 @@
                         })).sort((a,b) => b.last_modified - a.last_modified);
 
                         // 3. Update summary
-                        this.sourceSummary[0].count = this.agents.length;
+                        this.sourceSummary[0].count = this.sensords.length;
                         this.sourceSummary[1].count = this.events.length;
 
                     } catch (e) {

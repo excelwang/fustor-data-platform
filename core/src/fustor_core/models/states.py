@@ -41,8 +41,8 @@ class PipeInstanceDTO(BaseModel):
     current_role: Optional[str] = None
 
 
-class AgentState(BaseModel):
-    agent_id: str = Field(..., description="The unique identifier for the agent.")
+class sensordState(BaseModel):
+    sensord_id: str = Field(..., description="The unique identifier for the sensord.")
     pipes: Dict[str, PipeInstanceDTO] = Field(
         default_factory=dict, 
         description="A dictionary of all pipes, keyed by their ID."
@@ -53,7 +53,7 @@ class AgentState(BaseModel):
 @dataclass
 class SessionInfo:
     """
-    Information about an active session between Agent and Fusion.
+    Information about an active session between sensord and Fusion.
     
     Using dataclass for monorepo-wide backward compatibility with positional arguments.
     """

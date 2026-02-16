@@ -9,7 +9,7 @@ FusionPipe Architecture:
 
 ┌─────────────────────────────────────────────────────────────┐
 │                    FusionPipe                           │
-│  (receives events from Agents)                              │
+│  (receives events from sensords)                              │
 └────────────────────────┬────────────────────────────────────┘
                          │
                          ▼
@@ -35,7 +35,7 @@ Example Usage:
     # Start processing
     await pipe.start()
 
-    # Process incoming events from Agent
+    # Process incoming events from sensord
     await pipe.process_events(events, session_id="sess-123")
 
     # Query views

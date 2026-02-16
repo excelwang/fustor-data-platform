@@ -1,5 +1,5 @@
 """
-Fustor HTTP Receiver - Transport layer for Fusion to receive events from Agents.
+Fustor HTTP Receiver - Transport layer for Fusion to receive events from sensords.
 
 This package implements the HTTP transport protocol for receiving events
 on the Fusion side. Each HTTPReceiver starts its own independent HTTP server
@@ -342,20 +342,20 @@ class HTTPReceiver(Receiver):
         @router.post("/{session_id}/heartbeat", response_model=HeartbeatResponse)
         async def heartbeat(session_id: str, request: Request):
             """Send a heartbeat to maintain session."""
-            # Extract can_realtime and agent_status from payload (if any)
+            # Extract can_realtime and sensord_status from payload (if any)
             try:
                 payload = await request.json()
                 can_realtime = payload.get("can_realtime", False)
-                agent_status = payload.get("agent_status")
+                sensord_status = payload.get("sensord_status")
             except Exception:
                 can_realtime = False
-                agent_status = None
+                sensord_status = None
 
             logger.debug(f"Received heartbeat for session {session_id}, can_realtime={can_realtime}")
 
             if receiver._on_heartbeat:
                 try:
-                    result = await receiver._on_heartbeat(session_id, can_realtime, agent_status)
+                    result = await receiver._on_heartbeat(session_id, can_realtime, sensord_status)
                     if result and result.get("status") == "error":
                         raise HTTPException(
                             status_code=419,

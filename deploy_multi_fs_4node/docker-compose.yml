@@ -12,53 +12,53 @@ services:
     networks:
       - fustor-net
 
-  agent1:
+  sensord1:
     build:
       context: ..
       dockerfile: deploy_multi_fs_4node/Dockerfile
     volumes:
-      - ./agent1/config/default.yaml:/root/.fustor/agent-config/default.yaml
-      - ./agent1/data:/data
-    command: ["fustor-agent", "start"]
+      - ./sensord1/config/default.yaml:/root/.fustor/sensord-config/default.yaml
+      - ./sensord1/data:/data
+    command: ["fustor-sensord", "start"]
     depends_on:
       - fusion
     networks:
       - fustor-net
 
-  agent2:
+  sensord2:
     build:
       context: ..
       dockerfile: deploy_multi_fs_4node/Dockerfile
     volumes:
-      - ./agent2/config/default.yaml:/root/.fustor/agent-config/default.yaml
-      - ./agent2/data:/data
-    command: ["fustor-agent", "start"]
+      - ./sensord2/config/default.yaml:/root/.fustor/sensord-config/default.yaml
+      - ./sensord2/data:/data
+    command: ["fustor-sensord", "start"]
     depends_on:
       - fusion
     networks:
       - fustor-net
 
-  agent3:
+  sensord3:
     build:
       context: ..
       dockerfile: deploy_multi_fs_4node/Dockerfile
     volumes:
-      - ./agent3/config/default.yaml:/root/.fustor/agent-config/default.yaml
-      - ./agent3/data:/data
-    command: ["fustor-agent", "start"]
+      - ./sensord3/config/default.yaml:/root/.fustor/sensord-config/default.yaml
+      - ./sensord3/data:/data
+    command: ["fustor-sensord", "start"]
     depends_on:
       - fusion
     networks:
       - fustor-net
 
-  agent4:
+  sensord4:
     build:
       context: ..
       dockerfile: deploy_multi_fs_4node/Dockerfile
     volumes:
-      - ./agent4/config/default.yaml:/root/.fustor/agent-config/default.yaml
-      - ./agent4/data:/data
-    command: ["fustor-agent", "start"]
+      - ./sensord4/config/default.yaml:/root/.fustor/sensord-config/default.yaml
+      - ./sensord4/data:/data
+    command: ["fustor-sensord", "start"]
     depends_on:
       - fusion
     networks:

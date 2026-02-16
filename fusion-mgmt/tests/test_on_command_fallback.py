@@ -20,7 +20,7 @@ async def test_on_command_fallback_logic():
     mock_bridge = AsyncMock(spec=PipeSessionBridge)
     mock_bridge.send_command_and_wait.return_value = {
         "files": [{"name": "foo.txt"}],
-        "agent_id": "agent-1"
+        "sensord_id": "sensord-1"
     }
     
     # Explicitly create a MagicMock for PipeManager

@@ -13,30 +13,30 @@ echo "Mounting NFS share..."
 mount -t nfs -o "${MOUNT_OPTIONS}" "${NFS_SERVER}:${NFS_PATH}" "${MOUNT_POINT}"
 echo "NFS mounted at ${MOUNT_POINT}"
 
-# Start Agent if enabled
+# Start sensord if enabled
 if [ "${AGENT_ENABLED}" = "true" ]; then
-    echo "Starting Fustor Agent (${AGENT_ID})..."
+    echo "Starting Fustor sensord (${AGENT_ID})..."
     
-    # Create agent config directory
-    mkdir -p /root/.fustor/agent-config
+    # Create sensord config directory
+    mkdir -p /root/.fustor/sensord-config
     
     # Copy and process config template with environment variable substitution
-    # The config file is mounted from tests/e2e/config/agent-config/default.yaml
-    if [ -f "/config/agent-config/default.yaml" ]; then
+    # The config file is mounted from tests/e2e/config/sensord-config/default.yaml
+    if [ -f "/config/sensord-config/default.yaml" ]; then
         # Substitute environment variables in the config
         # Uses gettext-base (envsubst) installed in Dockerfile
-        envsubst < /config/agent-config/default.yaml > /root/.fustor/agent-config/default.yaml
-        echo "Agent config loaded and processed from mounted volume"
+        envsubst < /config/sensord-config/default.yaml > /root/.fustor/sensord-config/default.yaml
+        echo "sensord config loaded and processed from mounted volume"
     else
-        echo "ERROR: Agent config file not found at /config/agent-config/default.yaml"
+        echo "ERROR: sensord config file not found at /config/sensord-config/default.yaml"
         exit 1
     fi
     
-    # Start agent in foreground
-    echo "Starting Fustor Agent (${AGENT_ID}) in foreground..."
-    exec fustor-agent start
+    # Start sensord in foreground
+    echo "Starting Fustor sensord (${AGENT_ID}) in foreground..."
+    exec fustor-sensord start
 fi
 
-# Keep container running if Agent was not started
+# Keep container running if sensord was not started
 echo "Container ready. Entering idle loop..."
 exec tail -f /dev/null

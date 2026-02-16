@@ -15,10 +15,10 @@ if str(_it_dir) not in sys.path:
     sys.path.insert(0, str(_it_dir))
 
 from utils import docker_manager
-from .agents import (
+from .sensords import (
     CONTAINER_CLIENT_A, 
     CONTAINER_CLIENT_B,
-    ensure_agent_running,
+    ensure_sensord_running,
     MOUNT_POINT
 )
 from .constants import (
@@ -44,9 +44,9 @@ def wait_for_audit(fusion_client):
 
 
 @pytest.fixture(scope="function")
-def leader_follower_agents(setup_agents, fusion_client):
+def leader_follower_sensords(setup_sensords, fusion_client):
     """
-    Ensure we have a stable leader and follower agent set up.
+    Ensure we have a stable leader and follower sensord set up.
     
     Returns:
         dict: {
@@ -54,8 +54,8 @@ def leader_follower_agents(setup_agents, fusion_client):
             "follower": container_id_of_follower
         }
     """
-    api_key = setup_agents["api_key"]
-    view_id = setup_agents["view_id"]
+    api_key = setup_sensords["api_key"]
+    view_id = setup_sensords["view_id"]
     client_A = CONTAINER_CLIENT_A
     client_B = CONTAINER_CLIENT_B
 
@@ -64,10 +64,10 @@ def leader_follower_agents(setup_agents, fusion_client):
     leader = next((s for s in sessions if s.get("role") == "leader"), None)
     
     is_clean = False
-    if leader and "client-a" in leader.get("agent_id", ""):
-        # Agent A is leader. Check Agent B presence.
-        agent_b = next((s for s in sessions if "client-b" in s.get("agent_id", "")), None)
-        if agent_b and agent_b.get("role") == "follower":
+    if leader and "client-a" in leader.get("sensord_id", ""):
+        # sensord A is leader. Check sensord B presence.
+        sensord_b = next((s for s in sessions if "client-b" in s.get("sensord_id", "")), None)
+        if sensord_b and sensord_b.get("role") == "follower":
             is_clean = True
             
     if is_clean:
@@ -81,7 +81,7 @@ def leader_follower_agents(setup_agents, fusion_client):
     
     # Force reset: Stop everyone
     for container in [client_A, client_B]:
-        docker_manager.cleanup_agent_state(container)
+        docker_manager.cleanup_sensord_state(container)
 
     # Wait for sessions to vanish
     logger.info("Waiting for stale sessions to expire...")
@@ -92,26 +92,26 @@ def leader_follower_agents(setup_agents, fusion_client):
         time.sleep(POLL_INTERVAL)
         
     # 1. Start Client A
-    logger.info("Restarting Agent A...")
-    ensure_agent_running(CONTAINER_CLIENT_A, api_key, view_id)
+    logger.info("Restarting sensord A...")
+    ensure_sensord_running(CONTAINER_CLIENT_A, api_key, view_id)
     
     # Wait for A to become leader - use polling
     start_wait = time.time()
     while time.time() - start_wait < AGENT_READY_TIMEOUT:
         leader = fusion_client.get_leader_session()
-        if leader and "client-a" in leader.get("agent_id", ""):
+        if leader and "client-a" in leader.get("sensord_id", ""):
             break
         time.sleep(POLL_INTERVAL)
 
     # 2. Start Client B
-    logger.info("Restarting Agent B...")
-    ensure_agent_running(CONTAINER_CLIENT_B, api_key, view_id)
+    logger.info("Restarting sensord B...")
+    ensure_sensord_running(CONTAINER_CLIENT_B, api_key, view_id)
     
     # Wait for B - use polling
     start_wait = time.time()
     while time.time() - start_wait < AGENT_READY_TIMEOUT:
         sessions = fusion_client.get_sessions()
-        if any("client-b" in s.get("agent_id", "") for s in sessions):
+        if any("client-b" in s.get("sensord_id", "") for s in sessions):
             break
         time.sleep(POLL_INTERVAL)
     
@@ -123,18 +123,18 @@ def leader_follower_agents(setup_agents, fusion_client):
     }
 
 @pytest.fixture
-def reset_leadership(setup_agents, fusion_client):
+def reset_leadership(setup_sensords, fusion_client):
     """
     Fixture to manually trigger a leadership reset.
     """
-    api_key = setup_agents["api_key"]
-    view_id = setup_agents["view_id"]
+    api_key = setup_sensords["api_key"]
+    view_id = setup_sensords["view_id"]
     
     async def _reset():
         logger.warning("Forcing leadership reset via fixture...")
         # Stop everyone
         for container in [CONTAINER_CLIENT_A, CONTAINER_CLIENT_B]:
-            docker_manager.cleanup_agent_state(container)
+            docker_manager.cleanup_sensord_state(container)
 
         # Wait for sessions to vanish
         start_cleanup = time.time()
@@ -144,19 +144,19 @@ def reset_leadership(setup_agents, fusion_client):
             time.sleep(POLL_INTERVAL)
 
         # Restart A then B
-        ensure_agent_running(CONTAINER_CLIENT_A, api_key, view_id)
-        # Polling for Agent A
+        ensure_sensord_running(CONTAINER_CLIENT_A, api_key, view_id)
+        # Polling for sensord A
         start = time.time()
         while time.time() - start < AGENT_READY_TIMEOUT:
             if fusion_client.get_leader_session(): break
             time.sleep(POLL_INTERVAL)
 
-        ensure_agent_running(CONTAINER_CLIENT_B, api_key, view_id)
-        # Polling for Agent B
+        ensure_sensord_running(CONTAINER_CLIENT_B, api_key, view_id)
+        # Polling for sensord B
         start = time.monotonic()
         while time.monotonic() - start < AGENT_READY_TIMEOUT:
             sessions = fusion_client.get_sessions()
-            if any("client-b" in s.get("agent_id", "") for s in sessions): break
+            if any("client-b" in s.get("sensord_id", "") for s in sessions): break
             time.sleep(POLL_INTERVAL)
 
         logger.info("Leadership reset via fixture complete.")

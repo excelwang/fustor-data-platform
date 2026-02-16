@@ -66,7 +66,7 @@ class FusionPipeConfig(BaseModel):
     allow_concurrent_push: bool = True
     session_timeout_seconds: int = 30
     
-    # Sync Policy (Pushed to Agent)
+    # Sync Policy (Pushed to sensord)
     audit_interval_sec: float = 43200.0
     sentinel_interval_sec: float = 120.0
 

@@ -16,7 +16,7 @@ class PipeContext:
     shared state manager for pipes running in the same process.
     
     Use cases:
-    - Agent: Coordinate multiple Source->Sender pipes
+    - sensord: Coordinate multiple Source->Sender pipes
     - Fusion: Coordinate multiple Receiver->View pipes
     """
     

@@ -155,7 +155,7 @@ extensions/
 #### Application Packages
 
 ```
-agent/                               # fustor-agent
+sensord/                               # fustor-sensord
 fusion/                              # fustor-fusion
 ```
 
@@ -270,7 +270,7 @@ Session 是 **sensordPipe** 和 **FusionPipe** 之间的业务会话。
 @dataclass
 class Session:
     session_id: str                    # 唯一会话 ID
-    agent_task_id: str                 # sensordPipe 的 task_id
+    sensord_task_id: str                 # sensordPipe 的 task_id
     fusion_pipe_id: str                # FusionPipe ID
     
     # 生命周期
@@ -341,7 +341,7 @@ Pipe 停止 或 网络断开                     Session 超时检测
 $FUSTOR_AGENT_HOME/
 ├── sources-config.yaml              # Source 定义
 ├── senders-config.yaml              # Sender 定义 (原 pushers-config.yaml)
-└── agent-pipes-config/              # sensordPipe 定义
+└── sensord-pipes-config/              # sensordPipe 定义
     └── pipe-*.yaml
 ```
 
@@ -366,7 +366,7 @@ fusion-http:
     batch_size: 100
 ```
 
-#### agent-pipes-config/pipe-research.yaml
+#### sensord-pipes-config/pipe-research.yaml
 ```yaml
 id: pipe-research
 source: fs-research
@@ -469,7 +469,7 @@ sensord 收到响应后，设置心跳间隔为 `timeout_seconds / 2`。
                                     │
                     ┌───────────────┼───────────────┐
                     ▼                               ▼
-              fustor-agent                    fustor-fusion
+              fustor-sensord                    fustor-fusion
 ```
 
 ## COMPONENTS.ROLES
@@ -499,7 +499,7 @@ Domain/Management 服务不再拥有专用命令通道，而是统一作为 Clie
 #### 2. 代理控制任务 (Targeted Task)
 - **目的**: 状态变更 (State Mutation)
 - **场景**: `upgrade`, `reload`, `stop`
-- **租用原语**: `Stability.unicast(agent_id)`
+- **租用原语**: `Stability.unicast(sensord_id)`
 - **成功准则**: Any/Single (命中即生效)
 - **失败影响**: 管控失效 (Control Loss)
 
@@ -530,7 +530,7 @@ Domain/Management 服务不再拥有专用命令通道，而是统一作为 Clie
 ```yaml
 # sensord 端配置示例
 pipes:
-  my-agent-pipe:
+  my-sensord-pipe:
     source: shared-fs
     sender: fusion-main
     fields_mapping:

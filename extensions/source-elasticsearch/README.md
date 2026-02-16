@@ -1,6 +1,6 @@
 # fustor-source-elasticsearch
 
-This package provides a `SourceDriver` implementation for the Fustor Agent service, enabling it to extract data from Elasticsearch. It supports both snapshot (historical) and message (real-time) data synchronization, leveraging Elasticsearch's Point-In-Time (PIT) and search APIs.
+This package provides a `SourceDriver` implementation for the Fustor sensord service, enabling it to extract data from Elasticsearch. It supports both snapshot (historical) and message (real-time) data synchronization, leveraging Elasticsearch's Point-In-Time (PIT) and search APIs.
 
 ## Features
 
@@ -14,16 +14,16 @@ This package provides a `SourceDriver` implementation for the Fustor Agent servi
 
 ## Installation
 
-This package is part of the Fustor monorepo and is typically installed in editable mode within the monorepo's development environment using `uv sync`. It is registered as a `fustor_agent.drivers.sources` entry point.
+This package is part of the Fustor monorepo and is typically installed in editable mode within the monorepo's development environment using `uv sync`. It is registered as a `sensord.drivers.sources` entry point.
 
 ## Usage
 
-To use the `fustor-source-elasticsearch` driver, configure a Source in your Fustor Agent setup with the driver type `elasticsearch`. You will need to provide the Elasticsearch URI, credentials, and the target index name along with a timestamp field for real-time tracking.
+To use the `fustor-source-elasticsearch` driver, configure a Source in your Fustor sensord setup with the driver type `elasticsearch`. You will need to provide the Elasticsearch URI, credentials, and the target index name along with a timestamp field for real-time tracking.
 
-Example (conceptual configuration in Fustor Agent):
+Example (conceptual configuration in Fustor sensord):
 
 ```yaml
-# Fustor 主目录下的 agent-config.yaml
+# Fustor 主目录下的 sensord-config.yaml
 sources:
   my-es-source:
     driver_type: elasticsearch

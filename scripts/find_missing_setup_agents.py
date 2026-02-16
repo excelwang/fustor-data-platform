@@ -14,7 +14,7 @@ def find_missing_fixture():
         
         for func_name, args in matches:
             arg_list = [arg.strip() for arg in args.split(",")]
-            if "setup_agents" not in arg_list:
+            if "setup_sensords" not in arg_list:
                 results.append(f"{file_path}::{func_name}")
 
     return results

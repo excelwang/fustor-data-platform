@@ -2,15 +2,15 @@
 """
 FusionPipe - The V2 Pipe implementation for Fusion.
 
-This Pipe receives events from Agents and dispatches them to ViewHandlers.
-It implements the receiver side of the Agent -> Fusion data flow.
+This Pipe receives events from sensords and dispatches them to ViewHandlers.
+It implements the receiver side of the sensord -> Fusion data flow.
 
 Architecture:
 =============
 
-    Agent                               Fusion
+    sensord                               Fusion
     ┌─────────────┐                    ┌─────────────────────────────┐
-    │AgentPipe│ ─── HTTP/gRPC ───▶ │     FusionPipe          │
+    │sensordPipe│ ─── HTTP/gRPC ───▶ │     FusionPipe          │
     └─────────────┘                    │  ┌─────────────────────┐    │
                                        │  │ ReceiverHandler     │    │
                                        │  │ (session, events)   │    │
@@ -46,7 +46,7 @@ class FusionPipe(FustorPipe):
     Fusion-side Pipe for receiving and processing events.
     
     This pipe:
-    1. Receives events from Agents (via receivers)
+    1. Receives events from sensords (via receivers)
     2. Dispatches events to registered ViewHandlers
     3. Manages session lifecycle on the Fusion side
     4. Provides aggregated statistics and data views
@@ -509,7 +509,7 @@ class FusionPipe(FustorPipe):
         self.statistics["sessions_closed"] += 1
         logger.info(f"Session {session_id} closed acknowledgement in pipe {self.id}")
     
-    async def keep_session_alive(self, session_id: str, can_realtime: bool = False, agent_status: Optional[Dict[str, Any]] = None) -> bool:
+    async def keep_session_alive(self, session_id: str, can_realtime: bool = False, sensord_status: Optional[Dict[str, Any]] = None) -> bool:
         """Update last activity for a session."""
         from ..core.session_manager import session_manager
         
@@ -519,11 +519,11 @@ class FusionPipe(FustorPipe):
                 vid, 
                 session_id, 
                 can_realtime=can_realtime, 
-                agent_status=agent_status
+                sensord_status=sensord_status
             )
         
-        if agent_status:
-            self._last_agent_status = agent_status
+        if sensord_status:
+            self._last_sensord_status = sensord_status
         return True # Assumed alive if it was successfully kept alive for at least one or generally
 
     async def get_session_role(self, session_id: str) -> str:
@@ -561,7 +561,7 @@ class FusionPipe(FustorPipe):
         **kwargs
     ) -> Dict[str, Any]:
         """
-        Process a batch of events from an Agent.
+        Process a batch of events from an sensord.
         
         Args:
             events: List of events to process

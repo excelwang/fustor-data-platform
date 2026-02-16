@@ -21,8 +21,8 @@ class TestSessionLifecycle:
         await mgr.stop_periodic_cleanup()
 
     @pytest.mark.asyncio
-    async def test_agent_job_lifecycle(self, manager):
-        """Verify AgentJob creation and completion flow."""
+    async def test_sensord_job_lifecycle(self, manager):
+        """Verify sensordJob creation and completion flow."""
         view_id = "view-job"
         sessions = ["s1", "s2"]
         
@@ -31,20 +31,20 @@ class TestSessionLifecycle:
         await manager.create_session_entry(view_id, "s2")
         
         # 1. Create Job
-        job_id = await manager.create_agent_job(view_id, "/path/target", sessions)
+        job_id = await manager.create_sensord_job(view_id, "/path/target", sessions)
         assert job_id
-        assert job_id in manager._agent_jobs
-        job = manager._agent_jobs[job_id]
+        assert job_id in manager._sensord_jobs
+        job = manager._sensord_jobs[job_id]
         assert job.status == "RUNNING"
         assert job.expected_sessions == set(sessions)
         
         # 2. Complete for s1
-        await manager.complete_agent_job(view_id, "s1", "/path/target")
+        await manager.complete_sensord_job(view_id, "s1", "/path/target")
         assert "s1" in job.completed_sessions
         assert job.status == "RUNNING"
         
         # 3. Complete for s2 (Final)
-        await manager.complete_agent_job(view_id, "s2", "/path/target")
+        await manager.complete_sensord_job(view_id, "s2", "/path/target")
         assert "s2" in job.completed_sessions
         assert job.status == "COMPLETED"
         assert job.completed_at is not None

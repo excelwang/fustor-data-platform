@@ -150,7 +150,7 @@ class TestFusionPipeSession:
         await fusion_pipe.start()
         
         # Use bridge to create session (handles election and backing store)
-        await bridge.create_session(task_id="agent:pipe", session_id="sess-1")
+        await bridge.create_session(task_id="sensord:pipe", session_id="sess-1")
         
         # Give background event loop time to notify handlers
         await asyncio.sleep(0.05)
@@ -168,11 +168,11 @@ class TestFusionPipeSession:
         
         await fusion_pipe.start()
         
-        await bridge.create_session(task_id="agent1:pipe", session_id="sess-1")
+        await bridge.create_session(task_id="sensord1:pipe", session_id="sess-1")
         
         # Make the next session a follower
         mock_view_handler.next_role = "follower"
-        await bridge.create_session(task_id="agent2:pipe", session_id="sess-2")
+        await bridge.create_session(task_id="sensord2:pipe", session_id="sess-2")
         
         # Give background event loop time
         await asyncio.sleep(0.05)
@@ -190,8 +190,8 @@ class TestFusionPipeSession:
         
         await fusion_pipe.start()
         
-        await bridge.create_session(task_id="agent1:pipe", session_id="sess-1")
-        await bridge.create_session(task_id="agent2:pipe", session_id="sess-2")
+        await bridge.create_session(task_id="sensord1:pipe", session_id="sess-1")
+        await bridge.create_session(task_id="sensord2:pipe", session_id="sess-2")
         
         # Close via bridge (which calls pipe.on_session_closed)
         await bridge.close_session("sess-1")

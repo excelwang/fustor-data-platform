@@ -81,7 +81,7 @@ async def main():
     args = parser.parse_args()
 
     if args.mode == "setup":
-        paths = await create_known_files(args.url_push, "agent-1-push-key", "pipe-1")
+        paths = await create_known_files(args.url_push, "sensord-1-push-key", "pipe-1")
         with open("known_paths.txt", "w") as f:
             for p in paths:
                 f.write(p + "\n")

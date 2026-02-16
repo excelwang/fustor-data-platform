@@ -1,7 +1,7 @@
 """
 Test B1: Blind-spot file creation detected by Audit.
 
-验证无 Agent 客户端创建的文件通过 Audit 被发现，并标记为 agent_missing。
+验证无 sensord 客户端创建的文件通过 Audit 被发现，并标记为 sensord_missing。
 参考文档: CONSISTENCY_DESIGN.md - Section 4.4 (盲区名单) & Section 5.3 (Audit 消息处理)
 """
 import pytest
@@ -20,13 +20,13 @@ from ..fixtures.constants import (
 
 
 class TestBlindSpotFileCreation:
-    """Test detection of files created by client without agent."""
+    """Test detection of files created by client without sensord."""
 
     def test_blind_spot_file_discovered_by_audit(
         self,
         docker_env,
         fusion_client,
-        setup_agents,
+        setup_sensords,
         clean_shared_dir,
         wait_for_audit
     ):
@@ -42,7 +42,7 @@ class TestBlindSpotFileCreation:
         print(f"[DEBUG] Creating blind-spot file: {test_file}")
         test_file_rel = "/" + os.path.relpath(test_file, MOUNT_POINT)
         
-        # Step 1: Create file on client without agent
+        # Step 1: Create file on client without sensord
         docker_manager.create_file_in_container(
             CONTAINER_CLIENT_C,
             test_file,
@@ -54,18 +54,18 @@ class TestBlindSpotFileCreation:
         check_result = docker_manager.exec_in_container(CONTAINER_CLIENT_C, ["ls", "-la", test_file])
         print(f"[DEBUG] File on Client C: {check_result}")
         
-        # Verify file exists on Agent A's mount (check NFS propagation)
-        print(f"[DEBUG] Waiting for file to be visible on Agent A (NFS propagation)...")
+        # Verify file exists on sensord A's mount (check NFS propagation)
+        print(f"[DEBUG] Waiting for file to be visible on sensord A (NFS propagation)...")
         visible_on_a = False
         for _ in range(20): # ~10s wait
             check_a = docker_manager.exec_in_container(CONTAINER_CLIENT_A, ["ls", "-la", test_file])
             if check_a.returncode == 0:
                 visible_on_a = True
-                print(f"[DEBUG] File visible on Agent A: {check_a.stdout.strip()}")
+                print(f"[DEBUG] File visible on sensord A: {check_a.stdout.strip()}")
                 break
             time.sleep(0.5)
         
-        assert visible_on_a, f"File {test_file} did not become visible on Agent A within timeout"
+        assert visible_on_a, f"File {test_file} did not become visible on sensord A within timeout"
         
         # Step 1.1: Create a trigger file to ensure directory mtime change is noticed
         # This prevents Smart Audit from skipping the scan if it already scanned the dir recently.
@@ -73,18 +73,18 @@ class TestBlindSpotFileCreation:
         docker_manager.create_file_in_container(CONTAINER_CLIENT_C, trigger_file, "trigger")
         print(f"[DEBUG] Trigger file created at {datetime.datetime.utcnow().isoformat()} UTC")
         
-        # IMPORTANT: Wait for Agent A to see the changes via NFS actimeo
-        print(f"[DEBUG] Waiting {INGESTION_DELAY}s for NFS propagation to Agent A...")
+        # IMPORTANT: Wait for sensord A to see the changes via NFS actimeo
+        print(f"[DEBUG] Waiting {INGESTION_DELAY}s for NFS propagation to sensord A...")
         time.sleep(INGESTION_DELAY)
 
-        # Check dir mtime from Agent A's perspective
+        # Check dir mtime from sensord A's perspective
         try:
             dir_stat = docker_manager.exec_in_container(CONTAINER_CLIENT_A, ["stat", MOUNT_POINT])
-            print(f"[DEBUG] Agent A dir stat: {dir_stat.stdout}")
+            print(f"[DEBUG] sensord A dir stat: {dir_stat.stdout}")
             file_stat = docker_manager.exec_in_container(CONTAINER_CLIENT_A, ["ls", "-la", test_file])
-            print(f"[DEBUG] Agent A file check: {file_stat.stdout}")
+            print(f"[DEBUG] sensord A file check: {file_stat.stdout}")
         except Exception as e:
-            print(f"[DEBUG] Agent A check failed: {e}")
+            print(f"[DEBUG] sensord A check failed: {e}")
         
         # Debug: check audit stats before waiting
         try:
@@ -95,7 +95,7 @@ class TestBlindSpotFileCreation:
 
         # Step 2: Wait for Audit completion
         # We wait for TWO completions to be absolutely sure that at least one 
-        # full audit cycle started AFTER the file was visible on Agent A.
+        # full audit cycle started AFTER the file was visible on sensord A.
         print(f"[DEBUG] Waiting for Audit completion...")
         wait_for_audit()
         print(f"[DEBUG] One audit cycle finished, waiting for another just in case...")
@@ -115,15 +115,15 @@ class TestBlindSpotFileCreation:
         assert found_after_audit is not None, \
             f"File {test_file_rel} should be discovered by the Audit scan"
         
-        # Step 5: Verify agent_missing flag is set
-        assert fusion_client.wait_for_flag(test_file_rel, "agent_missing", True, timeout=SHORT_TIMEOUT), \
-            f"Blind-spot file {test_file_rel} should be marked with agent_missing: true. Tree node: {found_after_audit}"
+        # Step 5: Verify sensord_missing flag is set
+        assert fusion_client.wait_for_flag(test_file_rel, "sensord_missing", True, timeout=SHORT_TIMEOUT), \
+            f"Blind-spot file {test_file_rel} should be marked with sensord_missing: true. Tree node: {found_after_audit}"
 
     def test_blind_spot_file_added_to_blind_spot_list(
         self,
         docker_env,
         fusion_client,
-        setup_agents,
+        setup_sensords,
         clean_shared_dir,
         wait_for_audit
     ):

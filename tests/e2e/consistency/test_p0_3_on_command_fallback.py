@@ -24,26 +24,26 @@ class TestOnCommandFallback:
         self,
         docker_env,
         fusion_client,
-        setup_agents,
+        setup_sensords,
         clean_shared_dir
     ):
         """
         场景: 
         1. 正常启动环境。
-        2. 在 NFS 上创建一个新文件 (Agent 可能尚未同步)。
+        2. 在 NFS 上创建一个新文件 (sensord 可能尚未同步)。
         3. 发送带 `on_demand_scan=true` 的 API 请求。
            - 这会导致 ViewDriver 抛出 TypeError (未知参数)。
            - FallbackDriverWrapper 捕获异常，打印 Warning。
            - 调用 `on_command_fallback`。
-           - `on_command_fallback` 使用修复后的 `scan` 命令调用 Agent。
-        4. 验证 Agent 收到命令并执行扫描，文件最终出现在视图中。
+           - `on_command_fallback` 使用修复后的 `scan` 命令调用 sensord。
+        4. 验证 sensord 收到命令并执行扫描，文件最终出现在视图中。
         5. 验证 Fusion 日志确认触发了 Fallback。
         """
         from ..utils import docker_manager
         
         # 1. 确保环境就绪
         assert fusion_client.wait_for_view_ready(timeout=VIEW_READY_TIMEOUT), "View did not become ready"
-        assert fusion_client.wait_for_agent_ready("client-a", timeout=SHORT_TIMEOUT), "Agent A not ready"
+        assert fusion_client.wait_for_sensord_ready("client-a", timeout=SHORT_TIMEOUT), "sensord A not ready"
 
         # 2. 创建测试文件
         test_file_name = f"fallback_test_{int(time.time())}.txt"
@@ -82,10 +82,10 @@ class TestOnCommandFallback:
         found = fusion_client.wait_for_file_in_tree(test_file_rel, timeout=MEDIUM_TIMEOUT)
         assert found, "File should appear after fallback scan"
         
-        # 6. 验证 Agent 日志确认收到正确的 'scan' 命令
-        print("[Test] Verifying Agent logs for 'scan' command...")
-        agent_log = docker_manager.exec_in_container(CONTAINER_CLIENT_A, ["cat", "/root/.fustor/logs/agent.log"]).stdout
+        # 6. 验证 sensord 日志确认收到正确的 'scan' 命令
+        print("[Test] Verifying sensord logs for 'scan' command...")
+        sensord_log = docker_manager.exec_in_container(CONTAINER_CLIENT_A, ["cat", "/root/.fustor/logs/sensord.log"]).stdout
         # PipeCommandMixin logs: "Received command 'scan'"
-        assert "Received command 'scan'" in agent_log, "Agent should have received 'scan' command (Verify P0-3 fix)"
+        assert "Received command 'scan'" in sensord_log, "sensord should have received 'scan' command (Verify P0-3 fix)"
         
         print("[Test] P0-3 On-Command Fallback verified successfully.")

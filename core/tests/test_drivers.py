@@ -130,7 +130,7 @@ async def test_source_driver_defaults():
     success, msg = await ConcreteSourceDriver.check_runtime_params()
     assert success is True
     
-    success, msg = await ConcreteSourceDriver.create_agent_user()
+    success, msg = await ConcreteSourceDriver.create_sensord_user()
     assert success is True
 
 def test_source_driver_transient():

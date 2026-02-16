@@ -1,7 +1,7 @@
 [project]
 name = "fustor-source-fs"
 version = "0.9.1"
-description = "Fustor Agent FS Source Driver"
+description = "Fustor sensord FS Source Driver"
 license = "MIT"
 dependencies = ["fustor-core", "fustor-schema-fs", "watchdog"]
 
@@ -15,5 +15,5 @@ build-backend = "setuptools.build_meta"
 Homepage = "https://github.com/excelwang/fustor/tree/master/extensions/source-fs"
 "Bug Tracker" = "https://github.com/excelwang/fustor/issues"
 
-[project.entry-points."fustor_agent.drivers.sources"]
+[project.entry-points."sensord.drivers.sources"]
 fs = "fustor_source_fs:FSDriver"

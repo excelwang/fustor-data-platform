@@ -3,13 +3,13 @@ receivers:
     driver: http
     port: 18888
     api_keys:
-    - key: key-agent-1
+    - key: key-sensord-1
       pipe_id: pipe-a
-    - key: key-agent-2
+    - key: key-sensord-2
       pipe_id: pipe-a
-    - key: key-agent-3
+    - key: key-sensord-3
       pipe_id: pipe-b
-    - key: key-agent-4
+    - key: key-sensord-4
       pipe_id: pipe-b
 views:
   view-a:

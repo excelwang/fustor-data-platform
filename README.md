@@ -31,7 +31,7 @@ Fustor 使用一个主目录来存放配置、日志和数据库。
 # 创建基础目录结构
 mkdir -p ~/.fustor/views-config
 touch ~/.fustor/receivers-config.yaml      # 创建接收端配置文件
-mkdir -p ~/.fustor/agent-pipes-config
+mkdir -p ~/.fustor/sensord-pipes-config
 ```
 
 ---
@@ -82,17 +82,17 @@ mkdir -p ~/.fustor/agent-pipes-config
 #### 👷 Source Admin (数据源管理员)
 **职责**: 配置数据源和发送器 (Sender)，将数据推送给 Fusion。
 
-1.  **安装 Agent**:
+1.  **安装 sensord**:
     ```bash
-    pip install fustor-agent fustor-source-fs
+    pip install fustor-sensord fustor-source-fs
     ```
 
 2.  **配置 Pipe 任务**:
-    在 `~/.fustor/agent-pipes-config/pipe-job.yaml` 中定义采集与推送逻辑。
+    在 `~/.fustor/sensord-pipes-config/pipe-job.yaml` 中定义采集与推送逻辑。
 
-3.  **启动 Agent**:
+3.  **启动 sensord**:
     ```bash
-    fustor-agent start -D
+    fustor-sensord start -D
     ```
 
 ---
@@ -108,7 +108,7 @@ mkdir -p ~/.fustor/agent-pipes-config
 ## 📦 模块详情
 
 *   **Fusion**: 数据摄取、处理与视图提供。详见 `fusion/README.md`。
-*   **Agent**: 数据采集与推送。详见 `agent/README.md`。
+*   **sensord**: 数据采集与推送。详见 `sensord/README.md`。
 *   **Common**: 通用工具与基础库。
 
 ## 📖 核心文档
@@ -116,4 +116,4 @@ mkdir -p ~/.fustor/agent-pipes-config
 *   **[架构设计 V2 (最新)](docs/refactoring/1-ARCHITECTURE_V2.md)**: 了解 V2 架构的解耦设计、Pipe 抽象与 Handler 适配器模式。
 *   **[配置指南](docs/CONFIGURATION.md)**: 详细的 YAML 配置说明。
 *   **[架构设计](docs/ARCHITECTURE.md)**: 了解 Fustor 的顶层设计和服务交互。
-*   **[一致性设计](docs/CONSISTENCY_DESIGN.md)**: 了解多 Agent 环境下的数据一致性机制。
+*   **[一致性设计](docs/CONSISTENCY_DESIGN.md)**: 了解多 sensord 环境下的数据一致性机制。

@@ -6,7 +6,7 @@ This conftest imports modular fixtures from the fixtures/ package.
 For implementation details, see:
 - fixtures/docker.py: Docker environment management
 - fixtures/fusion.py: Fusion client and configuration
-- fixtures/agents.py: Agent setup and configuration
+- fixtures/sensords.py: sensord setup and configuration
 - fixtures/leadership.py: Leadership management and audit control
 """
 import os
@@ -38,7 +38,7 @@ if not logger.handlers:
 from fixtures.constants import TEST_TIMEOUT, CONTAINER_CLIENT_A, CONTAINER_CLIENT_B, CONTAINER_CLIENT_C, CONTAINER_FUSION, CONTAINER_NFS_SERVER, MOUNT_POINT, AUDIT_INTERVAL
 
 # Log architecture status
-logger.info("🚀 Integration tests running in V2 AgentPipe mode")
+logger.info("🚀 Integration tests running in V2 sensordPipe mode")
 
 
 # ============================================================================
@@ -63,7 +63,7 @@ def pytest_addoption(parser):
 
 from fixtures.docker import docker_env, clean_shared_dir
 from fixtures.fusion import test_view, test_api_key, test_query_key, fusion_client
-from fixtures.agents import setup_agents, setup_unskewed_agents
+from fixtures.sensords import setup_sensords, setup_unskewed_sensords
 from fixtures.leadership import wait_for_audit, reset_leadership
 
 
@@ -78,7 +78,7 @@ def reset_fusion_state(request, fusion_client, clean_shared_dir):
     NOT autouse — tests that need a clean slate should declare this explicitly.
     
     What it does:
-    1. Kill all agents in ALL containers (and wait for death) [SKIPPED IN FAST MODE]
+    1. Kill all sensords in ALL containers (and wait for death) [SKIPPED IN FAST MODE]
     2. Reset Fusion state via API (clears sessions, views)
     3. Verify no stale sessions remain
     """
@@ -86,17 +86,17 @@ def reset_fusion_state(request, fusion_client, clean_shared_dir):
     containers = [CONTAINER_CLIENT_A, CONTAINER_CLIENT_B, CONTAINER_CLIENT_C]
     
     if not fast_mode:
-        # 1. Kill agents and clean up local state in ALL containers
+        # 1. Kill sensords and clean up local state in ALL containers
         for container in containers:
-            docker_manager.cleanup_agent_state(container)
+            docker_manager.cleanup_sensord_state(container)
         
-        # Small delay to ensure all agent processes are fully dead
+        # Small delay to ensure all sensord processes are fully dead
         # and their last heartbeats/requests have been processed
         time.sleep(1.0)
     else:
-        logger.info("⚡ Fast mode: Skipping agent termination. Only resetting Fusion/NFS.")
+        logger.info("⚡ Fast mode: Skipping sensord termination. Only resetting Fusion/NFS.")
     
-    # 2. Reset Fusion state (AFTER agents are dead, so no re-registration)
+    # 2. Reset Fusion state (AFTER sensords are dead, so no re-registration)
     try:
         fusion_client.reset()
         
@@ -111,7 +111,7 @@ def reset_fusion_state(request, fusion_client, clean_shared_dir):
         else:
             remaining = fusion_client.get_sessions()
             if remaining:
-                logger.warning(f"Sessions still exist after reset wait: {[s.get('agent_id') for s in remaining]}")
+                logger.warning(f"Sessions still exist after reset wait: {[s.get('sensord_id') for s in remaining]}")
         
         # Wait for View to be READY (Initial snapshot complete)
         time.sleep(1.0)
@@ -130,7 +130,7 @@ def reset_fusion_state(request, fusion_client, clean_shared_dir):
     # 3. Clear logs
     for container in containers + [CONTAINER_FUSION]:
         try:
-            log_path = "/root/.fustor/logs/agent.log" if "client" in container else "/root/.fustor/logs/fusion.log"
+            log_path = "/root/.fustor/logs/sensord.log" if "client" in container else "/root/.fustor/logs/fusion.log"
             docker_manager.exec_in_container(container, ["sh", "-c", f"> {log_path}"], timeout=5)
         except Exception:
             pass
@@ -139,6 +139,6 @@ def reset_fusion_state(request, fusion_client, clean_shared_dir):
 
 
 # ============================================================================
-# Re-export ensure_agent_running for tests that need it directly
+# Re-export ensure_sensord_running for tests that need it directly
 # ============================================================================
-from fixtures.agents import ensure_agent_running
+from fixtures.sensords import ensure_sensord_running

@@ -8,7 +8,7 @@ Welcome to the Fustor documentation. Fustor is a high-reliability, consistency-a
 - **Source**: A data origin (e.g., local FS, MySQL CDC, S3).
 - **Sender**: A data destination (e.g., Fusion API, S3, HTTP Hook).
 - **View**: A materialized state of the data in the destination system (Fusion).
-- **Agent**: The process that runs pipes and captures local events.
+- **sensord**: The process that runs pipes and captures local events.
 - **Fusion**: The central state manager that performs arbitration and serves the data.
 
 ## Documentation Index

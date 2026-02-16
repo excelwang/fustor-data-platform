@@ -33,10 +33,10 @@ def _generate_base_event(
         "extra_metadata": extra_metadata or {}
     }
 
-# --- Mock Agent Functions ---
+# --- Mock sensord Functions ---
 
 def mock_mysql_create_project(project_name: str) -> Dict[str, Any]:
-    """Simulates a MySQL Agent creating a new project."""
+    """Simulates a MySQL sensord creating a new project."""
     project_id = project_name.lower().replace(" ", "_")
     event = _generate_base_event(
         project_id=project_id,
@@ -55,7 +55,7 @@ def mock_mysql_create_project(project_name: str) -> Dict[str, Any]:
     return event
 
 def mock_nfs_hot_add_file(project_id: str, filename: str, size_mb: int) -> Dict[str, Any]:
-    """Simulates an NFS Hot Agent detecting a new file."""
+    """Simulates an NFS Hot sensord detecting a new file."""
     event = _generate_base_event(
         project_id=project_id,
         source_type="nfs_hot",
@@ -72,7 +72,7 @@ def mock_nfs_hot_add_file(project_id: str, filename: str, size_mb: int) -> Dict[
     return event
 
 def mock_nfs_cold_add_file(project_id: str, filename: str, size_gb: int, age_days: int = 370) -> Dict[str, Any]:
-    """Simulates an NFS Cold Agent detecting an archived file."""
+    """Simulates an NFS Cold sensord detecting an archived file."""
     archived_time = datetime.now(timezone.utc) - timedelta(days=age_days)
     event = _generate_base_event(
         project_id=project_id,
@@ -91,7 +91,7 @@ def mock_nfs_cold_add_file(project_id: str, filename: str, size_gb: int, age_day
     return event
 
 def mock_oss_add_dataset_link(project_id: str, dataset_name: str, public_url: str) -> Dict[str, Any]:
-    """Simulates an OSS Agent detecting a new public dataset link."""
+    """Simulates an OSS sensord detecting a new public dataset link."""
     event = _generate_base_event(
         project_id=project_id,
         source_type="oss",
@@ -109,7 +109,7 @@ def mock_oss_add_dataset_link(project_id: str, dataset_name: str, public_url: st
     return event
 
 def mock_es_add_publication(project_id: str, title: str, pubmed_id: str) -> Dict[str, Any]:
-    """Simulates an Elasticsearch Agent finding a new publication metadata."""
+    """Simulates an Elasticsearch sensord finding a new publication metadata."""
     event = _generate_base_event(
         project_id=project_id,
         source_type="es",

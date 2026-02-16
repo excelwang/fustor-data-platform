@@ -26,7 +26,7 @@ class EchoDriver(Sender):
         super().__init__(sender_id, endpoint, credential, config)
         self.total_rows = 0
         self.total_size = 0
-        self.logger = logging.getLogger(f"fustor_agent.sender.echo.{sender_id}")
+        self.logger = logging.getLogger(f"sensord.sender.echo.{sender_id}")
         self._snapshot_triggered = False
 
     async def connect(self) -> None:

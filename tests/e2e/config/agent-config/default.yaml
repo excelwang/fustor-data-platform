@@ -1,10 +1,10 @@
-# Agent Configuration for Integration Tests
+# sensord Configuration for Integration Tests
 # Uses Unified Config V2 format
-# Location: tests/e2e/config/agent-config/default.yaml
+# Location: tests/e2e/config/sensord-config/default.yaml
 
 logging: "${FUSTOR_LOG_LEVEL}"
 
-agent_id: "${AGENT_ID}"
+sensord_id: "${AGENT_ID}"
 
 
 sources:

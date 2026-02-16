@@ -18,10 +18,10 @@ class ServiceManager:
         
         self.fusion_port = base_port + 2 # Management API
         self.ingest_port = base_port + 3 # Data Receiver
-        self.agent_port = base_port
+        self.sensord_port = base_port
         
         self.fusion_process = None
-        self.agent_process = None
+        self.sensord_process = None
         self.processes = [] # Backwards compatibility for stop_all fallback
 
     def setup_env(self):
@@ -116,15 +116,15 @@ class ServiceManager:
                 time.sleep(0.5)
         raise RuntimeError("Fusion start failed")
 
-    def start_agent(self, api_key: str, **kwargs):
+    def start_sensord(self, api_key: str, **kwargs):
         # Clean up stale PID file to allow restart
-        agent_pid = os.path.join(self.env_dir, "agent.pid")
-        if os.path.exists(agent_pid):
-            os.remove(agent_pid)
+        sensord_pid = os.path.join(self.env_dir, "sensord.pid")
+        if os.path.exists(sensord_pid):
+            os.remove(sensord_pid)
 
-        # V2: Unified Config for Agent
-        os.makedirs(os.path.join(self.env_dir, "agent-config"), exist_ok=True)
-        agent_config = {
+        # V2: Unified Config for sensord
+        os.makedirs(os.path.join(self.env_dir, "sensord-config"), exist_ok=True)
+        sensord_config = {
             "sources": {
                 "bench-fs": {
                     "driver": "fs",
@@ -151,26 +151,26 @@ class ServiceManager:
                 }
             }
         }
-        with open(os.path.join(self.env_dir, "agent-config/default.yaml"), "w") as f:
-            yaml.dump(agent_config, f)
+        with open(os.path.join(self.env_dir, "sensord-config/default.yaml"), "w") as f:
+            yaml.dump(sensord_config, f)
             
         cmd = [
-            "fustor-agent", "start"
+            "fustor-sensord", "start"
         ]
-        log_file = open(os.path.join(self.env_dir, "agent.log"), "a")
+        log_file = open(os.path.join(self.env_dir, "sensord.log"), "a")
         env = os.environ.copy()
         env["FUSTOR_HOME"] = self.env_dir
         
         p = subprocess.Popen(cmd, env=env, stdout=log_file, stderr=subprocess.STDOUT)
         log_file.close() # Close in parent
-        self.agent_process = p
+        self.sensord_process = p
         self.processes.append(p)
         
-        # Agent has no HTTP management API in V2, so we just wait a bit or check logs
+        # sensord has no HTTP management API in V2, so we just wait a bit or check logs
         time.sleep(2)
 
-    def check_agent_logs(self, lines=100):
-        log_path = os.path.join(self.env_dir, "agent.log")
+    def check_sensord_logs(self, lines=100):
+        log_path = os.path.join(self.env_dir, "sensord.log")
         if not os.path.exists(log_path):
             return False, "Log file not found yet"
         
@@ -202,8 +202,8 @@ class ServiceManager:
         except Exception as e:
             return True, f"Could not read log: {e}"
 
-    def get_agent_log_path(self):
-        return os.path.join(self.env_dir, "agent.log")
+    def get_sensord_log_path(self):
+        return os.path.join(self.env_dir, "sensord.log")
 
     def get_fusion_log_path(self):
         return os.path.join(self.env_dir, "fusion.log")
@@ -234,7 +234,7 @@ class ServiceManager:
             time.sleep(0.5)
         return None
 
-    def trigger_agent_audit(self, pipe_id="bench-pipe"):
+    def trigger_sensord_audit(self, pipe_id="bench-pipe"):
         """Triggers audit for a view via Fusion API."""
         url = f"http://localhost:{self.fusion_port}/api/v1/pipe/consistency/audit/start"
         headers = {"X-API-Key": self.api_key}
@@ -242,7 +242,7 @@ class ServiceManager:
         res.raise_for_status()
         return res.json()
 
-    def trigger_agent_sentinel(self, pipe_id="bench-pipe"):
+    def trigger_sensord_sentinel(self, pipe_id="bench-pipe"):
         """Sentinel check is passive in V2, but we can check tasks."""
         url = f"http://localhost:{self.fusion_port}/api/v1/pipe/consistency/sentinel/tasks"
         headers = {"X-API-Key": self.api_key}
@@ -253,28 +253,28 @@ class ServiceManager:
     def wait_for_leader(self, pipe_id="bench-pipe", timeout=30, start_offset=0):
         click.echo(f"Waiting for {pipe_id} to become LEADER...")
         pattern = rf"Assigned LEADER role for {pipe_id}"
-        return self.wait_for_log(self.get_agent_log_path(), pattern, start_offset=start_offset, timeout=timeout)
+        return self.wait_for_log(self.get_sensord_log_path(), pattern, start_offset=start_offset, timeout=timeout)
 
-    def stop_agent(self):
-        """Safely stop only the benchmark agent process."""
-        if self.agent_process:
-            click.echo("Stopping benchmark agent...")
+    def stop_sensord(self):
+        """Safely stop only the benchmark sensord process."""
+        if self.sensord_process:
+            click.echo("Stopping benchmark sensord...")
             try:
-                self.agent_process.terminate()
-                self.agent_process.wait(timeout=5)
+                self.sensord_process.terminate()
+                self.sensord_process.wait(timeout=5)
             except subprocess.TimeoutExpired:
-                self.agent_process.kill()
+                self.sensord_process.kill()
             
             # Remove from tracking list to prevent double-kill in stop_all
-            if self.agent_process in self.processes:
-                self.processes.remove(self.agent_process)
+            if self.sensord_process in self.processes:
+                self.processes.remove(self.sensord_process)
                 
-            self.agent_process = None
+            self.sensord_process = None
         
         # Remove PID file
-        agent_pid = os.path.join(self.env_dir, "agent.pid")
-        if os.path.exists(agent_pid):
-            os.remove(agent_pid)
+        sensord_pid = os.path.join(self.env_dir, "sensord.pid")
+        if os.path.exists(sensord_pid):
+            os.remove(sensord_pid)
         time.sleep(1)
 
     def stop_all(self):

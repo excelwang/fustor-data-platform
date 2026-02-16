@@ -7,8 +7,8 @@
 | 维度 | 广播式任务 (L2/Data-Compensatory) | 精准式任务 (L3/Administrative) |
 | :--- | :--- | :--- |
 | **典型示例** | `scan` (On-Demand Find) | `upgrade`, `reload`, `stop` |
-| **逻辑目标** | **View** (数据视图) | **Agent** (物理进程) |
-| **寻址映射** | `ViewID -> List[SessionID]` | `AgentID -> List[SessionID]` |
+| **逻辑目标** | **View** (数据视图) | **sensord** (物理进程) |
+| **寻址映射** | `ViewID -> List[SessionID]` | `sensordID -> List[SessionID]` |
 | **成功准则** | **Quorum/Full** (集齐所有源) | **Any/Single** (命中即生效) |
 | **失败影响** | 数据盲区 (Partial Data) | 管控失效 (Control Loss) |
 | **执行原子性** | 数据分片级 | 进程级 |
@@ -30,13 +30,13 @@
 这种任务的目的是**状态变更**。它是对 L2 连接载体的生命周期进行运维操作。
 
 *   **逻辑流程**:
-    1.  解析 Agent 的 `task_id` 获取 `AgentID`。
-    2.  在全局 Session 表中过滤出属于该 `AgentID` 的所有 `Session`。
+    1.  解析 sensord 的 `task_id` 获取 `sensordID`。
+    2.  在全局 Session 表中过滤出属于该 `sensordID` 的所有 `Session`。
     3.  **选路逻辑**:
         *   优先选择 `Leader` Session。
         *   若无 Leader，选择第一个探测到的活跃 Session（Heartbeat 最新的）。
     4.  **单点分发**: 只向选中的**一个** Session 发送指令。
-    5.  **原子执行**: 利用 Agent 进程的继承关系，实现全局重启或加载。
+    5.  **原子执行**: 利用 sensord 进程的继承关系，实现全局重启或加载。
 
 ---
 
@@ -53,7 +53,7 @@ class TaskOrchestrator:
         """
         pass
 
-    async def agent_targeted_dispatch(self, agent_id: str, cmd: Dict) -> Dict:
+    async def sensord_targeted_dispatch(self, sensord_id: str, cmd: Dict) -> Dict:
         """
         精准选路逻辑：用于升级/停止。
         保证进程级操作的原子性，避免冲突。

@@ -1,6 +1,6 @@
-# Agent 驱动开发指南
+# sensord 驱动开发指南
 
-本文档提供了为 Fustor Agent 开发自定义驱动（Source 和 Pusher）的完整指南。
+本文档提供了为 Fustor sensord 开发自定义驱动（Source 和 Pusher）的完整指南。
 
 ## 1. 驱动开发契约 (Driver Contract)
 
@@ -55,7 +55,7 @@ def get_audit_iterator(self, **kwargs) -> Iterator[EventBase]:
 
 ## 3. 作为贡献者在本仓库中添加驱动
 
-此流程适用于希望为 Fustor Agent 官方仓库贡献新驱动的开发者。
+此流程适用于希望为 Fustor sensord 官方仓库贡献新驱动的开发者。
 
 1.  **创建插件包结构**: 在 `extensions/` 目录下为新驱动创建一个符合 `[type]-[name]` 命名规范的目录。
     ```bash
@@ -104,9 +104,9 @@ def get_audit_iterator(self, **kwargs) -> Iterator[EventBase]:
 4.  **本地测试**:
     ```bash
     uv venv .venv
-    pip install fustor-agent
+    pip install fustor-sensord
     pip install -e .
-    fustor-agent start
+    fustor-sensord start
     ```
 
 5.  **发布 (可选)**: 您可以将您的包构建并发布到 PyPI。

@@ -79,7 +79,7 @@ async def test_echo_sender_logs_properly():
     # Capture logs
     log_stream = StringIO()
     handler = logging.StreamHandler(log_stream)
-    logger = logging.getLogger(f"fustor_agent.sender.echo.test-echo")
+    logger = logging.getLogger(f"sensord.sender.echo.test-echo")
     logger.addHandler(handler)
     logger.setLevel(logging.INFO) # Ensure INFO logs are captured
     events = [UpdateEvent(event_schema="test", table="test", rows=[{"id": 1, "name": "test"}], fields=["id", "name"])]

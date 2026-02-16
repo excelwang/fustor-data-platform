@@ -56,7 +56,7 @@ async def pipe_with_bridge():
 async def test_bridge_create_session(pipe_with_bridge):
     """Basic session create via bridge makes first session the leader."""
     pipe, bridge = pipe_with_bridge
-    await bridge.create_session(task_id="agent:pipe", session_id="s1")
+    await bridge.create_session(task_id="sensord:pipe", session_id="s1")
     
     role = await pipe.get_session_role("s1")
     assert role == "leader"
@@ -66,7 +66,7 @@ async def test_bridge_create_session(pipe_with_bridge):
 async def test_bridge_close_session(pipe_with_bridge):
     """Closing session via bridge works without errors."""
     pipe, bridge = pipe_with_bridge
-    await bridge.create_session(task_id="agent:pipe", session_id="s1")
+    await bridge.create_session(task_id="sensord:pipe", session_id="s1")
     result = await bridge.close_session("s1")
     assert result is True
 

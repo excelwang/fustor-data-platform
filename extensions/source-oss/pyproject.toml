@@ -17,7 +17,7 @@ Homepage = "https://github.com/excelwang/fustor/tree/master/extensions/source-os
 
 license = "MIT"
 
-[project.entry-points."fustor_agent.drivers.sources"]
+[project.entry-points."sensord.drivers.sources"]
 source_oss = "fustor_source_oss.driver:OssSourceDriver"
 
 [tool.pytest.ini_options]

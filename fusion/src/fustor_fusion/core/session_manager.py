@@ -9,7 +9,7 @@ from fustor_fusion_sdk.interfaces import SessionInfo
 logger = logging.getLogger(__name__)
 
 @dataclass
-class AgentJob:
+class sensordJob:
     job_id: str
     view_id: str
     path: str
@@ -34,18 +34,18 @@ class SessionManager:
         self._cleanup_task: Optional[asyncio.Task] = None
         self._is_removing: Set[str] = set() # Set of session_ids currently being removed
         
-        # Agent Job Tracking (Generic async command tracking)
-        self._agent_jobs: Dict[str, AgentJob] = {}
+        # sensord Job Tracking (Generic async command tracking)
+        self._sensord_jobs: Dict[str, sensordJob] = {}
         self._path_to_job_id: Dict[Tuple[str, str], str] = {} # (view_id, path) -> job_id
 
     def _get_view_lock(self, view_id: str) -> asyncio.Lock:
         """获取 per-view 锁（惰性创建）。"""
         return self._view_locks.setdefault(view_id, asyncio.Lock())
 
-    async def create_agent_job(self, view_id: str, path: str, session_ids: List[str]) -> str:
-        """Create a new agent job for multiple sessions and return its unique ID."""
+    async def create_sensord_job(self, view_id: str, path: str, session_ids: List[str]) -> str:
+        """Create a new sensord job for multiple sessions and return its unique ID."""
         job_id = str(uuid.uuid4())[:8]
-        job = AgentJob(
+        job = sensordJob(
             job_id=job_id,
             view_id=view_id,
             path=path,
@@ -53,14 +53,14 @@ class SessionManager:
             created_at=time.time(),
             expected_sessions=set(session_ids)
         )
-        self._agent_jobs[job_id] = job
+        self._sensord_jobs[job_id] = job
         self._path_to_job_id[(view_id, path)] = job_id
         return job_id
 
-    def get_agent_jobs(self) -> List[Dict[str, Any]]:
-        """List all agent jobs with completion percentage."""
+    def get_sensord_jobs(self) -> List[Dict[str, Any]]:
+        """List all sensord jobs with completion percentage."""
         results = []
-        for j in self._agent_jobs.values():
+        for j in self._sensord_jobs.values():
             total = len(j.expected_sessions)
             done = len(j.completed_sessions)
             percentage = round((done / total * 100.0), 2) if total > 0 else 100.0
@@ -117,7 +117,7 @@ class SessionManager:
             return session_info
 
     async def queue_command(self, view_id: str, session_id: str, command: Dict[str, Any]) -> bool:
-        """Queue a command for the agent to pick up on next heartbeat."""
+        """Queue a command for the sensord to pick up on next heartbeat."""
         view_id = str(view_id)
         async with self._get_view_lock(view_id):
             if view_id in self._sessions and session_id in self._sessions[view_id]:
@@ -132,10 +132,10 @@ class SessionManager:
                         session_info.pending_scans = set()
                     session_info.pending_scans.add(path)
                     
-                    # Find job_id and add to command for Agent to return
+                    # Find job_id and add to command for sensord to return
                     job_id = command.get("job_id") or self._path_to_job_id.get((view_id, path))
                     if job_id:
-                        command["job_id"] = job_id # Pass job_id to agent
+                        command["job_id"] = job_id # Pass job_id to sensord
                 
                 session_info.pending_commands.append(command)
                 logger.debug(f"Queued command for session {session_id}: {command['type']}")
@@ -144,17 +144,17 @@ class SessionManager:
                 logger.warning(f"queue_command failed: Session {session_id} not found in view {view_id} (Sessions: {list(self._sessions.get(view_id, {}).keys())})")
         return False
 
-    async def complete_agent_job(self, view_id: str, session_id: str, path: str, job_id: Optional[str] = None) -> bool:
-        """Mark an agent job as complete for a specific session."""
+    async def complete_sensord_job(self, view_id: str, session_id: str, path: str, job_id: Optional[str] = None) -> bool:
+        """Mark an sensord job as complete for a specific session."""
         view_id = str(view_id)
-        logger.info(f"complete_agent_job called: view_id={view_id}, session_id={session_id}, path={path}, job_id={job_id}")
+        logger.info(f"complete_sensord_job called: view_id={view_id}, session_id={session_id}, path={path}, job_id={job_id}")
         async with self._get_view_lock(view_id):
             # 1. Resolve job_id
             if not job_id:
                 job_id = self._path_to_job_id.get((view_id, path))
             
-            if job_id and job_id in self._agent_jobs:
-                job = self._agent_jobs[job_id]
+            if job_id and job_id in self._sensord_jobs:
+                job = self._sensord_jobs[job_id]
                 
                 # Mark this session as completed
                 job.completed_sessions.add(session_id)
@@ -195,7 +195,7 @@ class SessionManager:
     async def keep_session_alive(self, view_id: str, session_id: str, 
                                client_ip: Optional[str] = None,
                                can_realtime: bool = False,
-                               agent_status: Optional[Dict[str, Any]] = None) -> Tuple[bool, List[Dict[str, Any]]]:
+                               sensord_status: Optional[Dict[str, Any]] = None) -> Tuple[bool, List[Dict[str, Any]]]:
         """
         Updates session activity and returns any pending commands.
         Returns: (success, list_of_commands)
@@ -207,8 +207,8 @@ class SessionManager:
                 session_info = self._sessions[view_id][session_id]
                 session_info.last_activity = time.monotonic()
                 session_info.can_realtime = can_realtime
-                if agent_status:
-                    session_info.agent_status = agent_status
+                if sensord_status:
+                    session_info.sensord_status = sensord_status
                 if client_ip:
                     session_info.client_ip = client_ip
                 
@@ -350,7 +350,7 @@ class SessionManager:
         """Remove completed or very old jobs from history."""
         now = time.time()
         to_remove = []
-        for jid, job in self._agent_jobs.items():
+        for jid, job in self._sensord_jobs.items():
             # Remove completed jobs after TTL
             if job.status in ("COMPLETED", "FAILED") and job.completed_at:
                 if now - job.completed_at > ttl_seconds:
@@ -360,7 +360,7 @@ class SessionManager:
                 to_remove.append(jid)
         
         for jid in to_remove:
-            job = self._agent_jobs.pop(jid, None)
+            job = self._sensord_jobs.pop(jid, None)
             if job:
                 self._path_to_job_id.pop((job.view_id, job.path), None)
                 logger.debug(f"Cleaned up old job {jid}")

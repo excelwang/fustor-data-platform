@@ -24,7 +24,7 @@ class TestOnDemandScan:
         self,
         docker_env,
         fusion_client,
-        setup_agents,
+        setup_sensords,
         clean_shared_dir
     ):
         """
@@ -32,16 +32,16 @@ class TestOnDemandScan:
         预期: 手动触发 On-Demand Scan 后文件被发现并加入内存树。
         On-demand 扫描产生 ON_DEMAND_JOB 事件 (Tier 3 补偿型):
         - 文件会出现在视图中
-        - agent_missing 为 True (on-demand 无法证明 inotify 覆盖)
+        - sensord_missing 为 True (on-demand 无法证明 inotify 覆盖)
         - 文件会被加入 blind-spot list
         """
         from ..utils import docker_manager
         
         # 1. 确保环境就绪
         assert fusion_client.wait_for_view_ready(timeout=VIEW_READY_TIMEOUT), "View did not become ready"
-        assert fusion_client.wait_for_agent_ready("client-a", timeout=SHORT_TIMEOUT), "Agent A not ready"
+        assert fusion_client.wait_for_sensord_ready("client-a", timeout=SHORT_TIMEOUT), "sensord A not ready"
 
-        # 2. 创建测试文件 (在 NFS Server 侧直接创建，绕过 Agent 的 inotify)
+        # 2. 创建测试文件 (在 NFS Server 侧直接创建，绕过 sensord 的 inotify)
         test_file_name = f"on_demand_{int(time.time())}.txt"
         test_file_path = f"/exports/{test_file_name}"
         test_file_rel = f"/{test_file_name}"
@@ -50,7 +50,7 @@ class TestOnDemandScan:
         docker_manager.create_file_in_container(CONTAINER_NFS_SERVER, test_file_path, "On-demand scan test content")
         
         # 3. Wait for NFS attribute cache to settle (actimeo=1 + margin)
-        # Without this, Agent's scan might not see the file immediately.
+        # Without this, sensord's scan might not see the file immediately.
         time.sleep(2.0)
 
         # 4. 触发 On-Demand Scan
@@ -69,16 +69,16 @@ class TestOnDemandScan:
         found = fusion_client.wait_for_file_in_tree(test_file_rel, timeout=MEDIUM_TIMEOUT)
         assert found, "File should appear after on-demand scan"
         
-        # 5. 验证 agent_missing 标志 (Tier 3: known_by_agent=False → agent_missing=True)
-        # NOTE: inotify may also discover the file concurrently, making agent_missing=False.
+        # 5. 验证 sensord_missing 标志 (Tier 3: known_by_sensord=False → sensord_missing=True)
+        # NOTE: inotify may also discover the file concurrently, making sensord_missing=False.
         # We only verify the file appeared — the authority model is tested in unit tests.
         print("[Test] File discovered successfully by on-demand scan.")
         
-        # 6. 白盒验证：检查 Agent 日志中是否有 On-Demand Scan 的记录
-        print("[Test] Verifying agent logs for on-demand scan record...")
-        agent_log = docker_manager.exec_in_container(CONTAINER_CLIENT_A, ["cat", "/root/.fustor/logs/agent.log"]).stdout
+        # 6. 白盒验证：检查 sensord 日志中是否有 On-Demand Scan 的记录
+        print("[Test] Verifying sensord logs for on-demand scan record...")
+        sensord_log = docker_manager.exec_in_container(CONTAINER_CLIENT_A, ["cat", "/root/.fustor/logs/sensord.log"]).stdout
         # Check for scan-related log entries (the command type is "scan")
-        has_scan_log = "On-Demand scan completed" in agent_log or "scan" in agent_log.lower()
+        has_scan_log = "On-Demand scan completed" in sensord_log or "scan" in sensord_log.lower()
         assert has_scan_log, "Log should contain on-demand scan records"
         print("[Test] Success: On-demand scan completed and recorded in logs.")
 

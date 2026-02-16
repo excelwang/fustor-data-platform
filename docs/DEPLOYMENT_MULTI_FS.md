@@ -6,8 +6,8 @@
 
 假设您有 2 台存储服务器，分别挂载了不同的子目录，但逻辑上属于同一个数据集：
 
-- **节点 A (`agent-1`)**: `/mnt/data/shard-01`
-- **节点 B (`agent-2`)**: `/mnt/data/shard-02`
+- **节点 A (`sensord-1`)**: `/mnt/data/shard-01`
+- **节点 B (`sensord-2`)**: `/mnt/data/shard-02`
 
 目标是在 Fusion 端通过单一路径 `/data` 访问所有数据，自动路由到正确的节点。
 
@@ -29,24 +29,24 @@
 uv pip install fustor-fusion fustor-view-fs fustor-view-fs-forest fustor-receiver-http
 ```
 
-### 2.2 采集端 (Source Agents)
+### 2.2 采集端 (Source sensords)
 ```bash
-# 常规 Agent 安装
-uv pip install fustor-agent fustor-source-fs fustor-sender-http
+# 常规 sensord 安装
+uv pip install fustor-sensord fustor-source-fs fustor-sender-http
 ```
 
 ---
 
 ## 3. 配置文件
 
-### 3.1 采集端配置 (Agent)
+### 3.1 采集端配置 (sensord)
 
-**注意**: 从 v0.9.0 开始，**必须**在配置文件中显式设置 `agent_id`。
+**注意**: 从 v0.9.0 开始，**必须**在配置文件中显式设置 `sensord_id`。
 
-#### Agent 1 (Node A)
-`~/.fustor/agent-config/default.yaml`:
+#### sensord 1 (Node A)
+`~/.fustor/sensord-config/default.yaml`:
 ```yaml
-agent_id: "agent-shard-01"  # <--- 必须配置
+sensord_id: "sensord-shard-01"  # <--- 必须配置
 
 sources:
   fs-source:
@@ -65,10 +65,10 @@ pipes:
     sender: fusion-main
 ```
 
-#### Agent 2 (Node B)
-`~/.fustor/agent-config/default.yaml`:
+#### sensord 2 (Node B)
+`~/.fustor/sensord-config/default.yaml`:
 ```yaml
-agent_id: "agent-shard-02"  # <--- 必须配置
+sensord_id: "sensord-shard-02"  # <--- 必须配置
 
 sources:
   fs-source:
@@ -142,22 +142,22 @@ services:
       - "8101:8101" # API Port
       - "18888:18888" # Receiver Port
 
-  agent-1:
+  sensord-1:
     image: python:3.11-slim
-    command: fustor-agent start
+    command: fustor-sensord start
     volumes:
-      - ./config/agent-1:/root/.fustor/agent-config
+      - ./config/sensord-1:/root/.fustor/sensord-config
       - /mnt/data/shard-01:/data
     environment:
       # 注意：不再支持 FUSTOR_AGENT_ID 环境变量
-      # 必须在 config/agent-1/default.yaml 中配置 agent_id
+      # 必须在 config/sensord-1/default.yaml 中配置 sensord_id
       PYTHONUNBUFFERED: 1
 
-  agent-2:
+  sensord-2:
     image: python:3.11-slim
-    command: fustor-agent start
+    command: fustor-sensord start
     volumes:
-      - ./config/agent-2:/root/.fustor/agent-config
+      - ./config/sensord-2:/root/.fustor/sensord-config
       - /mnt/data/shard-02:/data
 ```
 
@@ -208,15 +208,15 @@ curl -H "X-API-Key: public-read-key" \
 
 ### 5.3 数据来源识别 (Data Lineage)
 在返回的目录树信息中，每个文件/目录节点都包含以下元数据字段，用于精确识别数据来源：
-*   **last_agent_id**: 最后更新该文件的 Agent ID (即配置文件中设置的 `agent_id`)。
-*   **source_uri**: 该文件在源 Agent 上的完整物理路径。
+*   **last_sensord_id**: 最后更新该文件的 sensord ID (即配置文件中设置的 `sensord_id`)。
+*   **source_uri**: 该文件在源 sensord 上的完整物理路径。
 
 **示例响应片段**:
 ```json
 {
   "name": "example.txt",
   "path": "/example.txt",             // <--- 视图中的逻辑路径
-  "last_agent_id": "agent-shard-01",  // <--- 来源 Agent
+  "last_sensord_id": "sensord-shard-01",  // <--- 来源 sensord
   "source_uri": "/mnt/data/shard-01/example.txt", // <--- 物理源路径
   ...
 }
@@ -227,9 +227,9 @@ curl -H "X-API-Key: public-read-key" \
 
 ## 6. 动态扩容 (Dynamic Scaling)
 
-本节介绍如何在 **不停止服务** 的情况下，向现有 Agent 添加新的 NFS 挂载源，并使其出现在 Forest View 聚合视图中。
+本节介绍如何在 **不停止服务** 的情况下，向现有 sensord 添加新的 NFS 挂载源，并使其出现在 Forest View 聚合视图中。
 
-由于 Fusion 的 `API Key` 与 `Pipe` 是 1:1 绑定的，新增 Source 需要同时更新 Fusion 和 Agent 的配置。
+由于 Fusion 的 `API Key` 与 `Pipe` 是 1:1 绑定的，新增 Source 需要同时更新 Fusion 和 sensord 的配置。
 
 ### 步骤 1: 修改 Fusion 配置 (fusion.yaml)
 
@@ -266,9 +266,9 @@ receivers:
 fustor-fusion reload
 ```
 
-### 步骤 3: 修改 Agent 配置 (agent.yaml)
+### 步骤 3: 修改 sensord 配置 (sensord.yaml)
 
-在 Agent 侧添加采集任务。注意我们需要定义一个 **新 Sender** 来使用上面分配的新 Key。
+在 sensord 侧添加采集任务。注意我们需要定义一个 **新 Sender** 来使用上面分配的新 Key。
 
 ```yaml
 sources:
@@ -292,13 +292,13 @@ pipes:
     sender: sender-for-new-nfs
 ```
 
-### 步骤 4: 热重载 Agent
+### 步骤 4: 热重载 sensord
 
-让 Agent 启动新的采集管道：
+让 sensord 启动新的采集管道：
 
 ```bash
 # 安全重载配置 (不会停止服务)
-fustor-agent reload
+fustor-sensord reload
 ```
 
 完成上述步骤后，新挂载点的数据将自动同步，并可通过 Forest View API 查询到（作为新的 tree key）。
@@ -307,8 +307,8 @@ fustor-agent reload
 
 ## 7. 常见问题
 
-**Q: Agent 启动报错 "Agent ID is not configured"?**
-A: 请检查 Agent 的 YAML 配置文件中是否包含 `agent_id: "..."` 字段。这是 v0.9.0 引入的强制要求。
+**Q: sensord 启动报错 "sensord ID is not configured"?**
+A: 请检查 sensord 的 YAML 配置文件中是否包含 `sensord_id: "..."` 字段。这是 v0.9.0 引入的强制要求。
 
 **Q: 聚合视图中成员 key 是什么?**
 A: Forest View 使用 `pipe_id` 作为内部子树的 key。在查询 API 返回的 `members` 字典中，key 即为对应的 `pipe_id`。

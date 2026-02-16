@@ -1,0 +1,159 @@
+import asyncio
+import pytest
+from pathlib import Path
+import time
+import logging
+from unittest.mock import MagicMock, Mock, patch, AsyncMock
+
+from sensord.runtime import sensordPipe
+from sensord.services.drivers.source_driver import SourceDriverService
+from sensord.services.drivers.sender_driver import SenderDriverService
+from sensord.services.instances.bus import EventBusService
+from sensord.services.instances.pipe import PipeInstanceService
+from sensord.services.configs.pipe import PipeConfigService
+from sensord.services.configs.source import SourceConfigService
+from sensord.services.configs.sender import SenderConfigService
+from fustor_core.models.config import PipeConfig, SourceConfig, SenderConfig, PasswdCredential, FieldMapping, AppConfig
+
+@pytest.fixture
+def integration_configs(tmp_path: Path):
+    source_config = SourceConfig(
+        driver="fs", 
+        uri=str(tmp_path),
+        credential=PasswdCredential(user="test"),
+        driver_params={"hot_data_cooloff_seconds": 0},
+        disabled=False
+    )
+    sender_config = SenderConfig(
+        driver="echo", 
+        uri="http://localhost:8080", 
+        credential=PasswdCredential(user="test"),
+        batch_size=10,
+        disabled=False
+    )
+    pipe_config = PipeConfig(
+        source="test_source", 
+        sender="test_sender",
+        disabled=False,
+        fields_mapping=[
+
+            FieldMapping(to="target.file_path", source=["fs.files.file_path:0"]),
+            FieldMapping(to="target.size", source=["fs.files.size:0"])
+        ]
+    )
+    return pipe_config, source_config, sender_config
+
+class MockSenderDriver:
+    """Mock for EchoDriver to avoid real network if any, though Echo is usually local."""
+    def __init__(self, **kwargs):
+        self.id = kwargs.get("sender_id", "mock")
+        self.endpoint = kwargs.get("endpoint", "http://localhost:8080")
+        self.config = {}
+    async def connect(self): pass
+    async def close(self): pass
+    async def create_session(self, task_id, **kwargs): 
+        return {"session_id": "s1", "role": "leader"}
+    async def heartbeat(self, **kwargs): return {"role": "leader"}
+    async def send_events(self, events, source_type="message", is_end=False, metadata=None): return {"success": True}
+    async def close_session(self): pass
+
+@pytest.mark.asyncio
+async def test_pipe_instance_service_integration(integration_configs, tmp_path: Path, caplog):
+    """Integration test for PipeInstanceService using sensordPipe."""
+    pipe_config, source_config, sender_config = integration_configs
+    
+    # Setup AppConfig
+    app_config = AppConfig()
+    app_config.add_source("test_source", source_config)
+    app_config.add_sender("test_sender", sender_config)
+    app_config.add_pipe("test_pipe", pipe_config)
+
+    from unittest.mock import patch
+    from sensord.config.unified import sensordPipeConfig
+
+    with patch("sensord.services.configs.pipe.sensord_config") as mock_sensord_config:
+        sensord_pipe_config = sensordPipeConfig(
+            source="test_source",
+            sender="test_sender",
+            disabled=False,
+            fields_mapping=[
+                {"to": "target.file_path", "source": ["fs.files.file_path:0"]},
+                {"to": "target.size", "source": ["fs.files.size:0"]}
+            ]
+        )
+        mock_sensord_config.get_all_pipes.return_value = {"test_pipe": sensord_pipe_config}
+        mock_sensord_config.get_pipe.return_value = sensord_pipe_config
+        
+        # Initialize Services
+        source_cfg_svc = SourceConfigService(app_config)
+        sender_cfg_svc = SenderConfigService(app_config)
+        pipe_cfg_svc = PipeConfigService(app_config, source_cfg_svc, sender_cfg_svc)
+        
+        # Patch discovery before creating services
+        with patch.object(SourceDriverService, "_discover_installed_drivers", return_value={}), \
+             patch.object(SenderDriverService, "_discover_installed_drivers", return_value={"echo": MockSenderDriver}):
+            
+            source_dr_svc = SourceDriverService()
+            sender_dr_svc = SenderDriverService()
+            
+            # Define a mock source driver class
+            class MockSourceDriver:
+                def __init__(self, id, config):
+                    self.id = id
+                    self.config = config
+                    self.schema_name = "fs"
+                    self.is_transient = True
+                    self.logger = logging.getLogger("mock_source")
+                async def connect(self): pass
+                async def close(self): pass
+                async def get_events(self, **kwargs): return []
+                async def get_snapshot(self, **kwargs): return []
+                def is_position_available(self, position): return True
+                def get_message_iterator(self, **kwargs): return iter([])
+                def get_snapshot_iterator(self, **kwargs): return iter([])
+
+            # Mock driver discovery to return our mock classes
+            source_dr_svc._get_driver_by_type = MagicMock(return_value=MockSourceDriver)
+            sender_dr_svc._get_driver_by_type = MagicMock(return_value=MockSenderDriver)
+
+            bus_svc = EventBusService(source_configs={"test_source": source_config}, source_driver_service=source_dr_svc)
+        
+        service = PipeInstanceService(
+            pipe_config_service=pipe_cfg_svc,
+            source_config_service=source_cfg_svc,
+            sender_config_service=sender_cfg_svc,
+            bus_service=bus_svc,
+            sender_driver_service=sender_dr_svc,
+            source_driver_service=source_dr_svc,
+        )
+
+        # Prepare some data
+        test_file = tmp_path / "test1.txt"
+        test_file.write_text("hello")
+
+        # Act
+        # Act
+        with caplog.at_level(logging.INFO):
+            try:
+                await service.start_one("test_pipe")
+                
+                # Give some time for sensordPipe to run its sequence
+                await asyncio.sleep(1)
+                
+                # Verify instance in pool
+                instance = service.get_instance("test_pipe")
+                assert instance is not None
+                assert isinstance(instance, sensordPipe)
+                
+                # Check logs for pipe activity
+                # We assert "start initiated successfully" instead of "Using sensordPipe"
+                assert "Pipe instance 'test_pipe' start initiated successfully" in caplog.text
+                assert "Snapshot sync phase complete" in caplog.text or "Starting message sync phase" in caplog.text
+
+            finally:
+                await service.stop_one("test_pipe")
+                # Ensure bus service cleanup too
+                await service.stop_all()
+            
+            assert service.get_instance("test_pipe") is None
+

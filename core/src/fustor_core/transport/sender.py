@@ -2,7 +2,7 @@
 Sender abstraction for Fustor.
 
 A Sender is responsible for transmitting events over a transport protocol
-(HTTP, gRPC, etc.) from Agent to Fusion.
+(HTTP, gRPC, etc.) from sensord to Fusion.
 """
 import time
 from abc import ABC, abstractmethod

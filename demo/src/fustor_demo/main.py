@@ -11,7 +11,7 @@ import httpx
 from fustor_core.event import EventBase, EventType
 
 from fustor_demo.store import demo_store
-from fustor_demo.mock_agents import (
+from fustor_demo.mock_sensords import (
     mock_mysql_create_project,
     mock_nfs_hot_add_file,
     mock_nfs_cold_add_file,

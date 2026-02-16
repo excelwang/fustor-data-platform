@@ -69,7 +69,7 @@ class FallbackDriverWrapper:
                 try:
                     return await attr(*args, **kwargs)
                 except Exception as e:
-                    # In Gap P0-3, we fallback to on-demand agent scan on failure
+                    # In Gap P0-3, we fallback to on-demand sensord scan on failure
                     if runtime_objects.on_command_fallback:
                         try:
                             return await runtime_objects.on_command_fallback(self._view_id, kwargs)
@@ -335,7 +335,7 @@ def setup_view_routers():
         "/{view_id}/jobs", 
         list_view_jobs, 
         methods=["GET"],
-        summary="List agent jobs for a view",
+        summary="List sensord jobs for a view",
         response_model=Dict[str, Any]
     )
     view_router.add_api_route(
@@ -356,34 +356,34 @@ def setup_view_routers():
 
 
 async def list_view_jobs(view_id: str, authorized_view_id: str = Depends(get_view_id_from_api_key)):
-    """List agent jobs for a specific view."""
+    """List sensord jobs for a specific view."""
     if authorized_view_id != view_id:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN, 
             detail="API Key not authorized for this view"
         )
     from ..core.session_manager import session_manager
-    all_jobs = session_manager.get_agent_jobs()
+    all_jobs = session_manager.get_sensord_jobs()
     # Filter by view_id
     jobs = [j for j in all_jobs if j.get("view_id") == view_id]
     return {"jobs": jobs}
 
 
 async def get_view_job_status(view_id: str, job_id: str, authorized_view_id: str = Depends(get_view_id_from_api_key)):
-    """Get status of a specific agent job in a view."""
+    """Get status of a specific sensord job in a view."""
     if authorized_view_id != view_id:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN, 
             detail="API Key not authorized for this view"
         )
     from ..core.session_manager import session_manager
-    all_jobs = session_manager.get_agent_jobs()
+    all_jobs = session_manager.get_sensord_jobs()
     job = next((j for j in all_jobs if j["job_id"] == job_id), None)
     
     if not job:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Agent job '{job_id}' not found"
+            detail=f"sensord job '{job_id}' not found"
         )
         
     if job.get("view_id") != view_id:
@@ -415,7 +415,7 @@ async def list_view_sessions(view_id: str, authorized_view_id: str = Depends(get
         session_data = {
             "session_id": session_id,
             "task_id": session_info.task_id,
-            "agent_id": session_info.task_id.split(":")[0] if session_info.task_id and ":" in session_info.task_id else session_info.task_id,
+            "sensord_id": session_info.task_id.split(":")[0] if session_info.task_id and ":" in session_info.task_id else session_info.task_id,
             
             "client_ip": session_info.client_ip,
             "source_uri": session_info.source_uri,

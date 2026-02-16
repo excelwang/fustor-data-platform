@@ -1,7 +1,7 @@
 """
-Test A2: Second Agent becomes Follower with IO isolation.
+Test A2: Second sensord becomes Follower with IO isolation.
 
-验证第二个 Agent 成为 Follower，且不执行 Snapshot/Audit IO 操作。
+验证第二个 sensord 成为 Follower，且不执行 Snapshot/Audit IO 操作。
 参考文档: CONSISTENCY_DESIGN.md - Section 3 (Leader/Follower 选举)
 """
 import pytest
@@ -20,22 +20,22 @@ from ..fixtures.constants import (
 
 
 class TestFollowerIOIsolation:
-    """Test that the follower agent does not perform snapshot/audit."""
+    """Test that the follower sensord does not perform snapshot/audit."""
 
-    def test_second_agent_becomes_follower(
+    def test_second_sensord_becomes_follower(
         self,
         docker_env,
         fusion_client,
-        setup_agents,
+        setup_sensords,
         clean_shared_dir
     ):
         """
-        场景: Agent A 已经是 Leader，Agent B 连接到 Fusion
-        预期: Agent B 被标记为 Follower
-        验证方法: 查询 Sessions，确认 Agent B 的 role 为 "follower"
+        场景: sensord A 已经是 Leader，sensord B 连接到 Fusion
+        预期: sensord B 被标记为 Follower
+        验证方法: 查询 Sessions，确认 sensord B 的 role 为 "follower"
         """
-        # Wait for agents to establish sessions and view to be ready
-        assert fusion_client.wait_for_view_ready(timeout=VIEW_READY_TIMEOUT), "View did not become ready for Agent A"
+        # Wait for sensords to establish sessions and view to be ready
+        assert fusion_client.wait_for_view_ready(timeout=VIEW_READY_TIMEOUT), "View did not become ready for sensord A"
         
         # Get all sessions
         sessions = fusion_client.get_sessions()
@@ -43,7 +43,7 @@ class TestFollowerIOIsolation:
         # Find follower session
         follower_session = None
         for session in sessions:
-            if session.get("agent_id", "").startswith("client-b"):
+            if session.get("sensord_id", "").startswith("client-b"):
                 follower_session = session
                 break
         
@@ -51,7 +51,7 @@ class TestFollowerIOIsolation:
             import logging
             logging.getLogger(__name__).debug(f"All sessions found: {sessions}")
         
-        assert follower_session is not None, "Agent B session not found"
+        assert follower_session is not None, "sensord B session not found"
         assert follower_session.get("role") == "follower", \
             f"Expected client-b to be follower, got {follower_session.get('role')}"
         
@@ -69,11 +69,11 @@ class TestFollowerIOIsolation:
         self,
         docker_env,
         fusion_client,
-        setup_agents,
+        setup_sensords,
         clean_shared_dir
     ):
         """
-        场景: Follower Agent 检测到文件变更
+        场景: Follower sensord 检测到文件变更
         预期: Follower 只发送 realtime 事件，不发送 snapshot/audit 事件
         验证方法: 创建文件，检查事件类型
         """
@@ -82,14 +82,14 @@ class TestFollowerIOIsolation:
         
         test_file = f"{MOUNT_POINT}/test_follower_realtime_{int(time.time()*1000)}.txt"
         
-        # Wait for Agent B to be registered and ready (post-prescan)
-        if not fusion_client.wait_for_agent_ready("client-b", timeout=AGENT_B_READY_TIMEOUT):
-             pytest.fail(f"Agent B did not become ready (can_realtime=True) within {AGENT_B_READY_TIMEOUT}s")
+        # Wait for sensord B to be registered and ready (post-prescan)
+        if not fusion_client.wait_for_sensord_ready("client-b", timeout=AGENT_B_READY_TIMEOUT):
+             pytest.fail(f"sensord B did not become ready (can_realtime=True) within {AGENT_B_READY_TIMEOUT}s")
         
         # Get session info to verify it's a follower
         sessions = fusion_client.get_sessions()
-        follower_session = next((s for s in sessions if "client-b" in s.get("agent_id", "")), None)
-        assert follower_session is not None, "Agent B session not found"
+        follower_session = next((s for s in sessions if "client-b" in s.get("sensord_id", "")), None)
+        assert follower_session is not None, "sensord B session not found"
         assert follower_session.get("role") == "follower", \
             f"Expected client-b to be follower, got {follower_session.get('role')}"
 
@@ -101,7 +101,7 @@ class TestFollowerIOIsolation:
         # Check against relative path since Source-FS emits relative keys
         warmup_rel = "/" + os.path.relpath(warmup_file, MOUNT_POINT)
         if not fusion_client.wait_for_file_in_tree(warmup_rel, timeout=SHORT_TIMEOUT):
-            pytest.fail("Follower Agent B failed to detect warmup file. FS Driver might not be ready.")
+            pytest.fail("Follower sensord B failed to detect warmup file. FS Driver might not be ready.")
         
         # Create file on follower's mount
         docker_manager.create_file_in_container(
@@ -128,20 +128,20 @@ class TestFollowerIOIsolation:
         
         assert found is not None, "File should appear via realtime event from follower"
         
-        # The file should not have agent_missing flag (came from agent)
+        # The file should not have sensord_missing flag (came from sensord)
         # We poll for the False flag as Realtime might arrive slightly after Audit discovery
         cleared = False
         start = time.time()
         flags = {}
         while time.time() - start < MEDIUM_TIMEOUT:
             flags = fusion_client.check_file_flags(test_file_rel)
-            if flags.get("agent_missing") is False:
+            if flags.get("sensord_missing") is False:
                 cleared = True
                 break
             time.sleep(POLL_INTERVAL)
             
         # assert cleared, \
-        #     f"File from follower should eventually have agent_missing=False, got flags: {flags}"
+        #     f"File from follower should eventually have sensord_missing=False, got flags: {flags}"
         if not cleared:
             import warnings
             warnings.warn("Realtime event from NFS follower was not processed. This is a known limitation in some Docker/NFS environments.")

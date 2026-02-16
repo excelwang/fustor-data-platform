@@ -4,7 +4,7 @@ def merge_python_files(root_dir, output_file):
     # Directories to exclude
     exclude_dirs = {
         '.git', '.venv', '__pycache__', 'node_modules', 
-        'dist', 'build', '.agent', '.idea', '.vscode', 
+        'dist', 'build', '.sensord', '.idea', '.vscode', 
         '.gemini', 'site-packages'
     }
     

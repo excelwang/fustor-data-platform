@@ -74,7 +74,7 @@ class EventFuzzer:
                 "event_type": evt_type,
                 "rows": rows,
                 "message_source": source,
-                "index": int(event_time) # Agent logical time in seconds
+                "index": int(event_time) # sensord logical time in seconds
             }
             events.append(event)
             events_generated += 1

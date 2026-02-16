@@ -1,5 +1,5 @@
 """
-Fuagent sender driver for OpenAPI endpoints. (Class-based refactoring)
+Fusensord sender driver for OpenAPI endpoints. (Class-based refactoring)
 """
 import httpx
 import logging
@@ -12,7 +12,7 @@ from fustor_core.models.config import SenderConfig, ApiKeyCredential, PasswdCred
 from fustor_core.event import EventBase
 from fustor_core.utils.retry import retry
 
-logger = logging.getLogger("fustor_agent.driver.openapi")
+logger = logging.getLogger("sensord.driver.openapi")
 
 
 # Module-level cache for OpenAPI specifications to improve performance
@@ -57,9 +57,9 @@ class OpenApiDriver(Sender):
         if servers and isinstance(servers, list) and len(servers) > 0:
             first_server = servers[0]
             if isinstance(first_server, dict):
-                batch_endpoint_path = first_server.get("x-fustor_agent-ingest-batch-endpoint")        
+                batch_endpoint_path = first_server.get("x-sensord-ingest-batch-endpoint")        
         
-        # If x-fustor_agent-ingest-batch-endpoint is not defined in OpenAPI spec, extract from available endpoints
+        # If x-sensord-ingest-batch-endpoint is not defined in OpenAPI spec, extract from available endpoints
         if not batch_endpoint_path:
             # Look for POST endpoints that might be appropriate for batch ingestion
             paths = spec.get("paths", {})
@@ -78,10 +78,10 @@ class OpenApiDriver(Sender):
         
             # If still no suitable path found, use a default
             if not batch_endpoint_path:
-                logger.debug(f"Sender endpoint {self.endpoint} spec does not define 'x-fustor_agent-ingest-batch-endpoint' and no suitable batch endpoint found in spec. Using default path '/batch'.")
+                logger.debug(f"Sender endpoint {self.endpoint} spec does not define 'x-sensord-ingest-batch-endpoint' and no suitable batch endpoint found in spec. Using default path '/batch'.")
                 batch_endpoint_path = "/batch"
             else:
-                logger.debug(f"Sender endpoint {self.endpoint} spec does not define 'x-fustor_agent-ingest-batch-endpoint', using discovered path '{batch_endpoint_path}' from available endpoints.")
+                logger.debug(f"Sender endpoint {self.endpoint} spec does not define 'x-sensord-ingest-batch-endpoint', using discovered path '{batch_endpoint_path}' from available endpoints.")
         
         # Construct the target URL regardless of how batch_endpoint_path was determined
         server_url_from_spec = spec.get("servers", [{}])[0].get("url", "")
@@ -160,7 +160,7 @@ class OpenApiDriver(Sender):
         if servers and isinstance(servers, list) and len(servers) > 0:
             first_server = servers[0]
             if isinstance(first_server, dict):
-                session_path = first_server.get("x-fustor_agent-open-session-endpoint")
+                session_path = first_server.get("x-sensord-open-session-endpoint")
         
         if not session_path:
             # Look for endpoints that might be appropriate for session creation
@@ -174,10 +174,10 @@ class OpenApiDriver(Sender):
             
             # If still no session path found, use a default
             if not session_path:
-                logger.debug(f"Sender endpoint {self.endpoint} spec does not define 'x-fustor_agent-open-session-endpoint' and no suitable session endpoint found in spec. Using default path '/events/session'.")
+                logger.debug(f"Sender endpoint {self.endpoint} spec does not define 'x-sensord-open-session-endpoint' and no suitable session endpoint found in spec. Using default path '/events/session'.")
                 session_path = "/events/session"
             else:
-                logger.debug(f"Sender endpoint {self.endpoint} spec does not define 'x-fustor_agent-open-session-endpoint', using discovered path '{session_path}' from available endpoints.")
+                logger.debug(f"Sender endpoint {self.endpoint} spec does not define 'x-sensord-open-session-endpoint', using discovered path '{session_path}' from available endpoints.")
         
         # Construct the session endpoint URL
         server_url = spec.get("servers", [{}])[0].get("url", "")
@@ -241,7 +241,7 @@ class OpenApiDriver(Sender):
         if servers and isinstance(servers, list) and len(servers) > 0:
             first_server = servers[0]
             if isinstance(first_server, dict):
-                heartbeat_path = first_server.get("x-fustor_agent-heartbeat-endpoint")
+                heartbeat_path = first_server.get("x-sensord-heartbeat-endpoint")
         
         if not heartbeat_path:
             # 如果没有定义专门的心跳端点，尝试从可用端点中提取
@@ -271,7 +271,7 @@ class OpenApiDriver(Sender):
                 base_url = spec.get("servers", [{}])[0].get("url", "/")
                 heartbeat_url = urljoin(self.endpoint, f"{base_url.rstrip('/')}/events/heartbeat")
             else:
-                logger.debug(f"Sender endpoint {self.endpoint} spec does not define 'x-fustor_agent-heartbeat-endpoint', using discovered path '{heartbeat_path}' from available endpoints.")
+                logger.debug(f"Sender endpoint {self.endpoint} spec does not define 'x-sensord-heartbeat-endpoint', using discovered path '{heartbeat_path}' from available endpoints.")
                 server_url = spec.get("servers", [{}])[0].get("url", "")
                 base_url = urljoin(self.endpoint, server_url)
                 heartbeat_url = urljoin(base_url, heartbeat_path)
@@ -407,9 +407,9 @@ class OpenApiDriver(Sender):
                 status_path = None
                 servers = spec.get("servers", [])
                 if servers:
-                    status_path = servers[0].get("x-fustor_agent-status-endpoint")
+                    status_path = servers[0].get("x-sensord-status-endpoint")
 
-                # If x-fustor_agent-status-endpoint is not defined in OpenAPI spec, extract from available endpoints
+                # If x-sensord-status-endpoint is not defined in OpenAPI spec, extract from available endpoints
                 if not status_path:
                     # Look for endpoints that might be appropriate for status/checkpoint functionality
                     paths = spec.get("paths", {})
@@ -423,7 +423,7 @@ class OpenApiDriver(Sender):
                     
                     # If still no appropriate path found, return error
                     if not status_path:
-                        return (False, "无法在 OpenAPI 规范中找到 'x-fustor_agent-status-endpoint' 或其他可用的状态端点，无法执行权限检查。")
+                        return (False, "无法在 OpenAPI 规范中找到 'x-sensord-status-endpoint' 或其他可用的状态端点，无法执行权限检查。")
 
                 server_url = spec.get("servers", [{}])[0].get("url", "")
                 base_url = urljoin(endpoint, server_url)

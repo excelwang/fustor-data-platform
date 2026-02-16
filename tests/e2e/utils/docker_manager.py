@@ -312,19 +312,19 @@ class DockerManager:
         ])
 
 
-    def cleanup_agent_state(self, container: str) -> None:
-        """Kill agent and remove state/pid files."""
-        # 1. Kill any existing agent processes
+    def cleanup_sensord_state(self, container: str) -> None:
+        """Kill sensord and remove state/pid files."""
+        # 1. Kill any existing sensord processes
         try:
-            self.exec_in_container(container, ["pkill", "-9", "-f", "fustor-agent"], timeout=10)
+            self.exec_in_container(container, ["pkill", "-9", "-f", "fustor-sensord"], timeout=10)
         except Exception:
             pass
         # 2. Remove state files
         state_files = [
-            "/root/.fustor/agent.pid",
-            "/root/.fustor/agent-state.json",
-            "/root/.fustor/logs/agent.log",
-            "/root/.fustor/agent.id"
+            "/root/.fustor/sensord.pid",
+            "/root/.fustor/sensord-state.json",
+            "/root/.fustor/logs/sensord.log",
+            "/root/.fustor/sensord.id"
         ]
         try:
             self.exec_in_container(container, ["rm", "-f"] + state_files, timeout=5)

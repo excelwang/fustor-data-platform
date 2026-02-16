@@ -9,7 +9,7 @@ version: 1.0.0
 
 ## VISION.SCOPE
 
-Fustor is a distributed data synchronization framework that ensures data consistency across heterogeneous storage endpoints via a real-time event-driven pipeline with autonomous agents.
+Fustor is a distributed data synchronization framework that ensures data consistency across heterogeneous storage endpoints via a real-time event-driven pipeline with autonomous sensords.
 
 ### In-Scope
 - **SYNC**: Real-time and periodic data synchronization across distributed storage (NFS, OSS, etc.)

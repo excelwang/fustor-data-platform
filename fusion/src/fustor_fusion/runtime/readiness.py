@@ -20,7 +20,7 @@ async def check_view_readiness(view_id: str) -> bool:
     state = await view_state_manager.get_state(view_id)
     
     if not state or not state.authoritative_session_id:
-        raise ViewNotReadyError(f"View '{view_id}': No active leader session. Ensure at least one agent is running.")
+        raise ViewNotReadyError(f"View '{view_id}': No active leader session. Ensure at least one sensord is running.")
         
     is_snapshot_complete = await view_state_manager.is_snapshot_complete(view_id)
     if not is_snapshot_complete:

@@ -3,7 +3,7 @@ Logical Clock implementation for Fustor hybrid time synchronization.
 
 This module provides a thread-safe logical clock that advances based on
 observed file modification times (mtime). It uses Fusion Local Time as the 
-authority to eliminate clock drift issues across distributed Agents.
+authority to eliminate clock drift issues across distributed sensords.
 """
 import threading
 import time
@@ -29,7 +29,7 @@ class LogicalClock:
             initial_time: Unused, kept for backward compatibility.
         """
         # Note: threading.RLock is used because this class serves both
-        # Agent-side (multi-threaded scanning) and Fusion-side (asyncio) contexts.
+        # sensord-side (multi-threaded scanning) and Fusion-side (asyncio) contexts.
         self._lock = threading.RLock()
 
         
@@ -59,7 +59,7 @@ class LogicalClock:
             The old Trust Window / Fast Path logic has been removed for simplicity and immunity.
         """
         # Unified physical reference: Always use Fusion Local Time (Spec §4.1.A)
-        # This makes the system immune to Agent local clock errors (Faketime/NTP drift).
+        # This makes the system immune to sensord local clock errors (Faketime/NTP drift).
         reference_time = time.time()
         
         with self._lock:

@@ -240,7 +240,7 @@ class AppConfig(BaseModel):
         """
         检查 Pipe 是否处于活动状态。
         由于 Pipe 是被动调起的，其活动状态取决于关联的组件：
-        1. Source 必须处于非禁用状态 (Agent 端标准)
+        1. Source 必须处于非禁用状态 (sensord 端标准)
         2. Sender 必须处于非禁用状态
         3. (在 Fusion 端) 如果存在关联 Views，则至少一个 View 必须启用 (此逻辑通常由驱动/管理器在运行时判断)
         """

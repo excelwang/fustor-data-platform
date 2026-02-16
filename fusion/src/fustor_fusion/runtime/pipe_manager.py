@@ -375,11 +375,11 @@ class FusionPipeManager:
         # Session not found or pipe gone
         raise ValueError(f"Session {session_id} not found or expired")
 
-    async def _on_heartbeat(self, session_id, can_realtime=bool, agent_status=None):
+    async def _on_heartbeat(self, session_id, can_realtime=bool, sensord_status=None):
         pipe_id = self._session_to_pipe.get(session_id)
         if pipe_id:
             bridge = self._bridges.get(pipe_id)
-            if bridge: return await bridge.keep_alive(session_id, can_realtime=can_realtime, agent_status=agent_status)
+            if bridge: return await bridge.keep_alive(session_id, can_realtime=can_realtime, sensord_status=sensord_status)
         return {"status": "error"}
 
     async def _on_session_closed(self, session_id):
@@ -397,7 +397,7 @@ class FusionPipeManager:
             fusion_pipe = self._pipes.get(pipe_id)
             if fusion_pipe:
                 for vid in fusion_pipe.view_ids:
-                    await session_manager.complete_agent_job(vid, session_id, scan_path, job_id)
+                    await session_manager.complete_sensord_job(vid, session_id, scan_path, job_id)
                 logger.debug(f"Scan complete (job_id={job_id}) for path {scan_path} on session {session_id}")
 
 # Alias for compatibility

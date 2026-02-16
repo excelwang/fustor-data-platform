@@ -16,10 +16,10 @@ COPY . .
 # Install Fustor components from source
 RUN uv pip install --system \
     ./core \
-    ./agent-sdk \
+    ./sensord-sdk \
     ./management-ui ./fusion-sdk \
     ./management-ui ./fusion \
-    ./agent \
+    ./sensord \
     ./benchmark \
     ./extensions/view-fs \
     ./extensions/view-multi-fs \
@@ -29,7 +29,7 @@ RUN uv pip install --system \
 
 # Create necessary directories
 RUN mkdir -p /root/.fustor/fusion-config \
-    && mkdir -p /root/.fustor/agent-config \
+    && mkdir -p /root/.fustor/sensord-config \
     && mkdir -p /root/.fustor/logs
 
 # Default command

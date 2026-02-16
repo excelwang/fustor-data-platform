@@ -72,7 +72,7 @@ class SourceHandler(Handler):
     Base class for source handlers (data producers).
     
     Source handlers read data from external systems and produce events.
-    They are used on the Agent side.
+    They are used on the sensord side.
     """
     
     @abstractmethod
@@ -178,11 +178,11 @@ class ViewHandler(Handler):
         return {"role": "leader"}
     
     async def on_session_start(self, **kwargs) -> None:
-        """Called when a new Agent session starts."""
+        """Called when a new sensord session starts."""
         pass
     
     async def on_session_close(self, **kwargs) -> None:
-        """Called when an Agent session terminates."""
+        """Called when an sensord session terminates."""
         pass
     
     async def handle_audit_start(self) -> None:

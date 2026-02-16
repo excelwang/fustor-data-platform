@@ -1,6 +1,6 @@
 # fustor-sender-echo
 
-This package provides an "echo" sender driver for the Fustor Agent service. It serves as a basic example and debugging tool for `SenderDriver` implementations. Instead of sending data to an external system, it simply logs all received events and control flags to the Fustor Agent's log output.
+This package provides an "echo" sender driver for the Fustor sensord service. It serves as a basic example and debugging tool for `SenderDriver` implementations. Instead of sending data to an external system, it simply logs all received events and control flags to the Fustor sensord's log output.
 
 ## Features
 
@@ -12,21 +12,21 @@ This package provides an "echo" sender driver for the Fustor Agent service. It s
 
 ## Installation
 
-This package is part of the Fustor monorepo and is typically installed in editable mode within the monorepo's development environment using `uv sync`. It is registered as a `fustor_agent.drivers.senders` entry point.
+This package is part of the Fustor monorepo and is typically installed in editable mode within the monorepo's development environment using `uv sync`. It is registered as a `sensord.drivers.senders` entry point.
 
 ## Usage
 
-To use the `fustor-sender-echo` driver, configure a Sender in your Fustor Agent setup with the driver type `echo`. When a pipe involves this sender, all data processed by the Agent will be logged by this driver.
+To use the `fustor-sender-echo` driver, configure a Sender in your Fustor sensord setup with the driver type `echo`. When a pipe involves this sender, all data processed by the sensord will be logged by this driver.
 
 This driver is particularly useful for:
-*   **Debugging**: Understanding the exact data and control signals being sent by the Fustor Agent.
+*   **Debugging**: Understanding the exact data and control signals being sent by the Fustor sensord.
 *   **Development**: As a template for creating new `SenderDriver` implementations.
-*   **Testing**: Verifying that the Fustor Agent's data pipe is correctly delivering events.
+*   **Testing**: Verifying that the Fustor sensord's data pipe is correctly delivering events.
 
-Example (conceptual configuration in Fustor Agent):
+Example (conceptual configuration in Fustor sensord):
 
 ```yaml
-# Fustor 主目录下的 agent-config.yaml
+# Fustor 主目录下的 sensord-config.yaml
 senders:
   my-echo-sender:
     driver_type: echo

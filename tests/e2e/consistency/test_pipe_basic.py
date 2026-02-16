@@ -1,8 +1,8 @@
 # tests/e2e/consistency/test_pipe_basic.py
 """
-Basic integration tests for AgentPipe.
+Basic integration tests for sensordPipe.
 
-These tests verify that the AgentPipe architecture works correctly
+These tests verify that the sensordPipe architecture works correctly
 with the integration test environment.
 
 Run with:
@@ -17,12 +17,12 @@ logger = logging.getLogger("fustor_test")
 
 
 class TestPipeBasicOperations:
-    """Test basic file operations in AgentPipe mode."""
+    """Test basic file operations in sensordPipe mode."""
     
     def test_file_create_detected(
         self, 
         docker_env, 
-        setup_agents, 
+        setup_sensords, 
         fusion_client, 
         wait_for_audit
     ):
@@ -31,7 +31,7 @@ class TestPipeBasicOperations:
         """
         logger.info("Running file create test")
         
-        containers = setup_agents["containers"]
+        containers = setup_sensords["containers"]
         leader = containers["leader"]
         
         # Create a unique test file
@@ -49,7 +49,7 @@ class TestPipeBasicOperations:
         logger.info(f"Created test file: {test_file}")
         
         # Wait for Fusion to detect it
-        # Note: Paths in Fusion tree are absolute as seen by the Agent
+        # Note: Paths in Fusion tree are absolute as seen by the sensord
         success = fusion_client.wait_for_file_in_tree(test_file_rel, timeout=SHORT_TIMEOUT)
         assert success, f"File {file_name} not found in tree after sync at {test_file}"
         
@@ -58,7 +58,7 @@ class TestPipeBasicOperations:
     def test_file_modify_detected(
         self, 
         docker_env, 
-        setup_agents, 
+        setup_sensords, 
         fusion_client, 
         wait_for_audit
     ):
@@ -67,7 +67,7 @@ class TestPipeBasicOperations:
         """
         logger.info("Running file modify test")
         
-        containers = setup_agents["containers"]
+        containers = setup_sensords["containers"]
         leader = containers["leader"]
         
         # Create initial file
@@ -103,7 +103,7 @@ class TestPipeBasicOperations:
     def test_file_delete_detected(
         self, 
         docker_env, 
-        setup_agents, 
+        setup_sensords, 
         fusion_client, 
         wait_for_audit
     ):
@@ -112,7 +112,7 @@ class TestPipeBasicOperations:
         """
         logger.info("Running file delete test")
         
-        containers = setup_agents["containers"]
+        containers = setup_sensords["containers"]
         leader = containers["leader"]
         
         # Create file first

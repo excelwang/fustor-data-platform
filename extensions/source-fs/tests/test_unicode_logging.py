@@ -61,7 +61,7 @@ def test_pre_scan_logs_safe_paths():
             import io
             log_capture_string = io.StringIO()
             ch = logging.StreamHandler(log_capture_string)
-            logger = logging.getLogger("fustor_agent.driver.fs")
+            logger = logging.getLogger("sensord.driver.fs")
             logger.addHandler(ch)
             
             # Force the pre-scan to happen - this triggers the logging that was failing
@@ -70,5 +70,5 @@ def test_pre_scan_logs_safe_paths():
             # Check that no UnicodeEncodeError was raised during the process
             assert driver._pre_scan_completed == True
         finally:
-            logger = logging.getLogger("fustor_agent.driver.fs")
+            logger = logging.getLogger("sensord.driver.fs")
             logger.handlers.clear()

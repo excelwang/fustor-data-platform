@@ -13,7 +13,7 @@ class SessionInfo:
     session_timeout_seconds: Optional[int] = None
     client_ip: Optional[str] = None
     source_uri: Optional[str] = None
-    pending_commands: List[Dict[str, Any]] = None  # Queue of commands for the Agent
+    pending_commands: List[Dict[str, Any]] = None  # Queue of commands for the sensord
     pending_scans: Set[str] = None  # Paths currently being scanned
 
     def __post_init__(self):
@@ -22,8 +22,8 @@ class SessionInfo:
         if self.pending_scans is None:
             self.pending_scans = set()
     can_realtime: bool = False
-    agent_status: Optional[Dict[str, Any]] = None  # Cached agent status from heartbeat
-    reported_config: Optional[str] = None  # Cached YAML config from Agent
+    sensord_status: Optional[Dict[str, Any]] = None  # Cached sensord status from heartbeat
+    reported_config: Optional[str] = None  # Cached YAML config from sensord
     cleanup_task: Optional[asyncio.Task] = None
 
 

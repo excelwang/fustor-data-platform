@@ -94,14 +94,14 @@ publish_package "extensions/receiver-http" "fustor-receiver-http"
 echo "--- Phase 3: SDKs & Core Connectors ---"
 publish_package "extensions/source-fs" "fustor-source-fs"
 publish_package "fusion-sdk" "fustor-fusion-sdk"
-publish_package "agent-sdk" "fustor-agent-sdk"
+publish_package "sensord-sdk" "fustor-sensord-sdk"
 publish_package "demo" "fustor-demo"
 
 # Phase 4: Main Services
 echo "--- Phase 4: Final Services ---"
 publish_package "extensions/sender-http" "fustor-sender-http"
 publish_package "fusion" "fustor-fusion"
-publish_package "agent" "fustor-agent"
+publish_package "sensord" "fustor-sensord"
 publish_package "benchmark" "fustor-benchmark"
 
 echo "----------------------------------------------------"

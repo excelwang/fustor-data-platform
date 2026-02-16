@@ -88,8 +88,8 @@ class TreeManager:
         
         # Persist lineage info
         if lineage_info:
-            if lineage_info.get('last_agent_id'):
-                node.last_agent_id = lineage_info.get('last_agent_id')
+            if lineage_info.get('last_sensord_id'):
+                node.last_sensord_id = lineage_info.get('last_sensord_id')
             if lineage_info.get('source_uri'):
                 node.source_uri = lineage_info.get('source_uri')
 

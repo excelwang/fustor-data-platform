@@ -1,8 +1,8 @@
 """
-Fustor HTTP Sender - Transport layer for Agent to Fusion communication.
+Fustor HTTP Sender - Transport layer for sensord to Fusion communication.
 
 This package implements the HTTP transport protocol for sending events
-from Fustor Agent to Fustor Fusion.
+from Fustor sensord to Fustor Fusion.
 """
 try:
     from ._version import version as __version__
@@ -159,7 +159,7 @@ class HTTPSender(Sender):
             self.logger.error(f"[{source_type}] Failed to send {len(events)} events: {e}")
             return {"success": False, "error": "Push failed"}
     
-    async def heartbeat(self, can_realtime: bool = False, agent_status: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    async def heartbeat(self, can_realtime: bool = False, sensord_status: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         """
         Send a heartbeat to maintain session.
         
@@ -171,7 +171,7 @@ class HTTPSender(Sender):
             return {"status": "error", "message": "Session ID not set"}
         
         try:
-            result = await self.client.send_heartbeat(self.session_id, can_realtime=can_realtime, agent_status=agent_status)
+            result = await self.client.send_heartbeat(self.session_id, can_realtime=can_realtime, sensord_status=sensord_status)
             
             if result and result.get("status") == "ok":
                 self.logger.debug("Heartbeat sent successfully.")

@@ -19,7 +19,7 @@ uv sync --package fustor-fusion-sdk
 
 ### 1. Reliable Event Ingestion (V2 Pipe API)
 
-The V2 API uses the `/api/v1/pipe` endpoint and is the recommended way for Agents to interact with Fusion.
+The V2 API uses the `/api/v1/pipe` endpoint and is the recommended way for sensords to interact with Fusion.
 
 ```python
 import asyncio
@@ -28,7 +28,7 @@ from fustor_fusion_sdk.client import FusionClient
 async def ingest_demo():
     async with FusionClient(base_url="http://fusion:8102", api_key="secret") as client:
         # Create a session (Leader/Follower role is assigned by Fusion)
-        session = await client.create_session(task_id="agent-001")
+        session = await client.create_session(task_id="sensord-001")
         session_id = session["session_id"]
         
         # Ingest events

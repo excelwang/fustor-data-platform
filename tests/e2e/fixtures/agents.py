@@ -1,6 +1,6 @@
-# tests/e2e/fixtures/agents.py
+# tests/e2e/fixtures/sensords.py
 """
-Agent setup and configuration fixtures for integration tests.
+sensord setup and configuration fixtures for integration tests.
 """
 import os
 import sys
@@ -40,16 +40,16 @@ from .constants import (
 
 
 
-def ensure_agent_running(container_name, api_key, view_id, mount_point=MOUNT_POINT, env_overrides=None):
+def ensure_sensord_running(container_name, api_key, view_id, mount_point=MOUNT_POINT, env_overrides=None):
     """
-    Ensure agent is configured and running in the container.
+    Ensure sensord is configured and running in the container.
     
     Args:
         container_name: Docker container name
         api_key: API key for authentication
         view_id: View ID for the pipe
         mount_point: Path to the NFS mount point
-        env_overrides: Dict of environment variables to export before running agent
+        env_overrides: Dict of environment variables to export before running sensord
     """
     # Ensure container is actually running
     try:
@@ -59,11 +59,11 @@ def ensure_agent_running(container_name, api_key, view_id, mount_point=MOUNT_POI
 
     fusion_endpoint = RECEIVER_ENDPOINT
     
-    # Generate unique agent ID
-    agent_id = f"{container_name.replace('fustor-nfs-', '')}-{os.urandom(2).hex()}"
+    # Generate unique sensord ID
+    sensord_id = f"{container_name.replace('fustor-nfs-', '')}-{os.urandom(2).hex()}"
     
-    # 1. Kill existing agent if running and clean up pid/state files INITIAL CLEANUP
-    docker_manager.cleanup_agent_state(container_name)
+    # 1. Kill existing sensord if running and clean up pid/state files INITIAL CLEANUP
+    docker_manager.cleanup_sensord_state(container_name)
     time.sleep(FAST_POLL_INTERVAL)
 
     # Determine the home directory in the container
@@ -77,14 +77,14 @@ def ensure_agent_running(container_name, api_key, view_id, mount_point=MOUNT_POI
     config_dir = f"{home_dir}/.fustor"
     logger.info(f"Using config directory: {config_dir}")
 
-    agent_config_dir = f"{config_dir}/agent-config"
+    sensord_config_dir = f"{config_dir}/sensord-config"
     # Ensure config dir exists
-    docker_manager.exec_in_container(container_name, ["mkdir", "-p", agent_config_dir])
+    docker_manager.exec_in_container(container_name, ["mkdir", "-p", sensord_config_dir])
 
     docker_manager.create_file_in_container(
         container_name,
-        f"{config_dir}/agent.id",
-        content=agent_id
+        f"{config_dir}/sensord.id",
+        content=sensord_id
     )
 
     # Create the target config file using envsubst
@@ -96,14 +96,14 @@ def ensure_agent_running(container_name, api_key, view_id, mount_point=MOUNT_POI
         f"THROTTLE_INTERVAL_SEC='{THROTTLE_INTERVAL_SEC}' "
         f"AUDIT_INTERVAL='{AUDIT_INTERVAL}' "
         f"SENTINEL_INTERVAL='{SENTINEL_INTERVAL}' "
-        f"AGENT_ID='{agent_id}' && "
-        "envsubst < /config/agent-config/default.yaml > /root/.fustor/agent-config/default.yaml"
+        f"AGENT_ID='{sensord_id}' && "
+        "envsubst < /config/sensord-config/default.yaml > /root/.fustor/sensord-config/default.yaml"
     )
     
     docker_manager.exec_in_container(container_name, ["sh", "-c", cmd])
     
     
-    logger.info(f"Starting agent in {container_name} in DAEMON mode (-D)")
+    logger.info(f"Starting sensord in {container_name} in DAEMON mode (-D)")
     env_prefix = ""
     
     # Apply env overrides if provided
@@ -115,50 +115,50 @@ def ensure_agent_running(container_name, api_key, view_id, mount_point=MOUNT_POI
     # Use -D for daemon mode as requested by user
     docker_manager.exec_in_container(
         container_name, 
-        ["sh", "-c", f"{cmd_prefix}fustor-agent start -D -V"],
+        ["sh", "-c", f"{cmd_prefix}fustor-sensord start -D -V"],
         detached=False # -D returns immediately anyway
     )
     
     # Wait for the log file to be created
     start_wait = time.time()
     while time.time() - start_wait < 5:
-        res = docker_manager.exec_in_container(container_name, ["test", "-f", "/root/.fustor/logs/agent.log"])
+        res = docker_manager.exec_in_container(container_name, ["test", "-f", "/root/.fustor/logs/sensord.log"])
         if res.returncode == 0:
             break
         time.sleep(0.5)
 
 
 @pytest.fixture(scope="function")
-def setup_agents(docker_env, fusion_client, test_api_key, test_view):
+def setup_sensords(docker_env, fusion_client, test_api_key, test_view):
     """
-    Ensure agents are running and healthy.
+    Ensure sensords are running and healthy.
     """
     view_id = test_view["id"]
     api_key = test_api_key["key"]
     
-    # Start Agent A first (Cleanup handled by conftest.py)
-    logger.info(f"Configuring and starting agent in {CONTAINER_CLIENT_A}...")
-    ensure_agent_running(CONTAINER_CLIENT_A, api_key, view_id)
+    # Start sensord A first (Cleanup handled by conftest.py)
+    logger.info(f"Configuring and starting sensord in {CONTAINER_CLIENT_A}...")
+    ensure_sensord_running(CONTAINER_CLIENT_A, api_key, view_id)
     
     # Wait for A to become Leader and Ready
-    logger.info("Waiting for Agent A to be ready (Leader + Realtime Ready)...")
-    if not fusion_client.wait_for_agent_ready("client-a", timeout=AGENT_READY_TIMEOUT):
-        # Dump logs for Agent A (Errors only, last 100 lines)
+    logger.info("Waiting for sensord A to be ready (Leader + Realtime Ready)...")
+    if not fusion_client.wait_for_sensord_ready("client-a", timeout=AGENT_READY_TIMEOUT):
+        # Dump logs for sensord A (Errors only, last 100 lines)
         logs_res = docker_manager.exec_in_container(
             CONTAINER_CLIENT_A, 
-            ["sh", "-c", "grep -Ei 'error|fatal|exception|fail|exit' /root/.fustor/logs/agent.log | tail -n 100"]
+            ["sh", "-c", "grep -Ei 'error|fatal|exception|fail|exit' /root/.fustor/logs/sensord.log | tail -n 100"]
         )
         logs = logs_res.stdout + logs_res.stderr
-        logger.error(f"FATAL: Agent A did not become ready. Relevant Logs:\n{logs}")
-        raise RuntimeError(f"Agent A did not become ready (can_realtime=True) within {AGENT_READY_TIMEOUT} seconds")
+        logger.error(f"FATAL: sensord A did not become ready. Relevant Logs:\n{logs}")
+        raise RuntimeError(f"sensord A did not become ready (can_realtime=True) within {AGENT_READY_TIMEOUT} seconds")
     
-    logger.info("Waiting for Agent A to become LEADER...")
+    logger.info("Waiting for sensord A to become LEADER...")
     timeout = 10
     start_time = time.time()
     leader = None
     while time.time() - start_time < timeout:
         sessions = fusion_client.get_sessions()
-        leader = next((s for s in sessions if "client-a" in s.get("agent_id", "")), None)
+        leader = next((s for s in sessions if "client-a" in s.get("sensord_id", "")), None)
         if leader and leader.get("role") == "leader":
             break
         time.sleep(0.5)
@@ -167,10 +167,10 @@ def setup_agents(docker_env, fusion_client, test_api_key, test_view):
         role = leader.get("role") if leader else "not found"
         # If still follower, dump sessions to help debug
         all_sessions = fusion_client.get_sessions()
-        logger.error(f"Agent A found as {role}. Active sessions: {all_sessions}")
-        raise RuntimeError(f"Agent A registered but did not become leader within {timeout}s (current role: {role})")
+        logger.error(f"sensord A found as {role}. Active sessions: {all_sessions}")
+        raise RuntimeError(f"sensord A registered but did not become leader within {timeout}s (current role: {role})")
     
-    logger.info(f"Agent A successfully became leader and is ready: {leader.get('agent_id')}")
+    logger.info(f"sensord A successfully became leader and is ready: {leader.get('sensord_id')}")
 
     # Wait for View to be READY (Snapshot complete)
     logger.info("Waiting for View to be ready (initial snapshot completion)...")
@@ -197,21 +197,21 @@ def setup_agents(docker_env, fusion_client, test_api_key, test_view):
         logger.info("Skew calibration successful.")
 
 
-    # Start Agent B as Follower
-    logger.info(f"Configuring and starting agent in {CONTAINER_CLIENT_B}...")
-    ensure_agent_running(CONTAINER_CLIENT_B, api_key, view_id)
+    # Start sensord B as Follower
+    logger.info(f"Configuring and starting sensord in {CONTAINER_CLIENT_B}...")
+    ensure_sensord_running(CONTAINER_CLIENT_B, api_key, view_id)
     
-    # Wait for Agent B to be Ready
-    logger.info("Waiting for Agent B to be ready (Follower + Realtime Ready)...")
-    if not fusion_client.wait_for_agent_ready("client-b", timeout=AGENT_B_READY_TIMEOUT):
+    # Wait for sensord B to be Ready
+    logger.info("Waiting for sensord B to be ready (Follower + Realtime Ready)...")
+    if not fusion_client.wait_for_sensord_ready("client-b", timeout=AGENT_B_READY_TIMEOUT):
         # Filter for errors before tailing as suggested by user
         logs_res = docker_manager.exec_in_container(
             CONTAINER_CLIENT_B, 
-            ["sh", "-c", "grep -Ei 'error|fatal|exception|fail|exit' /root/.fustor/logs/agent.log | tail -n 100"]
+            ["sh", "-c", "grep -Ei 'error|fatal|exception|fail|exit' /root/.fustor/logs/sensord.log | tail -n 100"]
         )
         logs = logs_res.stdout + logs_res.stderr
-        logger.error(f"FATAL: Agent B did not become ready. Relevant Logs:\n{logs}")
-        pytest.fail(f"Agent B did not become ready within {AGENT_B_READY_TIMEOUT}s")
+        logger.error(f"FATAL: sensord B did not become ready. Relevant Logs:\n{logs}")
+        pytest.fail(f"sensord B did not become ready within {AGENT_B_READY_TIMEOUT}s")
 
     return {
         "api_key": api_key,
@@ -221,15 +221,15 @@ def setup_agents(docker_env, fusion_client, test_api_key, test_view):
             "follower": CONTAINER_CLIENT_B,
             "blind": CONTAINER_CLIENT_C
         },
-        "ensure_agent_running": ensure_agent_running
+        "ensure_sensord_running": ensure_sensord_running
     }
 
 @pytest.fixture(scope="function")
-def setup_unskewed_agents(docker_env, fusion_client, test_api_key, test_view):
+def setup_unskewed_sensords(docker_env, fusion_client, test_api_key, test_view):
     """
-    Setup environment with Unskewed Agent A only.
-    Disable LD_PRELOAD to remove skew from Agent A.
-    Stop Agent B.
+    Setup environment with Unskewed sensord A only.
+    Disable LD_PRELOAD to remove skew from sensord A.
+    Stop sensord B.
     """
     view_id = test_view["id"]
     api_key = test_api_key["key"]
@@ -237,9 +237,9 @@ def setup_unskewed_agents(docker_env, fusion_client, test_api_key, test_view):
     # Stop B
     docker_manager.stop_container(CONTAINER_CLIENT_B)
     
-    # Start Agent A unskewed
-    logger.info(f"Configuring and starting UNSKEWED agent in {CONTAINER_CLIENT_A}...")
-    ensure_agent_running(
+    # Start sensord A unskewed
+    logger.info(f"Configuring and starting UNSKEWED sensord in {CONTAINER_CLIENT_A}...")
+    ensure_sensord_running(
         CONTAINER_CLIENT_A, 
         api_key, 
         view_id, 
@@ -247,26 +247,26 @@ def setup_unskewed_agents(docker_env, fusion_client, test_api_key, test_view):
     )
     
     # Wait for A to be Ready
-    logger.info("Waiting for Unskewed Agent A to be ready...")
-    if not fusion_client.wait_for_agent_ready("client-a", timeout=AGENT_READY_TIMEOUT):
-         raise RuntimeError("Unskewed Agent A failed to become ready")
+    logger.info("Waiting for Unskewed sensord A to be ready...")
+    if not fusion_client.wait_for_sensord_ready("client-a", timeout=AGENT_READY_TIMEOUT):
+         raise RuntimeError("Unskewed sensord A failed to become ready")
          
     # Wait for Leader
-    logger.info("Waiting for Agent A to become LEADER...")
+    logger.info("Waiting for sensord A to become LEADER...")
     timeout = 10
     start_time = time.time()
     leader = None
     while time.time() - start_time < timeout:
         sessions = fusion_client.get_sessions()
-        leader = next((s for s in sessions if "client-a" in s.get("agent_id", "")), None)
+        leader = next((s for s in sessions if "client-a" in s.get("sensord_id", "")), None)
         if leader and leader.get("role") == "leader":
             break
         time.sleep(0.5)
         
     if not leader or leader.get("role") != "leader":
-        raise RuntimeError("Agent A failed to become leader")
+        raise RuntimeError("sensord A failed to become leader")
         
-    logger.info("Unskewed Agent A is Leader.")
+    logger.info("Unskewed sensord A is Leader.")
     
     # Wait for View Ready
     if not fusion_client.wait_for_view_ready(timeout=VIEW_READY_TIMEOUT):
@@ -286,5 +286,5 @@ def setup_unskewed_agents(docker_env, fusion_client, test_api_key, test_view):
             "follower": None,
             "blind": CONTAINER_CLIENT_C
         },
-        "ensure_agent_running": ensure_agent_running
+        "ensure_sensord_running": ensure_sensord_running
     }

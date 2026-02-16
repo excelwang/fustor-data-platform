@@ -34,7 +34,7 @@ def setup_logging(
 
     Args:
         log_file_path (str): 日志文件存放的完整路径。
-        base_logger_name (str): 您的应用程序的基础logger名称（例如，"fustor_agent"或"fustor_fusion"）。
+        base_logger_name (str): 您的应用程序的基础logger名称（例如，"sensord"或"fustor_fusion"）。
         level (int): 控制台和文件处理程序的最低日志级别。
         console_output (bool): 是否将日志输出到控制台。
     """

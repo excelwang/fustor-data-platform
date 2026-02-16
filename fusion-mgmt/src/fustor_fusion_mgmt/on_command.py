@@ -2,7 +2,7 @@
 """
 On-Command Find Fallback Mechanism.
 
-This module provides the logic to fallback to a realtime Agent command
+This module provides the logic to fallback to a realtime sensord command
 when the memory view is incomplete or unavailable.
 """
 import logging
@@ -16,7 +16,7 @@ from fustor_fusion.core.session_manager import session_manager
 logger = logging.getLogger("fustor_fusion_mgmt.on_command")
 
 # Global semaphore to limit concurrent fallback scans across all requests
-# to prevent overwhelming agents or network.
+# to prevent overwhelming sensords or network.
 # Global semaphore cache to limit concurrent fallback scans across all requests
 _SEMAPHORE: Optional[asyncio.Semaphore] = None
 _SEMAPHORE_LIMIT: int = 0
@@ -48,7 +48,7 @@ async def get_semaphore(limit: int) -> asyncio.Semaphore:
 
 async def on_command_fallback(view_id: str, params: Dict[str, Any], pipe_manager: "PipeManager") -> Dict[str, Any]:
     """
-    Execute a remote scan on the Agent when local view query fails.
+    Execute a remote scan on the sensord when local view query fails.
     """
     start_time = time.time()
     
@@ -152,7 +152,7 @@ async def on_command_fallback(view_id: str, params: Dict[str, Any], pipe_manager
                 "pipes_queried": len(p_ids),
                 "successful_pipes": len([r for r in results if r]),
                 "timestamp": time.time(),
-                "agent_id": best_result.get("agent_id")
+                "sensord_id": best_result.get("sensord_id")
             }
         }
     except Exception as e:

@@ -1,7 +1,7 @@
 """
-Test A1: First Agent becomes Leader.
+Test A1: First sensord becomes Leader.
 
-验证第一个连接到 Fusion 的 Agent 被选举为 Leader。
+验证第一个连接到 Fusion 的 sensord 被选举为 Leader。
 参考文档: CONSISTENCY_DESIGN.md - Section 3 (Leader/Follower 选举)
 """
 import pytest
@@ -12,21 +12,21 @@ from ..fixtures.constants import VIEW_READY_TIMEOUT
 
 
 class TestLeaderElectionFirst:
-    """Test that the first agent to connect becomes the leader."""
+    """Test that the first sensord to connect becomes the leader."""
 
-    def test_first_agent_becomes_leader(
+    def test_first_sensord_becomes_leader(
         self,
         docker_env,
         fusion_client,
-        setup_agents,
+        setup_sensords,
         clean_shared_dir
     ):
         """
-        场景: 第一个 Agent A 连接到 Fusion
-        预期: Agent A 被选举为 Leader
-        验证方法: 查询 Fusion Sessions API，确认 Agent A 的 role 为 "leader"
+        场景: 第一个 sensord A 连接到 Fusion
+        预期: sensord A 被选举为 Leader
+        验证方法: 查询 Fusion Sessions API，确认 sensord A 的 role 为 "leader"
         """
-        # Wait for agents to establish sessions and View to be READY
+        # Wait for sensords to establish sessions and View to be READY
         assert fusion_client.wait_for_view_ready(timeout=VIEW_READY_TIMEOUT), "View did not become ready"
         
         # Get all sessions from Fusion
@@ -42,7 +42,7 @@ class TestLeaderElectionFirst:
         # Record actual leader for debugging
         import logging
         test_logger = logging.getLogger("fustor_test")
-        test_logger.info(f"Elected leader for view: {leader_session.get('agent_id')}")
+        test_logger.info(f"Elected leader for view: {leader_session.get('sensord_id')}")
         
         # Verify leader has the correct capabilities
         assert leader_session.get("can_snapshot") is True, "Leader should be able to snapshot"

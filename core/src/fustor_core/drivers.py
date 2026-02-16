@@ -1,5 +1,5 @@
 """
-Abstract Base Classes for Fuagent Drivers.
+Abstract Base Classes for Fusensord Drivers.
 
 This module defines the formal interface for Source and Sender drivers.
 All drivers must inherit from the appropriate base class and implement its
@@ -25,7 +25,7 @@ class ViewDriver(ABC):
     Abstract Base Class for View Drivers.
     
     A ViewDriver consumes events and maintains a consistent, queryable view of data.
-    This is the Fusion-side counterpart to SourceDriver (Agent-side).
+    This is the Fusion-side counterpart to SourceDriver (sensord-side).
     
     View drivers are discovered via the 'fustor.view_drivers' entry point group.
     """
@@ -86,11 +86,11 @@ class ViewDriver(ABC):
         raise NotImplementedError
 
     async def on_session_start(self, **kwargs):
-        """Called when a new Agent session starts."""
+        """Called when a new sensord session starts."""
         pass
     
     async def on_session_close(self, **kwargs):
-        """Called when an Agent session terminates."""
+        """Called when an sensord session terminates."""
         pass
 
     async def handle_audit_start(self):
@@ -137,7 +137,7 @@ class SenderDriver(ABC):
     """
     Abstract Base Class for all Sender drivers.
 
-    Defines the contract for drivers that receive data from the Fuagent core
+    Defines the contract for drivers that receive data from the Fusensord core
     and transmit it to a destination (e.g., Fusion, Object Storage).
     """
 
@@ -251,7 +251,7 @@ class SourceDriver(ABC):
     """
     Abstract Base Class for all Source drivers.
 
-    Defines the contract for drivers that produce data for the Fuagent core.
+    Defines the contract for drivers that produce data for the Fusensord core.
     """
 
     def __init__(self, id: str, config: SourceConfig):
@@ -262,7 +262,7 @@ class SourceDriver(ABC):
         self.config = config
 
     # Indicates whether this source driver requires a formal schema discovery process.
-    # If False, the agent will skip the discovery step and consider the schema valid.
+    # If False, the sensord will skip the discovery step and consider the schema valid.
     require_schema_discovery: bool = True
 
     @property
@@ -374,8 +374,8 @@ class SourceDriver(ABC):
         return (True, "Runtime parameter check not implemented for this driver.")
 
     @classmethod
-    async def create_agent_user(cls, **kwargs) -> Tuple[bool, str]:
+    async def create_sensord_user(cls, **kwargs) -> Tuple[bool, str]:
         """
-        Optional: Creates a agent user for the source service.
+        Optional: Creates a sensord user for the source service.
         """
-        return (True, "Agent user creation not implemented for this driver.")
+        return (True, "sensord user creation not implemented for this driver.")

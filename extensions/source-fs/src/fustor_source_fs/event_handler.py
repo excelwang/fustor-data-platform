@@ -10,7 +10,7 @@ from fustor_core.event import UpdateEvent, DeleteEvent
 from fustor_schema_fs.models import FSSchemaFields
 from .components import _WatchManager
 
-logger = logging.getLogger("fustor_agent.driver.fs")
+logger = logging.getLogger("sensord.driver.fs")
 
 def _get_relative_path(path: str, root_path: str) -> str:
     """Convert path to be relative to root_path, but ensuring it starts with /."""

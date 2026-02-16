@@ -1,4 +1,4 @@
-"Fuagent source driver for MySQL."
+"Fusensord source driver for MySQL."
 import time
 import pymysql
 from pymysql.cursors import SSCursor
@@ -20,7 +20,7 @@ from fustor_core.models.config import SourceConfig, PasswdCredential
 from fustor_core.exceptions import DriverError
 from fustor_core.event import EventBase, InsertEvent, UpdateEvent, DeleteEvent
 
-logger = logging.getLogger("fustor_agent.driver.mysql")
+logger = logging.getLogger("sensord.driver.mysql")
 
 class MysqlDriver(SourceDriver):
     _instances: Dict[str, 'MysqlDriver'] = {}
@@ -281,14 +281,14 @@ class MysqlDriver(SourceDriver):
                     close()
 
     @classmethod
-    async def create_agent_user(cls, **kwargs) -> Tuple[bool, str]:
+    async def create_sensord_user(cls, **kwargs) -> Tuple[bool, str]:
         uri = kwargs.get("uri")
         admin_creds_dict = kwargs.get("admin_creds", {})
-        agent_user_dict = kwargs.get("credential", {})
-        if not uri or not admin_creds_dict or not agent_user_dict:
+        sensord_user_dict = kwargs.get("credential", {})
+        if not uri or not admin_creds_dict or not sensord_user_dict:
             return (False, "缺少 'uri', 'admin_creds', 或 'credential' 参数")
         admin_creds = PasswdCredential(**admin_creds_dict)
-        agent_user = PasswdCredential(**agent_user_dict)
+        sensord_user = PasswdCredential(**sensord_user_dict)
         
         conn = None
         try:
@@ -296,18 +296,18 @@ class MysqlDriver(SourceDriver):
             async with conn.cursor() as cursor:
                 await cursor.execute(
                     "CREATE USER IF NOT EXISTS %s@%s IDENTIFIED BY %s",
-                    (agent_user.user, '%', agent_user.passwd or '')
+                    (sensord_user.user, '%', sensord_user.passwd or '')
                 )
                 await cursor.execute(
                     "GRANT REPLICATION SLAVE, REPLICATION CLIENT, SELECT ON *.* TO %s@%s",
-                    (agent_user.user, '%')
+                    (sensord_user.user, '%')
                 )
                 await cursor.execute("FLUSH PRIVILEGES")
-            logger.info(f"User '{agent_user.user}' is ready for replication.")
-            return True, f"用户 '{agent_user.user}' 已成功创建或验证。"
+            logger.info(f"User '{sensord_user.user}' is ready for replication.")
+            return True, f"用户 '{sensord_user.user}' 已成功创建或验证。"
         except Exception as e:
-            logger.error(f"Failed to create or grant privileges to user '{agent_user.user}': {e}", exc_info=True)
-            return False, f"创建或授权用户 '{agent_user.user}' 失败: {e}"
+            logger.error(f"Failed to create or grant privileges to user '{sensord_user.user}': {e}", exc_info=True)
+            return False, f"创建或授权用户 '{sensord_user.user}' 失败: {e}"
         finally:
             if conn is not None:
                 close = getattr(conn, "close", None)
@@ -318,11 +318,11 @@ class MysqlDriver(SourceDriver):
     async def check_privileges(cls, **kwargs) -> Tuple[bool, str]:
         uri = kwargs.get("uri")
         admin_creds_dict = kwargs.get("admin_creds", {})
-        agent_user_dict = kwargs.get("credential", {})
-        if not uri or not admin_creds_dict or not agent_user_dict:
+        sensord_user_dict = kwargs.get("credential", {})
+        if not uri or not admin_creds_dict or not sensord_user_dict:
             return (False, "缺少 'uri', 'admin_creds', 或 'credential' 参数")
         admin_creds = PasswdCredential(**admin_creds_dict)
-        agent_user = PasswdCredential(**agent_user_dict)
+        sensord_user = PasswdCredential(**sensord_user_dict)
         
         conn = None
         try:
@@ -330,19 +330,19 @@ class MysqlDriver(SourceDriver):
             async with conn.cursor() as cursor:
                 await cursor.execute(
                     "SELECT Repl_slave_priv, Repl_client_priv, Select_priv FROM mysql.user WHERE User = %s AND Host = %s",
-                    (agent_user.user, '%')
+                    (sensord_user.user, '%')
                 )
                 result = await cursor.fetchone()
                 if not result or result[0] != 'Y' or result[1] != 'Y' or result[2] != 'Y':
-                    msg = f"用户 '{agent_user.user}' 缺少必要的权限 (REPLICATION SLAVE, REPLICATION CLIENT, SELECT)。"
+                    msg = f"用户 '{sensord_user.user}' 缺少必要的权限 (REPLICATION SLAVE, REPLICATION CLIENT, SELECT)。"
                     logger.error(msg)
                     return False, msg
 
-            logger.info(f"User '{agent_user.user}' privileges verified")
-            return True, f"用户 '{agent_user.user}' 权限充足。"
+            logger.info(f"User '{sensord_user.user}' privileges verified")
+            return True, f"用户 '{sensord_user.user}' 权限充足。"
         except Exception as e:
-            logger.error(f"MySQL check_user_privileges failed for user '{agent_user.user}': {e}", exc_info=True)
-            return False, f"检查用户 '{agent_user.user}' 权限失败: {e}"
+            logger.error(f"MySQL check_user_privileges failed for user '{sensord_user.user}': {e}", exc_info=True)
+            return False, f"检查用户 '{sensord_user.user}' 权限失败: {e}"
         finally:
             if conn is not None:
                 close = getattr(conn, "close", None)

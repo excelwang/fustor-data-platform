@@ -1,6 +1,6 @@
 # fustor-receiver-http
 
-HTTP Receiver for Fustor Fusion - implements the transport layer for receiving events from Agents.
+HTTP Receiver for Fustor Fusion - implements the transport layer for receiving events from sensords.
 
 ## Overview
 

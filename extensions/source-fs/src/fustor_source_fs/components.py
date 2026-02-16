@@ -22,7 +22,7 @@ from watchdog.events import (
     DirMovedEvent,
 )
 
-logger = logging.getLogger("fustor_agent.driver.fs")
+logger = logging.getLogger("sensord.driver.fs")
 
 def contains_surrogate_characters(path: str) -> bool:
     """Checks if a string contains surrogate characters."""
@@ -155,7 +155,7 @@ class _WatchManager:
 
 
     def _get_current_time(self) -> float:
-        """Returns the current time (Agent physical time)."""
+        """Returns the current time (sensord physical time)."""
         return time.time()
 
     def _event_processing_loop(self):

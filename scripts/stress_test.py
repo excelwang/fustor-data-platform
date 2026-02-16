@@ -94,8 +94,8 @@ async def main():
     parser.add_argument("--batch", type=int, default=500)
     args = parser.parse_args()
 
-    t1 = send_events("pipe-1", "agent-1-push-key", args.url, args.count, args.batch)
-    t2 = send_events("pipe-2", "agent-2-push-key", args.url, args.count, args.batch)
+    t1 = send_events("pipe-1", "sensord-1-push-key", args.url, args.count, args.batch)
+    t2 = send_events("pipe-2", "sensord-2-push-key", args.url, args.count, args.batch)
 
     await asyncio.gather(t1, t2)
 

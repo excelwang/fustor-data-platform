@@ -1,6 +1,6 @@
 # tests/e2e/consistency/test_pipe_field_mapping.py
 """
-Integration test for Field Mapping in AgentPipe.
+Integration test for Field Mapping in sensordPipe.
 """
 import time
 import pytest
@@ -10,12 +10,12 @@ from ..fixtures.constants import MOUNT_POINT, FUSION_ENDPOINT, MEDIUM_TIMEOUT, P
 logger = logging.getLogger("fustor_test")
 
 class TestPipeFieldMapping:
-    """Test field mapping functionality in AgentPipe."""
+    """Test field mapping functionality in sensordPipe."""
     
     def test_field_mapping_affects_data(
         self, 
         docker_env, 
-        setup_agents, 
+        setup_sensords, 
         fusion_client
     ):
         """
@@ -24,12 +24,12 @@ class TestPipeFieldMapping:
         """
         logger.info("Running field mapping test")
         
-        containers = setup_agents["containers"]
+        containers = setup_sensords["containers"]
         leader = containers["leader"]
-        view_id = setup_agents["view_id"]
-        api_key = setup_agents["api_key"]
+        view_id = setup_sensords["view_id"]
+        api_key = setup_sensords["api_key"]
         
-        # 1. Update Agent Config to include fields_mapping
+        # 1. Update sensord Config to include fields_mapping
         # Map: path -> path, modified_time -> modified_time, is_directory -> is_directory, size -> remapped_size
         pipe_config = f"""
 pipes:
@@ -52,33 +52,33 @@ pipes:
 """
         docker_env.create_file_in_container(
             leader, 
-            "/root/.fustor/agent-config/pipe-task-1.yaml", 
+            "/root/.fustor/sensord-config/pipe-task-1.yaml", 
             pipe_config
         )
         
-        # 2. Restart Agent to apply config
-        logger.info(f"Restarting agent in {leader} to apply fields_mapping")
+        # 2. Restart sensord to apply config
+        logger.info(f"Restarting sensord in {leader} to apply fields_mapping")
         
         # Reset Fusion state to ensure a clean start for the new mapping
         fusion_client.reset()
         
-        # Use the standard ensure_agent_running function to restart
+        # Use the standard ensure_sensord_running function to restart
         # This handles PID cleanup and environment variable injection correctly
-        setup_agents["ensure_agent_running"](leader, api_key, view_id)
+        setup_sensords["ensure_sensord_running"](leader, api_key, view_id)
         
-        # Wait for agent to reconnect and become leader
-        logger.info("Waiting for Agent A to become leader...")
+        # Wait for sensord to reconnect and become leader
+        logger.info("Waiting for sensord A to become leader...")
         start_wait = time.time()
         while time.time() - start_wait < MEDIUM_TIMEOUT:
             sessions = fusion_client.get_sessions()
             # Ensure it's the leader and it's client-a
-            leader_session = next((s for s in sessions if s.get("role") == "leader" and "client-a" in s.get("agent_id", "")), None)
+            leader_session = next((s for s in sessions if s.get("role") == "leader" and "client-a" in s.get("sensord_id", "")), None)
             if leader_session:
-                logger.info(f"Agent A successfully became leader: {leader_session.get('session_id')}")
+                logger.info(f"sensord A successfully became leader: {leader_session.get('session_id')}")
                 break
             time.sleep(POLL_INTERVAL)
         else:
-             pytest.fail(f"Agent A failed to become leader. Current sessions: {fusion_client.get_sessions()}")
+             pytest.fail(f"sensord A failed to become leader. Current sessions: {fusion_client.get_sessions()}")
         
         # 3. Create a file with specific size
         import os.path

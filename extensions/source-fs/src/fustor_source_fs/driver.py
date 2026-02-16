@@ -1,5 +1,5 @@
 """
-Fuagent source driver for the file system.
+Fusensord source driver for the file system.
 
 This driver implements a 'Smart Dynamic Monitoring' strategy to efficiently
 monitor large directory structures without exhausting system resources.
@@ -24,7 +24,7 @@ from .components import _WatchManager, safe_path_handling
 from .event_handler import OptimizedWatchEventHandler, get_file_metadata, _get_relative_path
 from .scanner import FSScanner
 
-logger = logging.getLogger("fustor_agent.driver.fs")
+logger = logging.getLogger("sensord.driver.fs")
             
 class FSDriver(SourceDriver):
     _instances: Dict[str, 'FSDriver'] = {}

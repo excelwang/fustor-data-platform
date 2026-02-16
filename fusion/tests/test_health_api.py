@@ -25,8 +25,8 @@ async def test_get_component_health(client):
         # default disabled handlers to empty
         mock_pipe._disabled_handlers = []
         
-        mock_pipe._last_agent_status = {
-            "agent_id": "test-agent",
+        mock_pipe._last_sensord_status = {
+            "sensord_id": "test-sensord",
             "component_health": {
                 "source": {"status": "ok"},
                 "sender": {"status": "ok"},
@@ -43,8 +43,8 @@ async def test_get_component_health(client):
         assert "pipe-1" in data
         p_data = data["pipe-1"]
         assert p_data["state"] == "RUNNING"
-        assert p_data["agent_id"] == "test-agent"
-        assert p_data["agent_health"]["source"]["status"] == "ok"
+        assert p_data["sensord_id"] == "test-sensord"
+        assert p_data["sensord_health"]["source"]["status"] == "ok"
         assert p_data["handlers"]["h1"]["enabled"] is True
         assert p_data["handlers"]["h1"]["type"] == "view_fs"
 

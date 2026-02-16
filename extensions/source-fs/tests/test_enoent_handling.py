@@ -20,7 +20,7 @@ class TestENOENTHandling:
         Scenario:
         1. Pre-scan identifies '/path/to/hot/dir'.
         2. External process deletes '/path/to/hot/dir'.
-        3. Agent attempts to call schedule('/path/to/hot/dir').
+        3. sensord attempts to call schedule('/path/to/hot/dir').
         4. inotify.add_watch fails with ENOENT.
         """
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -40,6 +40,6 @@ class TestENOENTHandling:
             # Verify the path doesn't exist (simulating deletion after pre-scan)
             assert not os.path.exists(hot_dir_path)
             
-            # Call schedule method - this simulates the agent attempting to watch the identified hot dir.
+            # Call schedule method - this simulates the sensord attempting to watch the identified hot dir.
             # This should currently raise FileNotFoundError (bug reproduction).
             watch_manager.schedule(hot_dir_path)
