@@ -4,9 +4,7 @@ version: 1.0.0
 
 # L3: [algorithm] Fustor MemoryEventBus 消息同步机制
 
-> Implements: [Component: COMPONENTS.TOPOLOGY.MESSAGE_SYNC]
 > Type: algorithm
-> (Ref: CONTRACTS.STABILITY.EVENTBUS_RING_BUFFER)
 
 ## 1. 概述
 

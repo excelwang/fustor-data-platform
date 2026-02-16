@@ -4,9 +4,7 @@ version: 1.0.0
 
 # L3: [algorithm] Forest View 设计 (Multi-Source Aggregation)
 
-> Implements: [Component: COMPONENTS.TOPOLOGY]
 > Type: algorithm | interface
-> (Ref: CONTRACTS.DATA_ROUTING, CONTRACTS.CONCURRENCY)
 
 > 版本: 1.0.0  
 > 日期: 2026-02-13  

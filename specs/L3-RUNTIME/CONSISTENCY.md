@@ -4,9 +4,7 @@ version: 1.0.0
 
 # L3: [algorithm] Fustor 一致性设计方案
 
-> Implements: [Component: COMPONENTS.CONSISTENCY]
 > Type: algorithm | decision
-> (Ref: CONTRACTS.STABILITY, CONTRACTS.DATA_ROUTING)
 
 ## 1. 概述
 
@@ -355,7 +353,7 @@ if event.message_source == MessageSource.SNAPSHOT:
 > 3. **禁止跨域比较**：不得将 NFS 域时间戳与 Fusion 物理时间（`time.time()`）直接比较
 >
 > **Suspect Age 计算**：`age = watermark - mtime`，两者均在 NFS 时间域内。
-> 冷启动时 skew 未校准，watermark 退化为 `time.time()`，这是已知限制（参见 [03-LOGICAL_CLOCK_DESIGN.md §5.1](./03-LOGICAL_CLOCK_DESIGN.md)）。
+> 冷启动时 skew 未校准，watermark 退化为 `time.time()`，这是已知限制（参见 [LOGICAL_CLOCK.md §5.1](./LOGICAL_CLOCK.md)）。
 
 
 ### 5.3 Audit 消息处理
@@ -643,7 +641,7 @@ while suspect_heap and suspect_heap[0][0] <= time.monotonic():
 
 ### 11.4 并发控制
 
-`FSViewDriver` 使用 `AsyncRWLock` 控制内存树的并发访问（详见 [06-CONCURRENCY_PERFORMANCE.md §2.2](./06-CONCURRENCY_PERFORMANCE.md)）：
+`FSViewDriver` 使用 `AsyncRWLock` 控制内存树的并发访问（详见 [../L1-CONTRACTS.md](./../L1-CONTRACTS.md)）：
 - **读锁 (`read_lock`)**: 事件处理 (`process_event`) 和查询 (`query`) 使用，多个操作可并发执行
 - **写锁 (`write_lock`)**: Audit Start/End、Session Start、Reset 等需要独占访问的操作
 

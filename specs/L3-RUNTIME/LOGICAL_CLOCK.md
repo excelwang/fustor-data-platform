@@ -4,9 +4,7 @@ version: 1.0.0
 
 # L3: [algorithm] Fustor 分层时钟与时间一致性设计 (Hierarchical Clock Design)
 
-> Implements: [Component: COMPONENTS.CONSISTENCY]
 > Type: algorithm
-> (Ref: CONTRACTS.STABILITY, CONTRACTS.CONCURRENCY)
 
 ## 1. 背景与挑战
 

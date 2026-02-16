@@ -4,13 +4,11 @@ version: 1.0.0
 
 # L3: [workflow] Fustor 运行时行为与生命周期 (Runtime Behavior)
 
-> Implements: [Component: COMPONENTS.SESSION, COMPONENTS.ROLES]
 > Type: workflow | decision
-> (Ref: CONTRACTS.STABILITY, CONTRACTS.CONCURRENCY)
 
 > 版本: 1.0.0
 > 日期: 2026-02-04
-> 补充: 02-CONSISTENCY_DESIGN.md
+> 补充: CONSISTENCY.md
 
 本文档记录了系统在运行时的动态行为细节，包括 Leader 选举、角色切换、审计缓存生命周期等。
 
