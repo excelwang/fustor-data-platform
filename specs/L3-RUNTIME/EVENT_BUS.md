@@ -2,9 +2,10 @@
 version: 1.0.0
 ---
 
-# L3: [algorithm] Fustor MemoryEventBus 消息同步机制
+# L3: [pattern] Fustor MemoryEventBus 消息同步机制
 
-> Type: algorithm
+> Type: pattern | algorithm
+> Layer: Domain Layer
 
 ## 1. 概述
 

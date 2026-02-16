@@ -5,6 +5,7 @@ version: 1.0.0
 # L3: [workflow] Fustor 运行时行为与生命周期 (Runtime Behavior)
 
 > Type: workflow | decision
+> Layer: Domain Layer
 
 > 版本: 1.0.0
 > 日期: 2026-02-04

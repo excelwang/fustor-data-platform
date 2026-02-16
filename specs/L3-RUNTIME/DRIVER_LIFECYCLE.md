@@ -5,6 +5,7 @@ version: 1.0.0
 # L3: [algorithm] Driver Lifecycle & Instantiation
 
 > Type: algorithm | pattern
+> Layer: Domain Layer
 
 ## 1. 概述
 

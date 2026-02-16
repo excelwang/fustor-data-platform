@@ -5,8 +5,6 @@ version: 1.0.0
 # L2: Fustor Architecture
 
 > This document defines the high-level component structure.
-> Each component traces to L1 contracts and decomposes into L3 items.
-
 > **Subject**: Role (Active) | Component (Passive)
 > - Role: Observes / Decides / Acts (Agent-driven)
 > - Component: Input / Output (Script-driven)
@@ -19,28 +17,28 @@ version: 1.0.0
 
 ```mermaid
 graph TD
-    subgraph "L3: Management Plane (运维层/可选)"
+    subgraph "Management Layer (运维层/可选)"
         L3_Fusion["fustor-view-mgmt (Orchestration/UI)"]
         L3_Agent["fustor-source-mgmt (Command Support)"]
     end
 
-    subgraph "L2: Session & Control Plane (会话层/核心)"
-        L2_Fusion["SessionManager (Presence Tracking)"]
-        L2_Agent["AgentPipe (Heartbeat/Umbilical Cord)"]
+    subgraph "Domain Layer (数据层/核心)"
+        L2_Fusion["View Drivers (Arbitration/Merge)"]
+        L2_Agent["Source Drivers (FS/SQL/etc.)"]
     end
 
-    subgraph "L1: Data Plane (数据层/执行)"
-        L1_Source["Source Drivers (FS/SQL/etc.)"]
-        L1_View["View Drivers (Arbitration/Merge)"]
-        L1_Sender["Sender/Receiver Drivers"]
+    subgraph "Stability Layer (稳定性层/基础)"
+        L1_Session["SessionManager (Presence Tracking)"]
+        L1_AgentPipe["AgentPipe (Heartbeat/Umbilical Cord)"]
+        L1_Transport["Sender/Receiver Drivers"]
     end
 
     %% Dependencies
-    L3_Fusion -.->|Injects Admin Cmd| L2_Fusion
-    L2_Agent <==>|L2 Heartbeat Tunnel| L2_Fusion
-    L2_Agent ---|Spawns/Monitors| L1_Source
-    L1_Source ---|Produces Events| L2_Agent
-    L1_View ---|Queries/Updates| L2_Fusion
+    L3_Fusion -.->|Injects Admin Cmd| L1_Session
+    L1_AgentPipe <==>|Stability Heartbeat Tunnel| L1_Session
+    L1_AgentPipe ---|Spawns/Monitors| L2_Agent
+    L2_Agent ---|Produces Events| L1_AgentPipe
+    L2_Fusion ---|Queries/Updates| L1_Session
 ```
 
 
@@ -478,30 +476,30 @@ Agent 收到响应后，设置心跳间隔为 `timeout_seconds / 2`。
 
 ### Peer-to-Peer 自主模型
 
-Fustor 将 Agent 和 Fusion 视为 L1 稳定性层的 **平等租户 (Peer Tenants)**，而非主从关系：
+Fustor 将 Agent 和 Fusion 视为 Stability Layer 的 **平等租户 (Peer Tenants)**，而非主从关系：
 
-*   **主动感知 (Proactive)**: Agent 拥有原生的领域冲动（L2），会根据配置自主启动监听并租用 L1 管道推送数据。不需要 Fusion 的"启动命令"。
-*   **对等对称**: 双方使用相同的 L1 原语进行通信。区别仅在于 L2 驱动的类型：一端是 **感知源 (Source)**，另一端是 **聚合视图 (View)**。
-*   **生存隔离**: 管理行为（L3）的失效不应影响数据面（L2）的自主同步与生命体征（L1）。
+*   **主动感知 (Proactive)**: Agent 拥有原生的领域冲动 (Domain Layer)，会根据配置自主启动监听并租用 Stability 管道推送数据。不需要 Fusion 的"启动命令"。
+*   **对等对称**: 双方使用相同的 Stability 原语进行通信。区别仅在于 Domain 驱动的类型：一端是 **感知源 (Source)**，另一端是 **聚合视图 (View)**。
+*   **生存隔离**: 管理行为 (Management Layer) 的失效不应影响数据面 (Domain Layer) 的自主同步与生命体征 (Stability Layer)。
 
 
 ### COMPONENTS.ROLES.RENTING (Unified Renting Model)
 
 > Source: `2026-02-15-task-dispatch-paradigm.md`
 
-L2/L3 服务不再拥有专用命令通道，而是统一作为 Client 向 L1 租用寻址原语。
+Domain/Management 服务不再拥有专用命令通道，而是统一作为 Client 向 Stability Layer 租用寻址原语。
 
 #### 1. 视图广播任务 (Broadcast Task)
 - **目的**: 内容补偿 (Data Compensation)
 - **场景**: `scan` (On-Demand Find)
-- **租用原语**: `L1.broadcast(view_id)`
+- **租用原语**: `Stability.broadcast(view_id)`
 - **成功准则**: Quorum/Full (集齐所有源)
 - **失败影响**: 数据盲区 (Partial Data)
 
 #### 2. 代理控制任务 (Targeted Task)
 - **目的**: 状态变更 (State Mutation)
 - **场景**: `upgrade`, `reload`, `stop`
-- **租用原语**: `L1.unicast(agent_id)`
+- **租用原语**: `Stability.unicast(agent_id)`
 - **成功准则**: Any/Single (命中即生效)
 - **失败影响**: 管控失效 (Control Loss)
 

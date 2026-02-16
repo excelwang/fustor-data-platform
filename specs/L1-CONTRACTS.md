@@ -6,7 +6,7 @@ invariants:
   - id: INV_API_NEVER_503
     statement: "The /fs/tree API endpoint must always return a valid response, never 503."
   - id: INV_LAYER_ORDER
-    statement: "L1/L2 must never depend on L3. L3 is an optional plugin."
+    statement: "Stability/Domain Layer must never depend on Management Layer. Management Layer is an optional plugin."
 ---
 
 # L1: Fustor Contracts
@@ -169,21 +169,21 @@ invariants:
 
 ## CONTRACTS.ADDRESSING
 
-> Source: L1-NEUTRALITY, 2026-02-16T0220-neutral-addressing-primitives.md
+> Source: STABILITY_NEUTRALITY, 2026-02-16T0220-neutral-addressing-primitives.md
 
 - **ADDRESSING_ONLY**: Every packet sent from Fusion to Agent MUST be either `unicast(target_id)` or `broadcast(view_id)`.
   > Responsibility: Routing — purely mechanical packet delivery.
-  > Verification: L1 code contains only `dispatch(header, payload)`.
+  > Verification: Stability Layer code contains only `dispatch(header, payload)`.
 
-- **PAYLOAD_OPACITY**: L1 MUST treat all command payloads as opaque dictionaries.
-  > Responsibility: Stability — L1 survives invalid payloads.
+- **PAYLOAD_OPACITY**: Stability Layer MUST treat all command payloads as opaque dictionaries.
+  > Responsibility: Stability — Stability Layer survives invalid payloads.
   > Verification: Zero inspections of `payload.type` or `payload.body` in `SessionManager`.
 
 - **NEUTRALITY**: The `SessionManager` MUST NOT contain string literals or logic related to `scan`, `snapshot`, `job_id`, or `path`.
   > Responsibility: Decoupling — prevent business logic leakage.
   > Verification: Grep check passes.
 
-- **AUTO_RECONNECT**: All remote operations (even destructive ones like restart) MUST be auto-recovered by L2 heartbeat reconnection.
+- **AUTO_RECONNECT**: All remote operations (even destructive ones like restart) MUST be auto-recovered by Domain heartbeat reconnection.
   > Responsibility: Resilience — umbilical cord stays ready when physically reachable.
   > Verification: Agent reconnects within 2× backoff interval after process restart.
 
@@ -218,14 +218,14 @@ invariants:
 
 > Source: L0-VISION §1.4
 
-- **L1_NEUTRALITY**: L1 (SessionManager) MUST provide only addressing primitives (`broadcast`, `unicast`, `heartbeat_tunnel`). MUST NOT contain business logic.
+- **STABILITY_NEUTRALITY**: Stability Layer (SessionManager) MUST provide only addressing primitives (`broadcast`, `unicast`, `heartbeat_tunnel`). MUST NOT contain business logic.
   > Responsibility: Stability — keep the survival layer simple and generic.
-  > Verification: Zero business terms (`scan`, `upgrade`, `path`, `job_id`) in L1 code.
+  > Verification: Zero business terms (`scan`, `upgrade`, `path`, `job_id`) in Stability Layer code.
 
-- **L2_SELF_SUFFICIENT**: L2 MUST implement API fallback (On-Command Find) independently. MUST NOT depend on L3 for data completeness.
-  > Responsibility: Availability — core API survives L3 removal.
-  > Verification: Disable all L3 plugins; `/fs/tree` still returns valid data.
+- **DOMAIN_SELF_SUFFICIENT**: Domain Layer MUST implement API fallback (On-Command Find) independently. MUST NOT depend on Management Layer for data completeness.
+  > Responsibility: Availability — core API survives Management Layer removal.
+  > Verification: Disable all Management plugins; `/fs/tree` still returns valid data.
 
-- **L3_TRUE_PLUGIN**: Removing all L3 packages MUST NOT affect L1/L2 functionality.
+- **MANAGEMENT_TRUE_PLUGIN**: Removing all Management packages MUST NOT affect Stability/Domain functionality.
   > Responsibility: Independence — management is optional.
   > Verification: System boots and serves API without `fustor-view-mgmt` or `fustor-source-mgmt`.

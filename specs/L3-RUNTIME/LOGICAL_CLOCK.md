@@ -5,6 +5,7 @@ version: 1.0.0
 # L3: [algorithm] Fustor 分层时钟与时间一致性设计 (Hierarchical Clock Design)
 
 > Type: algorithm
+> Layer: Domain Layer
 
 ## 1. 背景与挑战
 
@@ -135,14 +136,6 @@ def get_watermark(self) -> float:
 - **简洁性**: 纯函数，无状态依赖
 - **免疫性**: 恶意 mtime（如 `touch -d 2050`）完全无法推进 Watermark
 - **一致性**: Watermark 始终与物理时间同步推进，不受写入流量影响
-
-> [!NOTE]
-> **移除的旧逻辑**: 
-> - ~~Trust Window~~ (±1s 信任窗口)
-> - ~~Fast Path~~ (mtime 直接推进水位线)
-> 
-> 这些已被移除以简化实现并增强对时间异常的免疫力。
-
 
 ### 4.2 核心 API
 

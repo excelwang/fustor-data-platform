@@ -80,30 +80,30 @@ graph TD
 
 Fustor 采用 **"下沉稳定性，上行扩展性"** 的三层垂直模型，严禁次序颠倒：
 
-### Layer 1: 稳定性与会话层 (Stability Layer)
+### Stability Layer (Stability & Session)
 - **职责**: 纯粹的连接维持。负责物理链接 (Pipes)、心跳隧道 (Umbilical Cord)、生存状态监控。
-- **中立原则**: L1 只提供**寻址原语** (Unicast / Broadcast)。严禁感知业务指令或管理操作，只负责"将二进制包安全送达"。
-- **愿景定位**: 系统的"生存地基"。如果 L1 因感知上层业务而变复杂，生存愿景将丧失。
+- **中立原则**: Stability Layer 只提供**寻址原语** (Unicast / Broadcast)。严禁感知业务指令或管理操作，只负责"将二进制包安全送达"。
+- **愿景定位**: 系统的"生存地基"。如果 Stability Layer 因感知上层业务而变复杂，生存愿景将丧失。
 
-### Layer 2: 领域与数据层 (Domain Layer)
+### Domain Layer (Domain & Data)
 - **职责**: 定义数据的"血肉"。包括数据驱动 (Source/View)、快照合并方案、API 核心查询逻辑。
-- **自治原则**: API 的"永不 503"保障 (Fallback Scan) 属于 L2 的**核心本能**，不属于 L3 的外部干预。
-- **层级借用**: L2 通过调用 L1 的中立广播原语来实现数据补全，无需 L1 知道补全内容。
+- **自治原则**: API 的"永不 503"保障 (Fallback Scan) 属于 Domain Layer 的**核心本能**，不属于 Management Layer 的外部干预。
+- **层级借用**: Domain Layer 通过调用 Stability Layer 的中立广播原语来实现数据补全，无需 Stability Layer 知道补全内容。
 
-### Layer 3: 运维与插件层 (Management Layer)
+### Management Layer (Operations & Plugins)
 - **职责**: 非实时、非关键路径的管理工作（升级、迁移、UI 服务）。
 - **命名规范**: Fusion 端 `fustor-view-mgmt`，Agent 端 `fustor-source-mgmt`。
-- **独立原则**: L3 必须是**真插件**。删除 L3 后，核心 API 服务 (L2 + L1) 必须正常运行。
-- **次序校验**: L1/L2 严禁依赖 L3。
+- **独立原则**: Management Layer 必须是**真插件**。删除 Management Layer 后，核心 API 服务 (Domain + Stability) 必须正常运行。
+- **次序校验**: Stability/Domain 严禁依赖 Management Layer。
 
 ## VISION.AUTONOMY
 
 Fustor 拒绝"主从"式命令模型，推崇 **"感知驱动，按需对齐"** 的自主模型：
 
-- **INTRINSIC_DRIVE**: Agent 绝非被动等待 Fusion 命令的傀儡。它是一个**主动的、有状态的传感器**。Agent 的 L2 层根据自身配置，自主监听本地变化并主动寻找 L1 管道推送。
-- **INDEPENDENT_LIFECYCLE**: Agent 的生存不依赖于 Fusion。断网或 Fusion 崩溃时，Agent 感知逻辑 (L2) 全速运行，事件在 L1 隧道中排队。
-- **MULTI_TARGET_RENTING**: Agent 可同时向多个 Receiver (Fusion、三方工具) 租用 L1 管道推送数据。只认管道契约，不认行政从属。
-- **UNIVERSAL_ADDRESSING**: L1 层仅提供 `broadcast` (全量覆盖) 和 `unicast` (精准触达) 两种寻址原语。任何上层业务（数据回退、远程升级）都必须映射为这两种原语之一。
+- **INTRINSIC_DRIVE**: Agent 绝非被动等待 Fusion 命令的傀儡。它是一个**主动的、有状态的传感器**。Agent 的 Domain Layer 根据自身配置，自主监听本地变化并主动寻找 Stability 管道推送。
+- **INDEPENDENT_LIFECYCLE**: Agent 的生存不依赖于 Fusion。断网或 Fusion 崩溃时，Agent 感知逻辑 (Domain) 全速运行，事件在 Stability 隧道中排队。
+- **MULTI_TARGET_RENTING**: Agent 可同时向多个 Receiver (Fusion、三方工具) 租用 Stability 管道推送数据。只认管道契约，不认行政从属。
+- **UNIVERSAL_ADDRESSING**: Stability Layer 仅提供 `broadcast` (全量覆盖) 和 `unicast` (精准触达) 两种寻址原语。任何上层业务（数据回退、远程升级）都必须映射为这两种原语之一。
 
 ## VISION.SUCCESS_CRITERIA
 

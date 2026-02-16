@@ -2,9 +2,10 @@
 version: 1.0.0
 ---
 
-# L3: [algorithm] Forest View 设计 (Multi-Source Aggregation)
+# L3: [component] Forest View 设计 (Multi-Source Aggregation)
 
-> Type: algorithm | interface
+> Type: component | algorithm
+> Layer: Domain Layer
 
 > 版本: 1.0.0  
 > 日期: 2026-02-13  

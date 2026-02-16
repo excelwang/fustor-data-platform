@@ -2,9 +2,10 @@
 version: 1.0.0
 ---
 
-# L3: [algorithm] Fustor 一致性设计方案
+# L3: [algorithm] Fustor 一致性设计方案 (Consistency Design)
 
 > Type: algorithm | decision
+> Layer: Domain Layer
 
 ## 1. 概述
 
