@@ -36,6 +36,58 @@ Sensord 通过三种互补的时间轨道确保数据的一致性：
 
 ---
 
+## [model] Event_Lifecycle_State_Machine
+
+**Rationale**: Ensure clear mapping from Kernel/FS events to SDP data frames, preventing partial data leaks.
+
+```mermaid
+state_machine
+    [*] --> DISCOVERED: Scan or Inotify(IN_CREATE)
+    
+    DISCOVERED --> WRITING: Inotify(IN_MODIFY)
+    WRITING --> WRITING: Inotify(IN_MODIFY)
+    
+    WRITING --> COMMITTED: Inotify(IN_CLOSE_WRITE)
+    DISCOVERED --> COMMITTED: Inotify(IN_CLOSE_WRITE)
+    
+    COMMITTED --> [*]: DELETE / Event Filtered
+    
+    %% SDP Mapping
+    state DISCOVERED {
+        is_atomic_write: false
+    }
+    state WRITING {
+        event_type: "UPDATE"
+        is_atomic_write: false
+    }
+    state COMMITTED {
+        event_type: "UPDATE"
+        is_atomic_write: true
+    }
+```
+
+> [!NOTE]
+> **Sensord** 遵循 "Write-Buffered" 契约：只有在 `is_atomic_write: true` 时，Consumer 才会视数据为最终可用状态。
+
+---
+
+## [logic] Exception_Isolation_Whitelist
+
+**Rationale**: Prevent transient or permission-related file errors from crashing the entire scanning task.
+
+### 4.1 Silenced Exceptions
+Sensord Source Drivers MUST catch and log (but NOT re-raise) the following exceptions for individual path processing:
+
+- `PermissionError`: 权限不足，跳过。
+- `FileNotFoundError`: 扫描过程中文件被删除，视为已同步删除。
+- `OSError (ETIMEDOUT / EIO)`: 偶发性的网络文件系统超时。
+
+### 4.2 Fatal Exceptions
+The following exceptions are considered fatal and MUST bubble up to the `Pipe` level for recovery/reconnect:
+- `ConnectionError`: 与存储后端的物理连接断开。
+- `MemoryError`: 内存不足。
+- `RecursionError`: 极端深层目录导致的循环。
+
 ## [algorithm] Data_Scan_Algorithms
 
 **Rationale**: Use tiered scanning strategies to balance real-time responsiveness with periodic deep consistency checks.

@@ -22,8 +22,13 @@
   2. 若 `(Head_Index - Tail_Index) >= Capacity * 0.95`，判定发生由于慢消费者导致的 Head-of-Line Blocking。
   3. **分裂执行**: 系统将最快订阅者通过“接球（Handoff）”流程迁移至一个新的、空的 `EventBus` 实例，使其恢复极速推送。
 
-### 2.2 消息投影 (Event Projection)
+### 2.2 消息投影与字段过滤 (Event Projection & Selection)
 
+**Rationale**: Ensure data security and minimize network payload by implementing a strict "Opt-in" field selection policy.
+
+- **投影语义 (Projection Semantics)**:
+    - **Explicit Mapping**: 若配置了 `fields_mapping` 且不为空，输出事件**仅包含**明确映射的字段。所有未映射的原始驱动字段将被丢弃。
+    - **Transparent Passthrough**: 若 `fields_mapping` 为空或未配置，输出事件包含所有原始驱动字段（不做任何转换）。
 - **字段最小化**: Bus 会动态聚合所有订阅者的 `required_fields` 集合。
 - **采集优化**: 若所有活跃订阅者都不需要某类大体积字段（如图片二进制流），Source 驱动可在采集层直接跳过该字段的分封。
 
