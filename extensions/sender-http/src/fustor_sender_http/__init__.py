@@ -13,10 +13,10 @@ import logging
 from typing import Any, Dict, List, Optional
 
 import httpx
-from fustor_core.transport import Sender
-from fustor_core.exceptions import fustordConnectionError
-from fustor_core.event import EventBase
-from fustor_core.exceptions import SessionObsoletedError
+from sensord_core.transport import Sender
+from sensord_core.exceptions import fustordConnectionError
+from sensord_core.event import EventBase
+from sensord_core.exceptions import SessionObsoletedError
 
 
 class HTTPSender(Sender):

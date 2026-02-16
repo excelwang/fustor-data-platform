@@ -15,10 +15,10 @@ import threading
 import json
 import os
 
-from fustor_core.drivers import SourceDriver
-from fustor_core.models.config import SourceConfig, PasswdCredential
-from fustor_core.exceptions import DriverError
-from fustor_core.event import EventBase, InsertEvent, UpdateEvent, DeleteEvent
+from sensord_core.drivers import SourceDriver
+from sensord_core.models.config import SourceConfig, PasswdCredential
+from sensord_core.exceptions import DriverError
+from sensord_core.event import EventBase, InsertEvent, UpdateEvent, DeleteEvent
 
 logger = logging.getLogger("sensord.driver.mysql")
 

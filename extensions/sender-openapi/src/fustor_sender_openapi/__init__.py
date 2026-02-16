@@ -6,11 +6,11 @@ import logging
 from typing import List, Dict, Any, Tuple, Optional
 from urllib.parse import urljoin
 
-from fustor_core.transport import Sender
-from fustor_core.exceptions import DriverError, SessionObsoletedError
-from fustor_core.models.config import SenderConfig, ApiKeyCredential, PasswdCredential
-from fustor_core.event import EventBase
-from fustor_core.utils.retry import retry
+from sensord_core.transport import Sender
+from sensord_core.exceptions import DriverError, SessionObsoletedError
+from sensord_core.models.config import SenderConfig, ApiKeyCredential, PasswdCredential
+from sensord_core.event import EventBase
+from sensord_core.utils.retry import retry
 
 logger = logging.getLogger("sensord.driver.openapi")
 

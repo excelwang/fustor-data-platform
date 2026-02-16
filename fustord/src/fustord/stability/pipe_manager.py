@@ -3,7 +3,7 @@ import asyncio
 import logging
 from typing import Dict, List, Optional, Any
 
-from fustor_core.transport.receiver import Receiver
+from sensord_core.transport.receiver import Receiver
 from .pipe import FustordPipe
 from .mixins.manager_lifecycle import ManagerLifecycleMixin
 from .mixins.manager_callbacks import ManagerCallbacksMixin

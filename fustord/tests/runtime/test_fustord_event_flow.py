@@ -3,7 +3,7 @@ import pytest_asyncio
 import asyncio
 from unittest.mock import MagicMock, AsyncMock, patch
 from fustord.stability.pipe import FustordPipe
-from fustor_core.pipe.handler import ViewHandler
+from fustord.domain.base_view import ViewHandler
 
 class TestfustordEventFlow:
     """

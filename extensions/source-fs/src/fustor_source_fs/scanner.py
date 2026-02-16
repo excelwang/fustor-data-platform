@@ -6,7 +6,7 @@ import logging
 import threading
 from typing import Dict, List, Optional, Callable, Any, Iterator, Tuple, Union
 
-from fustor_core.event import EventBase, UpdateEvent, MessageSource
+from sensord_core.event import EventBase, UpdateEvent, MessageSource
 from .event_handler import get_file_metadata, _get_relative_path
 
 logger = logging.getLogger("sensord.driver.fs.scanner")

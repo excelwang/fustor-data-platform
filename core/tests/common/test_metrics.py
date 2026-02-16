@@ -2,7 +2,7 @@
 import logging
 import pytest
 from unittest.mock import MagicMock
-from fustor_core.common.metrics import Metrics, NoOpMetrics, LoggingMetrics, get_metrics, set_global_metrics
+from sensord_core.common.metrics import Metrics, NoOpMetrics, LoggingMetrics, get_metrics, set_global_metrics
 
 def test_noop_metrics_does_not_crash():
     m = NoOpMetrics()

@@ -2,7 +2,7 @@
 import logging
 import time
 from typing import Optional, TYPE_CHECKING
-from fustor_core.models.states import SessionInfo
+from sensord_core.models.states import SessionInfo
 from fustord.config.unified import fustord_config
 
 if TYPE_CHECKING:

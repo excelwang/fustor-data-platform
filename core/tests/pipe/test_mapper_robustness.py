@@ -1,6 +1,6 @@
 import pytest
 import logging
-from fustor_core.pipe.mapper import EventMapper
+from sensord_core.pipe.mapper import EventMapper
 
 def test_event_mapper_init_variations():
     """测试 Mapper 初始化时处理不同类型的配置对象"""

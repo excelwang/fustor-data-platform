@@ -14,8 +14,8 @@ import sys
 
 import pytest
 
-from fustor_core.models.config import PasswdCredential, SourceConfig
-from fustor_core.event import UpdateEvent
+from sensord_core.models.config import PasswdCredential, SourceConfig
+from sensord_core.event import UpdateEvent
 from fustor_source_fs import FSDriver
 
 

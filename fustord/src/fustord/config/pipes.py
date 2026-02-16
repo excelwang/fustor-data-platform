@@ -14,7 +14,7 @@ from pathlib import Path
 from typing import Dict, Optional, List, Any, Union
 from pydantic import BaseModel, field_validator
 
-from fustor_core.common import get_fustor_home_dir
+from sensord_core.common import get_fustor_home_dir
 from .validators import validate_url_safe_id
 
 logger = logging.getLogger(__name__)

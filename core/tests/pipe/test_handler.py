@@ -1,7 +1,7 @@
 import pytest
 from unittest.mock import MagicMock
-from fustor_core.pipe.handler import Handler, SourceHandler, ViewHandler
-from fustor_core.event import EventBase
+from sensord_core.pipe.handler import Handler, SourceHandler, ViewHandler
+from sensord_core.event import EventBase
 
 class ConcreteHandler(Handler):
     schema_name = "test_schema"

@@ -4,7 +4,7 @@ version = "0.9.1"
 description = "realtime data sync sensord for various data sources"
 readme = "README.md"
 requires-python = ">=3.11"
-dependencies = ["click>=8.1.7", "pydantic>=2.11.7", "python-dotenv", "fustor-core", "sensord-sdk"]
+dependencies = ["click>=8.1.7", "pydantic>=2.11.7", "python-dotenv", "sensord-core", "sensord-sdk"]
 [[project.authors]]
 name = "Huajin Wang"
 email = "wanghuajin999@163.com"

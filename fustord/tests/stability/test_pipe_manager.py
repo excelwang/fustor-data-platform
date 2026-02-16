@@ -3,7 +3,7 @@ import asyncio
 from unittest.mock import MagicMock, patch, AsyncMock
 from fustord.stability.pipe_manager import FustordPipeManager
 from fustord.stability.pipe import FustordPipe
-from fustor_core.event import EventBase
+from sensord_core.event import EventBase
 
 @pytest.fixture
 def mock_receivers_config():
@@ -64,7 +64,7 @@ class TestPipeManager:
             def mount_router(self, router): pass
 
         # Patch ReceiverRegistry.create instead of HTTPReceiver directly
-        with patch("fustor_core.transport.ReceiverRegistry.create", return_value=DummyHTTPReceiver()) as mock_create:
+        with patch("sensord_core.transport.ReceiverRegistry.create", return_value=DummyHTTPReceiver()) as mock_create:
             await pipe_manager.initialize_pipes()
             
             # Verify receiver is created and accessible
@@ -109,7 +109,7 @@ class TestPipeManager:
         with patch("fustord.stability.mixins.manager_lifecycle.get_cached_view_manager", new_callable=AsyncMock) as mock_get_vm, \
              patch("fustord.domain.view_handler_adapter.create_view_handler_from_manager") as mock_create_handler, \
              patch("fustord.stability.session_bridge.create_session_bridge") as mock_bridge, \
-             patch("fustor_core.transport.ReceiverRegistry.create") as mock_recv_create:
+             patch("sensord_core.transport.ReceiverRegistry.create") as mock_recv_create:
                  
              mock_vm = MagicMock()
              mock_get_vm.return_value = mock_vm

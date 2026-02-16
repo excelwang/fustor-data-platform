@@ -1,7 +1,7 @@
 import pytest
 from typing import Tuple, Dict, Any, List
-from fustor_core.pipe.sender import SenderHandler
-from fustor_core.event import EventBase
+from sensord_core.pipe.sender import SenderHandler
+from sensord_core.event import EventBase
 
 class ConcreteSenderHandler(SenderHandler):
     async def create_session(self, task_id, source_type, session_timeout_seconds=30, **kwargs):

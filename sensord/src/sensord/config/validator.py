@@ -4,7 +4,7 @@ Configuration Validation Utility
 import logging
 from typing import List, Dict, Any, Tuple
 from sensord.config.unified import sensordConfigLoader, sensord_config
-from fustor_core.models.config import SourceConfig, SenderConfig, GlobalLoggingConfig
+from sensord_core.models.config import SourceConfig, SenderConfig, GlobalLoggingConfig
 
 
 logger = logging.getLogger("sensord.validator")

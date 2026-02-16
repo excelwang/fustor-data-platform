@@ -43,5 +43,5 @@ sources:
 
 *   `aiomysql`: Asynchronous MySQL client for Python.
 *   `mysql-replication`: Library for reading MySQL binary logs.
-*   `fustor-core`: Provides the `SourceDriver` abstract base class and other core components.
+*   `sensord-core`: Provides the `SourceDriver` abstract base class and other core components.
 *   `fustor-event-model`: Provides `EventBase` for event data structures.

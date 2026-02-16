@@ -6,7 +6,7 @@ readme = "README.md"
 requires-python = ">=3.11"
 license = "MIT"
 dependencies = [
-    "fustor-core",
+    "sensord-core",
     "sensord-sdk",
     "pyyaml>=6.0"
 ]

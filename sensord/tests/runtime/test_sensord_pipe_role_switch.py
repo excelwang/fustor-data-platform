@@ -5,9 +5,9 @@ Tests for SensordPipe role transitions (Leader <-> Follower).
 import pytest
 import asyncio
 from unittest.mock import MagicMock, AsyncMock
-from fustor_core.pipe import PipeState
-from sensord.runtime.sensord_pipe import SensordPipe
-from sensord.runtime.sensord_pipe import SensordPipe
+from sensord_core.pipe import PipeState
+from sensord.stability.pipe import SensordPipe
+from sensord.stability.pipe import SensordPipe
 
 @pytest.mark.timeout(10)
 class TestsensordRoleSwitch:

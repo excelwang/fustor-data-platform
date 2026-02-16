@@ -3,7 +3,7 @@ name = "fustor-source-fs"
 version = "0.9.1"
 description = "Fustor sensord FS Source Driver"
 license = "MIT"
-dependencies = ["fustor-core", "fustor-schema-fs", "watchdog"]
+dependencies = ["sensord-core", "fustor-schema-fs", "watchdog"]
 
 [build-system]
 requires = [ "setuptools>=61.0" ]

@@ -8,7 +8,7 @@ import logging
 import queue
 import threading
 from fustor_view_fs.state import FSState
-from fustor_core.event import MessageSource, EventType
+from sensord_core.event import MessageSource, EventType
 from fustor_source_fs.event_handler import OptimizedWatchEventHandler
 from fustor_source_fs.components import _WatchManager
 # We don't need Observer

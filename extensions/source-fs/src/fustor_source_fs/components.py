@@ -6,7 +6,7 @@ import time
 import dataclasses
 import heapq
 from typing import Dict, List, Optional, Set, Tuple
-from fustor_core.exceptions import DriverError # NEW IMPORT
+from sensord_core.exceptions import DriverError # NEW IMPORT
 
 # Use the low-level inotify wrapper and high-level event types
 from watchdog.observers.inotify_c import Inotify

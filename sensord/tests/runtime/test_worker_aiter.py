@@ -3,7 +3,7 @@ Tests for aiter_sync_phase_wrapper — sync-to-async iterator bridge.
 """
 import pytest
 import asyncio
-from sensord.runtime.pipe.worker import aiter_sync_phase_wrapper
+from sensord.stability.mixins.worker import aiter_sync_phase_wrapper
 
 
 @pytest.mark.asyncio

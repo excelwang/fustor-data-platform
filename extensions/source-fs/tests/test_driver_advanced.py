@@ -3,9 +3,9 @@ import time
 import pytest
 from unittest.mock import MagicMock, patch
 from fustor_source_fs.driver import FSDriver
-from fustor_core.models.config import SourceConfig
-from fustor_core.event.types import MessageSource
-from fustor_core.event.base import UpdateEvent
+from sensord_core.models.config import SourceConfig
+from sensord_core.event.types import MessageSource
+from sensord_core.event.base import UpdateEvent
 
 @pytest.fixture
 def source_uri(tmp_path):

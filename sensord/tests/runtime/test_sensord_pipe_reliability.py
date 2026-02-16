@@ -2,10 +2,10 @@
 import pytest
 import asyncio
 from unittest.mock import AsyncMock, MagicMock
-from fustor_core.pipe import PipeState
-from sensord.runtime.sensord_pipe import SensordPipe
-from fustor_core.pipe.handler import SourceHandler
-from fustor_core.pipe.sender import SenderHandler
+from sensord_core.pipe import PipeState
+from sensord.stability.pipe import SensordPipe
+from sensord_core.pipe.handler import SourceHandler
+from sensord_core.pipe.sender import SenderHandler
 
 @pytest.fixture
 def mock_source():

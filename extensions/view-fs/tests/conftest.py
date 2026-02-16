@@ -2,7 +2,7 @@
 import random
 import time
 from typing import List, Dict, Any, Optional
-from fustor_core.event import MessageSource, EventType
+from sensord_core.event import MessageSource, EventType
 
 class EventFuzzer:
     """

@@ -3,8 +3,8 @@ import asyncio
 import logging
 import time
 from typing import Any, Dict, List, Optional
-from fustor_core.event import EventBase
-from fustor_core.common.metrics import get_metrics
+from sensord_core.event import EventBase
+from sensord_core.common.metrics import get_metrics
 
 from fustord.domain.view_state_manager import view_state_manager
 

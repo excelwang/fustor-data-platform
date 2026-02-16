@@ -1,6 +1,6 @@
 import pytest
 from logging import getLogger
-from fustor_core.pipe.mapper import EventMapper
+from sensord_core.pipe.mapper import EventMapper
 
 logger = getLogger(__name__)
 

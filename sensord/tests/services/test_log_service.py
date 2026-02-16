@@ -4,13 +4,13 @@ import logging
 from datetime import datetime
 from unittest.mock import patch, mock_open
 
-from sensord.services.log import LogService, LOG_FILE_PATH, LOG_PATTERN
-from fustor_core.models.log import LogEntry
+from sensord.domain.log import LogService, LOG_FILE_PATH, LOG_PATTERN
+from sensord_core.models.log import LogEntry
 
 # Mock the LOG_FILE_PATH for testing purposes
 @pytest.fixture(autouse=True)
 def mock_log_file_path():
-    with patch('sensord.services.log.LOG_FILE_PATH', '/tmp/test_sensord.log'):
+    with patch('sensord.domain.log.LOG_FILE_PATH', '/tmp/test_sensord.log'):
         yield
 
 @pytest.fixture

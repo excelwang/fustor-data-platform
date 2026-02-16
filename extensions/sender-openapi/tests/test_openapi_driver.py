@@ -1,7 +1,7 @@
 import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
 from fustor_sender_openapi import OpenApiDriver, _spec_cache
-from fustor_core.exceptions import DriverError
+from sensord_core.exceptions import DriverError
 
 SAMPLE_SPEC = {
     "servers": [{"url": "/api/v1"}],

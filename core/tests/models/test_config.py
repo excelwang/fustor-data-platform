@@ -1,5 +1,5 @@
 import pytest
-from fustor_core.models.config import (
+from sensord_core.models.config import (
     PasswdCredential, ApiKeyCredential, FieldMapping,
     SourceConfig, SenderConfig, PipeConfig,
     AppConfig, ConfigError, NotFoundError

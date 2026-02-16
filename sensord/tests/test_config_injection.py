@@ -1,7 +1,7 @@
 
 import pytest
 from sensord.config.unified import sensordConfigLoader, UnifiedsensordConfig
-from fustor_core.models.config import SourceConfig
+from sensord_core.models.config import SourceConfig
 
 def test_sensord_config_default_fs_scan_workers():
     loader = sensordConfigLoader()

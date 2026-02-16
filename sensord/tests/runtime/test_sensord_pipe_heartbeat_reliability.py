@@ -1,8 +1,8 @@
 import pytest
 import asyncio
 from unittest.mock import AsyncMock, MagicMock
-from sensord.runtime.sensord_pipe import SensordPipe
-from fustor_core.exceptions import SessionObsoletedError
+from sensord.stability.pipe import SensordPipe
+from sensord_core.exceptions import SessionObsoletedError
 from .mocks import MockSourceHandler, MockSenderHandler
 
 @pytest.fixture

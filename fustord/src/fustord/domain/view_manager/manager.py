@@ -8,11 +8,11 @@ View Drivers are discovered dynamically via the 'fustor.view_drivers' entry poin
 """
 from typing import Dict, Any, Optional, Type
 from importlib.metadata import entry_points
-from fustor_core.drivers import ViewDriver
+from sensord_core.drivers import ViewDriver
 from fustord.config.unified import fustord_config
 import logging
 import asyncio
-from fustor_core.event import EventBase
+from sensord_core.event import EventBase
 # from ..in_memory_queue import memory_event_queue
 
 logger = logging.getLogger(__name__)

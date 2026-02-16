@@ -1,7 +1,7 @@
 # sensord/tests/runtime/mocks.py
 from typing import Iterator, List, Any, Dict, Tuple
-from fustor_core.pipe.handler import SourceHandler
-from fustor_core.pipe.sender import SenderHandler
+from sensord_core.pipe.handler import SourceHandler
+from sensord_core.pipe.sender import SenderHandler
 
 class MockSourceHandler(SourceHandler):
     """Mock source handler for testing."""

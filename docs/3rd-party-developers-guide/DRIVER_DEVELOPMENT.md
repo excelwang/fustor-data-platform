@@ -7,8 +7,8 @@
 所有驱动都遵循统一的开发契约。一个合格的驱动是一个独立的 Python 包，其中包含一个**必须继承**自 `SourceDriver` 或 `PusherDriver` 抽象基类（ABC）的**驱动类**。开发者必须实现该基类定义的所有抽象方法。
 
 -   **核心基类**:
-    -   `fustor_core.drivers.SourceDriver`
-    -   `fustor_core.drivers.PusherDriver`
+    -   `sensord_core.drivers.SourceDriver`
+    -   `sensord_core.drivers.PusherDriver`
 -   **核心数据模型**:
     -   `fustor_event_model.models.EventBase`
 
@@ -91,7 +91,7 @@ def get_audit_iterator(self, **kwargs) -> Iterator[EventBase]:
     [project]
     name = "my-fustor-driver"
     dependencies = [
-        "fustor-core",
+        "sensord-core",
         "fustor-event-model",
     ]
 

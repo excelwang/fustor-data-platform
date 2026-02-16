@@ -97,8 +97,8 @@ class FSDeleteRow(BaseModel):
 # --- Event Models ---
 
 from typing import List, Union
-from fustor_core.event import EventBase, EventType
-from fustor_core.event.types import MessageSource
+from sensord_core.event import EventBase, EventType
+from sensord_core.event.types import MessageSource
 
 class FSEventBase(EventBase):
     """Base class for FS-specific events."""

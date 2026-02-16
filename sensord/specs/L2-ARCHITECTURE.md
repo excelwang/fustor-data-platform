@@ -74,7 +74,7 @@ graph TD
 ### 2.3 Component Mapping
 | Original Package | New Standalone Identity | Role |
 |------------------|-------------------------|------|
-| `fustor-core` | `sensord-core` | Foundation ABCs & Models |
+| `sensord-core` | `sensord-core` | Foundation ABCs & Models |
 | `sensord` | `sensord` | Process Guardian (SCP/SDP Orchestrator) |
 | `fustor-source-fs` | `sensord-source-fs` | FS Scanner Driver |
 | `fustor-schema-fs` | `sensord-schema-fs` | FS Event Schema (SDP Implementation) |

@@ -6,7 +6,7 @@ The skew is the mode of (time.time() - observed_mtime) samples.
 """
 import pytest
 import time
-from fustor_core.clock import LogicalClock
+from sensord_core.clock import LogicalClock
 
 
 def test_cold_start_returns_physical_time():

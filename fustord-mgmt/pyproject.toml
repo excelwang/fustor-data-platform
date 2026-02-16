@@ -5,7 +5,7 @@ description = "Management (L3) extension for Fustor fustord - Remote commands, m
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
-    "fustor-core",
+    "sensord-core",
     "fastapi",
     "pydantic>=2.0.0"
 ]

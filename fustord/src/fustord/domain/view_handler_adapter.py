@@ -8,9 +8,8 @@ to be used with the new Pipe-based architecture.
 import logging
 from typing import Any, Dict, List, Optional, TYPE_CHECKING
 
-from fustor_core.pipe.handler import ViewHandler
-from fustor_core.drivers import ViewDriver
-from fustor_core.event import EventBase
+from .base_view import ViewHandler, ViewDriver
+from sensord_core.event import EventBase
 
 if TYPE_CHECKING:
     from fustord.domain.view_manager.manager import ViewManager
@@ -23,8 +22,8 @@ class ViewDriverAdapter(ViewHandler):
     Adapts a single ViewDriver to the ViewHandler interface.
     
     This adapter bridges the gap between:
-    - fustor_core.drivers.ViewDriver (driver layer)
-    - fustor_core.pipe.handler.ViewHandler (pipe/handler layer)
+    - sensord_core.drivers.ViewDriver (driver layer)
+    - sensord_core.pipe.handler.ViewHandler (pipe/handler layer)
     
     Example usage:
         from fustor_view_fs import FSViewDriver

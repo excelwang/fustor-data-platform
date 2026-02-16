@@ -34,8 +34,8 @@ uv sync --package sensord-sdk
 To add a new data source, implement the `SourceDriver` interface:
 
 ```python
-from fustor_core.drivers import SourceDriver
-from fustor_core.event import EventBase
+from sensord_core.drivers import SourceDriver
+from sensord_core.event import EventBase
 
 class MyCustomSource(SourceDriver):
     def get_event_iterator(self, **kwargs):
@@ -48,7 +48,7 @@ class MyCustomSource(SourceDriver):
 
 ```python
 from sensord_sdk.interfaces import PipeConfigServiceInterface
-from fustor_core.models.config import PipeConfig
+from sensord_core.models.config import PipeConfig
 
 async def register_pipe(service: PipeConfigServiceInterface):
     config = PipeConfig(
@@ -65,5 +65,5 @@ The SDK is designed to be modular. You can replace the default `EventBus` or `Pe
 
 ## Dependencies
 
-*   `fustor-core`: Foundational models and core synchronization logic.
+*   `sensord-core`: Foundational models and core synchronization logic.
 *   `fustor-common`: Shared utilities and constants.

@@ -30,8 +30,9 @@ import logging
 from pathlib import Path
 from typing import Dict, Optional, List, Any, Set
 from pydantic import BaseModel, Field
-from fustor_core.common import get_fustor_home_dir
-from fustor_core.models.config import GlobalLoggingConfig, fustordGlobalConfig
+from sensord_core.common import get_fustor_home_dir
+from sensord_core.models.config import GlobalLoggingConfig
+from fustord.domain.configs.server import fustordGlobalConfig
 
 logger = logging.getLogger(__name__)
 

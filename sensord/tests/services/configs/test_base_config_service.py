@@ -1,9 +1,9 @@
 import pytest
 from unittest.mock import MagicMock, AsyncMock, patch
-from sensord.services.configs.base import BaseConfigService
-from fustor_core.models.config import AppConfig, SourceConfig, SenderConfig, PipeConfig, PasswdCredential
-from fustor_core.exceptions import ConfigError, NotFoundError, ConflictError
-from fustor_core.models.states import PipeState
+from sensord.domain.configs.base import BaseConfigService
+from sensord_core.models.config import AppConfig, SourceConfig, SenderConfig, PipeConfig, PasswdCredential
+from sensord_core.exceptions import ConfigError, NotFoundError, ConflictError
+from sensord_core.models.states import PipeState
 
 # Define a simple mock config class for testing BaseConfigService
 class MockConfig(SourceConfig):

@@ -2,7 +2,7 @@
 import pytest
 import asyncio
 from unittest.mock import AsyncMock
-from sensord.runtime.sensord_pipe import SensordPipe
+from sensord.stability.pipe import SensordPipe
 from .mocks import MockSourceHandler, MockSenderHandler
 
 class TestSensordPipeResume:

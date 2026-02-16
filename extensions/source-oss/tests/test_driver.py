@@ -5,9 +5,9 @@ from moto import mock_aws
 from datetime import datetime, timedelta, timezone
 from typing import List, Dict, Any
 
-from fustor_core.models.config import SourceConfig, PasswdCredential
-from fustor_core.exceptions import DriverError
-from fustor_core.event import EventBase, EventType
+from sensord_core.models.config import SourceConfig, PasswdCredential
+from sensord_core.exceptions import DriverError
+from sensord_core.event import EventBase, EventType
 
 from fustor_source_oss.driver import OssSourceDriver
 from fustor_source_oss.config import OssDriverParams, QueueType, PollingQueueConfig

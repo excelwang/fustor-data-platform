@@ -3,7 +3,7 @@ name = "fustor-source-elasticsearch"
 version = "0.9.1"
 description = "An Elasticsearch source for Fustor sensord"
 requires-python = ">=3.11"
-dependencies = [ "elasticsearch>=9.2.0", "fustor-core"]
+dependencies = [ "elasticsearch>=9.2.0", "sensord-core"]
 [[project.authors]]
 name = "Huajin Wang"
 email = "wanghuajin999@163.com"

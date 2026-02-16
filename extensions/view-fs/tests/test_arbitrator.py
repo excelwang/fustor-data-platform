@@ -6,7 +6,7 @@ from unittest.mock import MagicMock
 from fustor_view_fs.arbitrator import FSArbitrator
 from fustor_view_fs.state import FSState
 from fustor_view_fs.tree import TreeManager
-from fustor_core.event import MessageSource, EventType, EventBase
+from sensord_core.event import MessageSource, EventType, EventBase
 
 @pytest.fixture
 def fs_state():

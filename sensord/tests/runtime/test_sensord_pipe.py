@@ -6,8 +6,8 @@ Note: Full lifecycle tests are skipped because they require async task coordinat
 Those tests should be done as integration tests with proper timeouts.
 """
 import pytest
-from fustor_core.pipe import PipeState
-from sensord.runtime.sensord_pipe import SensordPipe
+from sensord_core.pipe import PipeState
+from sensord.stability.pipe import SensordPipe
 
 @pytest.fixture
 def sensord_pipe(mock_source, mock_sender, pipe_config):

@@ -1,8 +1,8 @@
 import pytest
 from unittest.mock import MagicMock, AsyncMock, patch
-from sensord.services.configs.source import SourceConfigService
-from fustor_core.models.config import AppConfig, SourceConfig, PipeConfig, PasswdCredential
-from fustor_core.exceptions import NotFoundError
+from sensord.domain.configs.source import SourceConfigService
+from sensord_core.models.config import AppConfig, SourceConfig, PipeConfig, PasswdCredential
+from sensord_core.exceptions import NotFoundError
 
 @pytest.fixture
 def mock_app_config():
@@ -38,7 +38,7 @@ class TestSourceConfigService:
         assert source_config_service.pipe_instance_service == mock_pipe_service
 
     @pytest.mark.asyncio
-    @patch('sensord.services.configs.source.config_lock')
+    @patch('sensord.domain.configs.source.config_lock')
     async def test_add_config(self, mock_config_lock, source_config_service, mock_app_config, sample_source_config):
         mock_app_config.get_sources.return_value = {}
         source_config_service._add_config_to_app = MagicMock()
@@ -52,8 +52,8 @@ class TestSourceConfigService:
         assert result == sample_source_config
 
     @pytest.mark.asyncio
-    @patch('sensord.services.configs.source.config_lock')
-    @patch('sensord.services.schema_cache.is_schema_valid', return_value=True)
+    @patch('sensord.domain.configs.source.config_lock')
+    @patch('sensord.domain.schema_cache.is_schema_valid', return_value=True)
     async def test_update_config_enable_with_schema(self, mock_schema_exists, mock_config_lock, source_config_service, mock_app_config, sample_source_config):
         sample_source_config.disabled = True # Start disabled
         mock_app_config.get_sources.return_value = {"test_source": sample_source_config}
@@ -66,8 +66,8 @@ class TestSourceConfigService:
         mock_schema_exists.assert_called_once_with("test_source")
 
     @pytest.mark.asyncio
-    @patch('sensord.services.configs.source.config_lock')
-    @patch('sensord.services.schema_cache.is_schema_valid', return_value=False)
+    @patch('sensord.domain.configs.source.config_lock')
+    @patch('sensord.domain.schema_cache.is_schema_valid', return_value=False)
     async def test_update_config_enable_without_schema(self, mock_schema_exists, mock_config_lock, source_config_service, mock_app_config, sample_source_config):
         sample_source_config.disabled = True # Start disabled
         mock_app_config.get_sources.return_value = {"test_source": sample_source_config}
@@ -80,7 +80,7 @@ class TestSourceConfigService:
         mock_schema_exists.assert_called_once_with("test_source")
 
     @pytest.mark.asyncio
-    @patch('sensord.services.configs.source.config_lock')
+    @patch('sensord.domain.configs.source.config_lock')
     async def test_cleanup_obsolete_configs(self, mock_config_lock, source_config_service, mock_app_config):
         mock_app_config.get_sources.return_value = {
             "src1": SourceConfig(driver="d", uri="u", credential=PasswdCredential(user="u"), disabled=True), # Obsolete
@@ -104,8 +104,8 @@ class TestSourceConfigService:
         assert "src3" not in mock_app_config.get_sources.return_value
 
     @pytest.mark.asyncio
-    @patch('sensord.services.configs.source.config_lock')
-    @patch('sensord.services.schema_cache.is_schema_valid')
+    @patch('sensord.domain.configs.source.config_lock')
+    @patch('sensord.domain.schema_cache.is_schema_valid')
     async def test_check_and_disable_missing_schema_sources(self, mock_schema_exists, mock_config_lock, source_config_service, mock_app_config):
         # Setup initial state: one enabled source with no schema, one enabled with schema, one disabled with no schema
         source_no_schema = SourceConfig(driver="d", uri="u", credential=PasswdCredential(user="u"), disabled=False, schema_cached=None)
@@ -136,9 +136,9 @@ class TestSourceConfigService:
     
 
     @pytest.mark.asyncio
-    @patch('fustor_core.models.config.PasswdCredential')
-    @patch('sensord.services.drivers.source_driver.SourceDriverService')
-    @patch('sensord.services.schema_cache.save_source_schema')
+    @patch('sensord_core.models.config.PasswdCredential')
+    @patch('sensord.domain.drivers.source_driver.SourceDriverService')
+    @patch('sensord.domain.schema_cache.save_source_schema')
     async def test_discover_and_cache_fields_success(self, mock_save_schema, mock_source_driver_service, mock_passwd_credential, source_config_service, mock_app_config, sample_source_config):
         mock_app_config.get_sources.return_value = {"test_source": sample_source_config}
         mock_source_driver_instance = MagicMock()
@@ -152,9 +152,9 @@ class TestSourceConfigService:
         mock_save_schema.assert_called_once_with("test_source", {"field1": "type1"})
 
     @pytest.mark.asyncio
-    @patch('fustor_core.models.config.PasswdCredential')
-    @patch('sensord.services.drivers.source_driver.SourceDriverService')
-    @patch('sensord.services.schema_cache.save_source_schema')
+    @patch('sensord_core.models.config.PasswdCredential')
+    @patch('sensord.domain.drivers.source_driver.SourceDriverService')
+    @patch('sensord.domain.schema_cache.save_source_schema')
     async def test_discover_and_cache_fields_driver_error(self, mock_save_schema, mock_source_driver_service, mock_passwd_credential, source_config_service, mock_app_config, sample_source_config):
         mock_app_config.get_sources.return_value = {"test_source": sample_source_config}
         mock_source_driver_instance = MagicMock()

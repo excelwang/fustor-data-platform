@@ -17,7 +17,7 @@ import sys
 import subprocess
 import time
 
-from fustor_core.common import setup_logging, get_fustor_home_dir
+from sensord_core.common import setup_logging, get_fustor_home_dir
 from .config.unified import sensord_config
 
 # Define common paths

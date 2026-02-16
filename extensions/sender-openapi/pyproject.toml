@@ -3,7 +3,7 @@ name = "fustor-sender-openapi"
 version = "0.9.1"
 description = "An OpenAPI sender for Fustor sensord"
 requires-python = ">=3.11"
-dependencies = [ "fustor-core"]
+dependencies = [ "sensord-core"]
 [[project.authors]]
 name = "Huajin Wang"
 email = "wanghuajin999@163.com"

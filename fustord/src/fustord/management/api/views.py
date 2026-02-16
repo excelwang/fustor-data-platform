@@ -97,7 +97,7 @@ class FallbackDriverWrapper:
             # Check if fallback handler is registered (it should be if fustord-mgmt is installed)
             if hasattr(runtime_objects, "on_command_fallback") and runtime_objects.on_command_fallback:
                 # Log only if it's NOT a ViewNotReadyError (which is expected during startup)
-                from fustor_core.exceptions import ViewNotReadyError
+                from sensord_core.exceptions import ViewNotReadyError
                 if not isinstance(e, ViewNotReadyError):
                     logger.warning(f"View {self._view_id} primary failed ({e}), triggering On-Command Fallback...")
                 else:
@@ -117,7 +117,7 @@ class FallbackDriverWrapper:
                     raise e
             else:
                 # No fallback capability
-                from fustor_core.exceptions import ViewNotReadyError
+                from sensord_core.exceptions import ViewNotReadyError
                 if isinstance(e, ViewNotReadyError):  # Use custom exception, not string matching
                      raise HTTPException(
                         status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
@@ -181,7 +181,7 @@ def make_readiness_checker(view_name: str) -> Callable:
         
         # 1. Centralized Check
         from fustord.stability.readiness import check_view_readiness
-        from fustor_core.exceptions import ViewNotReadyError
+        from sensord_core.exceptions import ViewNotReadyError
         
         try:
             await check_view_readiness(view_name)

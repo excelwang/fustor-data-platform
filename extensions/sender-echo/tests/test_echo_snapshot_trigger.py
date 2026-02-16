@@ -8,8 +8,8 @@ import asyncio
 from unittest.mock import AsyncMock, MagicMock, patch
 
 from fustor_sender_echo import EchoDriver
-from fustor_core.models.config import SenderConfig, PasswdCredential
-from fustor_core.event import UpdateEvent
+from sensord_core.models.config import SenderConfig, PasswdCredential
+from sensord_core.event import UpdateEvent
 
 @pytest.mark.asyncio
 async def test_echo_sender_requests_snapshot_on_first_push():

@@ -6,9 +6,9 @@ U4: EventBus Failed 状态的行为和恢复(不)能力。
 """
 import pytest
 import asyncio
-from sensord.runtime.bus import MemoryEventBus, EventBusFailedError
-from fustor_core.event import EventBase
-from fustor_core.event.types import EventType
+from sensord.stability.bus import MemoryEventBus, EventBusFailedError
+from sensord_core.event import EventBase
+from sensord_core.event.types import EventType
 
 
 def _make_event(index: int) -> EventBase:

@@ -3,14 +3,14 @@ import pytest
 from pathlib import Path
 from unittest.mock import patch, MagicMock, AsyncMock
 
-from sensord.services.instances.pipe import PipeInstanceService
-from sensord.services.configs.pipe import PipeConfigService
-from sensord.services.configs.source import SourceConfigService
-from sensord.services.configs.sender import SenderConfigService
-from sensord.services.instances.bus import EventBusService
-from sensord.services.drivers.source_driver import SourceDriverService
-from sensord.services.drivers.sender_driver import SenderDriverService
-from fustor_core.models.config import AppConfig, PipeConfig, SourceConfig, SenderConfig, PasswdCredential
+from sensord.stability.pipe_manager import PipeInstanceService
+from sensord.domain.configs.pipe import PipeConfigService
+from sensord.domain.configs.source import SourceConfigService
+from sensord.domain.configs.sender import SenderConfigService
+from sensord.stability.bus_manager import EventBusService
+from sensord.domain.drivers.source_driver import SourceDriverService
+from sensord.domain.drivers.sender_driver import SenderDriverService
+from sensord_core.models.config import AppConfig, PipeConfig, SourceConfig, SenderConfig, PasswdCredential
 from sensord.config.unified import SensordPipeConfig
 
 @pytest.fixture
@@ -74,8 +74,8 @@ async def test_pipe_service_restart_outdated_pipes(mock_services):
     mock_pipe_instance_2.bus = MagicMock(id="mock-bus-id-2")
 
 
-    with patch("sensord.services.configs.pipe.sensord_config") as mock_sensord_config, \
-         patch("sensord.services.instances.pipe.SensordPipe", side_effect=[mock_pipe_instance_1, mock_pipe_instance_2]) as MockSensordPipeClass:
+    with patch("sensord.domain.configs.pipe.sensord_config") as mock_sensord_config, \
+         patch("sensord.stability.pipe_manager.SensordPipe", side_effect=[mock_pipe_instance_1, mock_pipe_instance_2]) as MockSensordPipeClass:
         
         sensord_pipe_config = SensordPipeConfig(source="s1", sender="se1")
         mock_sensord_config.get_pipe.return_value = sensord_pipe_config
@@ -110,8 +110,8 @@ async def test_pipe_service_stop_all_cleans_up(mock_services):
     mock_pipe_instance.id = "p1"
     mock_pipe_instance.bus = MagicMock(id="mock-bus-id-1") # Ensure bus attribute exists
 
-    with patch("sensord.services.configs.pipe.sensord_config") as mock_sensord_config, \
-         patch("sensord.services.instances.pipe.SensordPipe", return_value=mock_pipe_instance) as MockSensordPipeClass:
+    with patch("sensord.domain.configs.pipe.sensord_config") as mock_sensord_config, \
+         patch("sensord.stability.pipe_manager.SensordPipe", return_value=mock_pipe_instance) as MockSensordPipeClass:
         
         sensord_pipe_config = SensordPipeConfig(source="s1", sender="se1")
         mock_sensord_config.get_pipe.return_value = sensord_pipe_config

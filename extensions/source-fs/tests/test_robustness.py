@@ -7,8 +7,8 @@ from unittest.mock import MagicMock, patch
 from fustor_source_fs.driver import FSDriver
 from fustor_source_fs.components import _WatchManager
 from fustor_source_fs.scanner import FSScanner
-from fustor_core.models.config import SourceConfig
-from fustor_core.exceptions import DriverError
+from sensord_core.models.config import SourceConfig
+from sensord_core.exceptions import DriverError
 
 @pytest.fixture
 def temp_test_dir(tmp_path):

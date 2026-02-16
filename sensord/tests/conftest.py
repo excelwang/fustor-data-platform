@@ -6,8 +6,8 @@ from unittest.mock import MagicMock, AsyncMock
 import yaml
 
 from sensord.app import App
-from fustor_core.models.config import SenderConfig, PipeConfig, PasswdCredential, FieldMapping, SourceConfig
-from fustor_core.event import EventBase, InsertEvent
+from sensord_core.models.config import SenderConfig, PipeConfig, PasswdCredential, FieldMapping, SourceConfig
+from sensord_core.event import EventBase, InsertEvent
 
 @pytest.fixture(scope="function")
 def test_app_instance(tmp_path):

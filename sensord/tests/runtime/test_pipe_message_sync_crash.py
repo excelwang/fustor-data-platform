@@ -7,8 +7,8 @@ U6: message_sync 任务崩溃后 control loop 的检测和恢复。
 """
 import pytest
 import asyncio
-from fustor_core.pipe import PipeState
-from sensord.runtime.sensord_pipe import SensordPipe
+from sensord_core.pipe import PipeState
+from sensord.stability.pipe import SensordPipe
 from .mocks import MockSourceHandler, MockSenderHandler
 
 

@@ -6,7 +6,7 @@ import os
 sys.path.insert(0, os.path.abspath("fustord/src"))
 
 from fustord.models.event import EventCreate, EventResponse
-from fustor_core.event import EventBase, EventType, MessageSource # Import EventType and MessageSource
+from sensord_core.event import EventBase, EventType, MessageSource # Import EventType and MessageSource
 
 def test_event_create_model():
     """Test instantiation and basic properties of EventCreate."""

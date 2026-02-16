@@ -43,7 +43,7 @@ async def test_session_source_uri_exposure():
     mock_pipe_manager.list_sessions = AsyncMock(return_value=[mock_session_info])
     
     # Create a mock session info object for create_session return (SessionInfo model)
-    from fustor_core.models.states import SessionInfo
+    from sensord_core.models.states import SessionInfo
     mock_si_obj = SessionInfo(
         session_id=session_id,
         task_id="task_with_uri",

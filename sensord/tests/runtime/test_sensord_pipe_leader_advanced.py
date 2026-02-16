@@ -1,9 +1,9 @@
 import asyncio
 import pytest
 from unittest.mock import MagicMock, AsyncMock, patch
-from fustor_core.pipe import PipeState
-from fustor_core.exceptions import SessionObsoletedError
-from sensord.runtime.sensord_pipe import SensordPipe
+from sensord_core.pipe import PipeState
+from sensord_core.exceptions import SessionObsoletedError
+from sensord.stability.pipe import SensordPipe
 
 @pytest.fixture
 def mock_pipe():
@@ -71,7 +71,7 @@ async def test_snapshot_sync_fatal_error_propagation(mock_pipe):
     mock_pipe._handle_fatal_error = AsyncMock()
     
     # 模拟 phases.run_snapshot_sync 抛出异常
-    with patch("sensord.runtime.pipe.phases.run_snapshot_sync", new_callable=AsyncMock) as mock_run:
+    with patch("sensord.stability.mixins.phases.run_snapshot_sync", new_callable=AsyncMock) as mock_run:
         mock_run.side_effect = ValueError("fatal")
         await mock_pipe._run_snapshot_sync()
         mock_pipe._handle_fatal_error.assert_called_once()

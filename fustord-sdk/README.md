@@ -63,5 +63,5 @@ If you need custom path sanitization, you can pass a `sanitizer` function to the
 
 ## Dependencies
 
-*   `fustor-core`: Shared models and event definitions.
+*   `sensord-core`: Shared models and event definitions.
 *   `httpx`: Asynchronous HTTP client.

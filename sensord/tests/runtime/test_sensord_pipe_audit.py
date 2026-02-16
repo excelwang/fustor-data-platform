@@ -2,11 +2,11 @@
 import pytest
 import asyncio
 from unittest.mock import MagicMock
-from sensord.runtime.sensord_pipe import SensordPipe
-from sensord.runtime.pipe.phases import run_audit_sync
+from sensord.stability.pipe import SensordPipe
+from sensord.stability.mixins.phases import run_audit_sync
 from .mocks import MockSourceHandler, MockSenderHandler
 
-from fustor_core.pipe import PipeState
+from sensord_core.pipe import PipeState
 
 class TestSensordPipeAudit:
     

@@ -1,8 +1,8 @@
 import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
 from fustor_sender_http import HTTPSender
-from fustor_core.event import EventBase
-from fustor_core.exceptions import SessionObsoletedError
+from sensord_core.event import EventBase
+from sensord_core.exceptions import SessionObsoletedError
 import httpx
 
 class MockEvent(EventBase):

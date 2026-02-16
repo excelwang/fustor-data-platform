@@ -14,7 +14,7 @@ from fastapi.testclient import TestClient
 
 from fustor_view_fs.api import create_fs_router
 from fustor_view_fs.driver import FSViewDriver
-from fustor_core.event import UpdateEvent, MessageSource
+from sensord_core.event import UpdateEvent, MessageSource
 
 
 # --- Fixtures ---

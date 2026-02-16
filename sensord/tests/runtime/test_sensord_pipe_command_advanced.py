@@ -7,8 +7,8 @@ import shutil
 from unittest.mock import MagicMock, AsyncMock, patch
 from pathlib import Path
 
-from sensord.runtime.sensord_pipe import SensordPipe
-from fustor_core.pipe.pipe import PipeState
+from sensord.stability.pipe import SensordPipe
+from sensord_core.pipe.pipe import PipeState
 
 @pytest.fixture(autouse=True)
 def mock_os_kill():

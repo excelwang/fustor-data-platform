@@ -3,8 +3,8 @@ import json
 import logging
 from io import StringIO
 from fustor_sender_echo import EchoDriver
-from fustor_core.models.config import SenderConfig, PasswdCredential
-from fustor_core.event import InsertEvent
+from sensord_core.models.config import SenderConfig, PasswdCredential
+from sensord_core.event import InsertEvent
 
 @pytest.mark.asyncio
 async def test_echo_driver_push(caplog):

@@ -19,8 +19,8 @@ import sys
 import subprocess
 import time
 
-from fustor_core.common import setup_logging, get_fustor_home_dir
-from fustor_core.common import setup_logging, get_fustor_home_dir
+from sensord_core.common import setup_logging, get_fustor_home_dir
+from sensord_core.common import setup_logging, get_fustor_home_dir
 from fustord.config.unified import fustord_config
 from fustord.runner import run_fustord
 

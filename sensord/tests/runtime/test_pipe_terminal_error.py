@@ -12,9 +12,9 @@ U1: max_consecutive_errors 触发后 Pipe 的行为。
 import pytest
 import asyncio
 from unittest.mock import AsyncMock
-from fustor_core.pipe import PipeState
-from fustor_core.exceptions import fustordConnectionError
-from sensord.runtime.sensord_pipe import SensordPipe
+from sensord_core.pipe import PipeState
+from sensord_core.exceptions import fustordConnectionError
+from sensord.stability.pipe import SensordPipe
 from .mocks import MockSourceHandler, MockSenderHandler
 
 

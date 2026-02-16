@@ -3,7 +3,7 @@ from unittest.mock import MagicMock, patch
 from pathlib import Path
 import pytest
 
-from fustor_core.models.config import PasswdCredential, SourceConfig
+from sensord_core.models.config import PasswdCredential, SourceConfig
 from fustor_source_fs import FSDriver
 
 @pytest.fixture

@@ -1,7 +1,7 @@
 import pytest
 from unittest.mock import MagicMock
-from fustor_core.transport.receiver import Receiver, ReceiverRegistry
-from fustor_core.transport.sender import Sender
+from sensord_core.transport.receiver import Receiver, ReceiverRegistry
+from sensord_core.transport.sender import Sender
 
 class ConcreteReceiver(Receiver):
     async def start(self): pass

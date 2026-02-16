@@ -16,8 +16,8 @@ import uvicorn
 from fastapi import APIRouter, Depends, HTTPException, status, Request
 from pydantic import BaseModel
 
-from fustor_core.transport import Receiver
-from fustor_core.event import EventBase, EventType, MessageSource
+from sensord_core.transport import Receiver
+from sensord_core.event import EventBase, EventType, MessageSource
 
 try:
     from fustord.management.auth.dependencies import get_view_id_from_api_key
@@ -65,7 +65,7 @@ class HeartbeatResponse(BaseModel):
 
 # --- Session Handler Protocol ---
 
-from fustor_core.models.states import SessionInfo
+from sensord_core.models.states import SessionInfo
 
 
 # Type aliases for callbacks
@@ -483,6 +483,6 @@ __all__ = [
 ]
 
 # Register with global registry
-from fustor_core.transport.receiver import ReceiverRegistry
+from sensord_core.transport.receiver import ReceiverRegistry
 ReceiverRegistry.register("http", HTTPReceiver)
 

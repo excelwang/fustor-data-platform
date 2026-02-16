@@ -1,7 +1,7 @@
 import pytest
 from unittest.mock import MagicMock, AsyncMock
-from sensord.services.drivers.source_driver import SourceDriverService
-from fustor_core.exceptions import DriverError, ConfigError
+from sensord.domain.drivers.source_driver import SourceDriverService
+from sensord_core.exceptions import DriverError, ConfigError
 
 @pytest.fixture
 def source_driver_service():

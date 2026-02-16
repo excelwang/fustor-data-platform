@@ -3,7 +3,7 @@ import logging
 from typing import Dict, Any, Optional, List, Tuple
 from collections import defaultdict
 
-from fustor_core.drivers import ViewDriver
+from sensord_core.drivers import ViewDriver
 # We might need to import from domain instead of extension directly if we want to use the manager
 # But the driver is an extension. It should probably use the SDK or a provided interface.
 # However, within fustord, it's easier to use fustord.domain.view_manager.manager.

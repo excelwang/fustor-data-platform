@@ -7,8 +7,8 @@ when bus splitting occurs.
 """
 import pytest
 from unittest.mock import MagicMock
-from fustor_core.pipe import PipeState
-from sensord.runtime.sensord_pipe import SensordPipe
+from sensord_core.pipe import PipeState
+from sensord.stability.pipe import SensordPipe
 
 @pytest.fixture
 def mock_bus():

@@ -73,7 +73,7 @@ rm tests/e2e/.env_state  # 强制刷新哈希状态
 ```
 
 ### 2. 代码生效机制
-- **热生效**: 核心代码（`fustor_core`, `sensord`, `fustord` 等）已通过 **Volume 挂载**。修改 `src` 目录代码后，测试固件会自动重启进程使代码生效，**无需重启容器**。
+- **热生效**: 核心代码（`sensord_core`, `sensord`, `fustord` 等）已通过 **Volume 挂载**。修改 `src` 目录代码后，测试固件会自动重启进程使代码生效，**无需重启容器**。
 - **三方库变更**: 修改了 `pyproject.toml` 中的 `dependencies` 后，系统会自动触发镜像重建。
 
 ### 3. 排障与日志

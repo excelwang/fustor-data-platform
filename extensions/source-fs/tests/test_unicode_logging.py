@@ -7,7 +7,7 @@ import logging
 from io import StringIO
 from unittest.mock import patch
 import pytest
-from fustor_core.models.config import PasswdCredential, SourceConfig
+from sensord_core.models.config import PasswdCredential, SourceConfig
 from fustor_source_fs import FSDriver
 
 

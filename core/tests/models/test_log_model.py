@@ -1,5 +1,5 @@
 from datetime import datetime
-from fustor_core.models.log import LogEntry
+from sensord_core.models.log import LogEntry
 
 def test_log_entry_creation():
     """测试 LogEntry 模型的创建和字段别名"""

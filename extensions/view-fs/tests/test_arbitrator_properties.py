@@ -4,7 +4,7 @@ import asyncio
 from fustor_view_fs.arbitrator import FSArbitrator
 from fustor_view_fs.state import FSState
 from fustor_view_fs.tree import TreeManager
-from fustor_core.event import MessageSource, EventType
+from sensord_core.event import MessageSource, EventType
 from fuzzer_utils import EventFuzzer
 
 # Re-use mocks from test_arbitrator.py

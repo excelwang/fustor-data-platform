@@ -9,17 +9,17 @@ import os
 import shutil
 from typing import Dict, Any, Optional, List
 
-from fustor_core.common import get_fustor_home_dir
+from sensord_core.common import get_fustor_home_dir
 # ID generation is removed per config-only requirement
 
 from .config.unified import sensord_config, SensordPipeConfig
 
 # Import driver and instance services
-from .services.drivers.source_driver import SourceDriverService
-from .services.drivers.sender_driver import SenderDriverService
-from .services.instances.bus import EventBusService
-from .services.instances.pipe import PipeInstanceService
-from .runtime.sender_handler_adapter import SenderHandlerAdapter
+from .domain.drivers.source_driver import SourceDriverService
+from .domain.drivers.sender_driver import SenderDriverService
+from .stability.bus_manager import EventBusService
+from .stability.pipe_manager import PipeInstanceService
+from .stability.sender_adapter import SenderHandlerAdapter
 from .domain.source_handler_adapter import SourceHandlerAdapter
 
 # State file path
@@ -147,7 +147,7 @@ class App:
         source_id = pipe_cfg.source
         
         # Convert fields_mapping to FieldMapping objects for EventBus
-        from fustor_core.models.config import FieldMapping
+        from sensord_core.models.config import FieldMapping
         field_mappings = [
             FieldMapping(**m) if isinstance(m, dict) else m 
             for m in pipe_cfg.fields_mapping
@@ -166,7 +166,7 @@ class App:
         sender = self.sender_driver_service.create_driver(pipe_cfg.sender, sender_cfg)
         
         # 3. Create pipe instance
-        from .runtime.sensord_pipe import SensordPipe
+        from .stability.pipe import SensordPipe
         
         # Adapt unified SensordPipeConfig to what SensordPipe expects (dict-like or object)
         # SensordPipe usually takes a config dict or object. 

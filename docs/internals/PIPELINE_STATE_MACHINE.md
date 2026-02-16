@@ -2,7 +2,7 @@
 
 The Fustor Pipe uses an `IntFlag` bitmask to represent its current state. This allows for composite states where multiple flags can be active simultaneously (e.g., `RUNNING | SNAPSHOT_SYNC`).
 
-## State Flags (`fustor_core.pipe.PipeState`)
+## State Flags (`sensord_core.pipe.PipeState`)
 
 | Flag | Value | Description |
 |------|-------|-------------|

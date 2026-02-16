@@ -12,7 +12,7 @@ import heapq
 from unittest.mock import patch
 
 from fustor_view_fs import FSViewDriver
-from fustor_core.event import UpdateEvent, DeleteEvent, MessageSource
+from sensord_core.event import UpdateEvent, DeleteEvent, MessageSource
 
 
 @pytest.fixture

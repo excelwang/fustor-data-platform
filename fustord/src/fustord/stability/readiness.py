@@ -1,7 +1,7 @@
 import logging
 from typing import Optional, Tuple
 from fustord.domain.view_state_manager import view_state_manager
-from fustor_core.exceptions import ViewNotReadyError
+from sensord_core.exceptions import ViewNotReadyError
 
 logger = logging.getLogger(__name__)
 

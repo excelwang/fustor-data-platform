@@ -61,7 +61,7 @@ async def test_handle_command_update_config(tmp_path):
     default_yaml = config_dir / "default.yaml"
     default_yaml.write_text("old: config")
     
-    with patch("fustor_core.common.get_fustor_home_dir", return_value=tmp_path):
+    with patch("sensord_core.common.get_fustor_home_dir", return_value=tmp_path):
         with patch("os.kill") as mock_kill:
             # Valid config
             valid_yaml = "sensord_id: test\nsources: {s1: {driver: fs, uri: /tmp}}\nsenders: {f1: {driver: fustord, uri: http://f}}\npipes: {p1: {source: s1, sender: f1}}"
@@ -81,7 +81,7 @@ async def test_handle_command_report_config(tmp_path):
     config_dir.mkdir()
     (config_dir / "default.yaml").write_text("hello: world")
     
-    with patch("fustor_core.common.get_fustor_home_dir", return_value=tmp_path):
+    with patch("sensord_core.common.get_fustor_home_dir", return_value=tmp_path):
         processor._handle_command_report_config(pipe, {"filename": "default.yaml"})
         await asyncio.sleep(0.1)
         

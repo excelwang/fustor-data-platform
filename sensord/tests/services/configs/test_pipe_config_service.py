@@ -1,7 +1,7 @@
 import pytest
 from unittest.mock import MagicMock, AsyncMock, patch
-from sensord.services.configs.pipe import PipeConfigService
-from fustor_core.models.config import AppConfig, PipeConfig, PasswdCredential
+from sensord.domain.configs.pipe import PipeConfigService
+from sensord_core.models.config import AppConfig, PipeConfig, PasswdCredential
 
 @pytest.fixture
 def mock_app_config():

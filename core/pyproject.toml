@@ -1,7 +1,7 @@
 [project]
-name = "fustor-core"
+name = "sensord-core"
 version = "0.9.1"
-description = "Core foundation for Fustor - event models, pipe/transport abstractions, and common utilities"
+description = "Core foundation for Sensors - event models, pipe/transport abstractions, and common utilities"
 requires-python = ">=3.11"
 dependencies = [
     "pydantic>=2.11.7",

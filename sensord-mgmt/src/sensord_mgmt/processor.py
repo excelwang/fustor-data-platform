@@ -129,7 +129,7 @@ class CommandProcessor(CommandProcessorInterface):
             return
 
         import sensord.config.validator as validator
-        from fustor_core.common import get_fustor_home_dir
+        from sensord_core.common import get_fustor_home_dir
         import yaml
 
         # Validate YAML syntax before writing
@@ -172,7 +172,7 @@ class CommandProcessor(CommandProcessorInterface):
     def _handle_command_report_config(self, pipe: PipeInterface, cmd: Dict[str, Any]) -> None:
         """Handle 'report_config' command."""
         filename = cmd.get("filename", "default.yaml")
-        from fustor_core.common import get_fustor_home_dir
+        from sensord_core.common import get_fustor_home_dir
         
         safe_name = os.path.basename(filename)
         if not safe_name.endswith((".yaml", ".yml")):

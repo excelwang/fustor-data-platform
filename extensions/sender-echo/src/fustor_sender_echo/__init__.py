@@ -5,9 +5,9 @@ import json
 import logging
 from typing import Any, Dict, List, Optional
 
-from fustor_core.transport import Sender
-from fustor_core.models.config import SenderConfig
-from fustor_core.event import EventBase
+from sensord_core.transport import Sender
+from sensord_core.models.config import SenderConfig
+from sensord_core.event import EventBase
 
 
 class EchoDriver(Sender):

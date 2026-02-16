@@ -5,8 +5,8 @@ This test verifies the echo sender can write to logs for various event types.
 import pytest
 import logging
 from fustor_sender_echo import EchoDriver
-from fustor_core.models.config import SenderConfig, PasswdCredential
-from fustor_core.event import UpdateEvent, DeleteEvent, InsertEvent
+from sensord_core.models.config import SenderConfig, PasswdCredential
+from sensord_core.event import UpdateEvent, DeleteEvent, InsertEvent
 
 
 @pytest.mark.asyncio

@@ -3,12 +3,12 @@ import os
 import json
 from unittest.mock import patch, mock_open
 
-from sensord.services import schema_cache
+from sensord.domain import schema_cache
 
 # Mock the SCHEMA_CACHE_DIR for testing purposes
 @pytest.fixture(autouse=True)
 def mock_schema_cache_dir():
-    with patch('sensord.services.schema_cache.SCHEMA_CACHE_DIR', '/tmp/test_schemas'):
+    with patch('sensord.domain.schema_cache.SCHEMA_CACHE_DIR', '/tmp/test_schemas'):
         yield
 
 @pytest.fixture

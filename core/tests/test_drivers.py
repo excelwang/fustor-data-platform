@@ -1,8 +1,8 @@
 import pytest
 from unittest.mock import MagicMock
-from fustor_core.drivers import ViewDriver, SenderDriver, SourceDriver
-from fustor_core.event.base import EventBase
-from fustor_core.models.config import SourceConfig, SenderConfig
+from sensord_core.drivers import ViewDriver, SenderDriver, SourceDriver
+from sensord_core.event.base import EventBase
+from sensord_core.models.config import SourceConfig, SenderConfig
 
 class ConcreteViewDriver(ViewDriver):
     async def process_event(self, event: EventBase) -> bool:

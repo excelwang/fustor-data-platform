@@ -38,7 +38,7 @@ senders:
 
 ## Dependencies
 
-*   `fustor-core`: Provides the `SenderDriver` abstract base class and other core components.
+*   `sensord-core`: Provides the `SenderDriver` abstract base class and other core components.
 *   `fustor-event-model`: Provides `EventBase` for event data structures.
 *   `httpx`: A next-generation HTTP client for making asynchronous requests.
 *   `pydantic`: For data validation and settings management.

@@ -1,6 +1,6 @@
 import pytest
 import time
-from fustor_core.clock.logical_clock import LogicalClock
+from sensord_core.clock.logical_clock import LogicalClock
 
 def test_logical_clock_buffer_full_eviction():
     """测试缓冲区满时旧值的正确移除逻辑 (Lines 77-80)"""

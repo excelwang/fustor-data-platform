@@ -1,9 +1,9 @@
 import pytest
 import asyncio
 from unittest.mock import MagicMock, AsyncMock, patch
-from sensord.runtime.sensord_pipe import SensordPipe
+from sensord.stability.pipe import SensordPipe
 from fustor_source_fs.driver import FSDriver
-from fustor_core.pipe.sender import SenderHandler
+from sensord_core.pipe.sender import SenderHandler
 
 @pytest.mark.asyncio
 async def test_sensord_command_execution():

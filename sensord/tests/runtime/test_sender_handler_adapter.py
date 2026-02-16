@@ -6,8 +6,8 @@ import pytest
 from unittest.mock import AsyncMock, MagicMock
 from typing import Any, Dict, List, Optional
 
-from fustor_core.transport import Sender
-from sensord.runtime.sender_handler_adapter import (
+from sensord_core.transport import Sender
+from sensord.stability.sender_adapter import (
     SenderHandlerAdapter,
     SenderHandlerFactory,
     create_sender_handler_from_config
@@ -277,7 +277,7 @@ class TestSenderHandlerAdapterBatch:
     @pytest.mark.asyncio
     async def test_send_batch_session_obsolete_error(self, adapter, mock_sender):
         """send_batch should propagate SessionObsoletedError (important for pipe)."""
-        from fustor_core.exceptions import SessionObsoletedError
+        from sensord_core.exceptions import SessionObsoletedError
         mock_sender._send_events_impl = AsyncMock(side_effect=SessionObsoletedError("Expired"))
         
         with pytest.raises(SessionObsoletedError, match="Expired"):

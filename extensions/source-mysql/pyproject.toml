@@ -3,7 +3,7 @@ name = "fustor-source-mysql"
 version = "0.9.1"
 description = "A MySQL source for Fustor sensord"
 requires-python = ">=3.11"
-dependencies = [ "fustor-core", "aiomysql>=0.2.0", "mysql-replication>=1.0.9"]
+dependencies = [ "sensord-core", "aiomysql>=0.2.0", "mysql-replication>=1.0.9"]
 [[project.authors]]
 name = "Huajin Wang"
 email = "wanghuajin999@163.com"

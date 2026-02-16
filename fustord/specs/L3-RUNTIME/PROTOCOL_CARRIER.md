@@ -52,8 +52,8 @@ Symmetry is found in the **Protocol Carrier layer**, not the Pipe layer. The car
 
 | Symmetric Point | Responsibility | Implementation Carrier |
 |-----------------|----------------|------------------------|
-| **Frame Definition** | Shared models for SCP/SDP packets | `fustor_core.protocol` |
-| **Negotiation Logic** | Logic for `session_timeout` and `role` | `fustor_core.protocol.scp` |
+| **Frame Definition** | Shared models for SCP/SDP packets | `sensord_core.protocol` |
+| **Negotiation Logic** | Logic for `session_timeout` and `role` | `sensord_core.protocol.scp` |
 | **Reliability Primitives** | Retries (Client) / Backpressure (Server) | `Stability Layer` |
 
-By extracting the Protocol Carrier into `fustor-core`, we achieve ecosystem-wide alignment without creating a monolithic, over-complicated Pipe component.
+By extracting the Protocol Carrier into `sensord-core`, we achieve ecosystem-wide alignment without creating a monolithic, over-complicated Pipe component.

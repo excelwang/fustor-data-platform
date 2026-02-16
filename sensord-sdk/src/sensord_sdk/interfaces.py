@@ -1,8 +1,8 @@
 from typing import Protocol, Dict, Any, List, Optional, TypeVar, Tuple, Set
 from pydantic import BaseModel # Import BaseModel
 
-from fustor_core.models.config import SourceConfig, FieldMapping
-from fustor_core.models.states import EventBusInstance, EventBusState
+from sensord_core.models.config import SourceConfig, FieldMapping
+from sensord_core.models.states import EventBusInstance, EventBusState
 
 T = TypeVar('T', bound=BaseModel) # Use BaseModel here
 
@@ -45,7 +45,7 @@ class SourceConfigServiceInterface(BaseConfigService[SourceConfig]):
     async def discover_and_cache_fields(self, source_id: str, admin_user: str, admin_password: str):
         ...
 
-from fustor_core.models.config import SenderConfig
+from sensord_core.models.config import SenderConfig
 
 class SenderConfigServiceInterface(BaseConfigService[SenderConfig]):
     """
@@ -58,7 +58,7 @@ class SenderConfigServiceInterface(BaseConfigService[SenderConfig]):
 
 
 
-from fustor_core.models.config import PipeConfig
+from sensord_core.models.config import PipeConfig
 
 class PipeConfigServiceInterface(BaseConfigService[PipeConfig]):
     """
@@ -111,7 +111,7 @@ class EventBusServiceInterface(BaseInstanceServiceInterface):
     ):
         ...
 
-from fustor_core.models.config import SourceConfig
+from sensord_core.models.config import SourceConfig
 
 class SourceDriverServiceInterface(Protocol):
     """
@@ -155,7 +155,7 @@ class SenderDriverServiceInterface(Protocol):
 
 
 
-from fustor_core.models.states import PipeState
+from sensord_core.models.states import PipeState
 
 class PipeInstanceServiceInterface(BaseInstanceServiceInterface):
     """

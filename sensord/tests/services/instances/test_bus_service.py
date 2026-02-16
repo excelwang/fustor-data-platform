@@ -3,11 +3,11 @@ from unittest.mock import MagicMock, AsyncMock, patch
 import asyncio
 import threading
 
-from sensord.services.instances.bus import EventBusService, EventBusInstanceRuntime
-from fustor_core.models.config import SourceConfig, PasswdCredential
-from fustor_core.models.states import EventBusState
-from fustor_core.exceptions import DriverError, TransientSourceBufferFullError
-from fustor_core.event import InsertEvent
+from sensord.stability.bus_manager import EventBusService, EventBusInstanceRuntime
+from sensord_core.models.config import SourceConfig, PasswdCredential
+from sensord_core.models.states import EventBusState
+from sensord_core.exceptions import DriverError, TransientSourceBufferFullError
+from sensord_core.event import InsertEvent
 
 @pytest.fixture
 def mock_source_driver_service():

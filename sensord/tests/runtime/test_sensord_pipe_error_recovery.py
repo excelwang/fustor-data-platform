@@ -5,8 +5,8 @@ Tests for SensordPipe error recovery and session loss handling.
 import pytest
 import asyncio
 from unittest.mock import MagicMock, AsyncMock, patch
-from fustor_core.pipe import PipeState
-from sensord.runtime.sensord_pipe import SensordPipe
+from sensord_core.pipe import PipeState
+from sensord.stability.pipe import SensordPipe
 from .mocks import MockSourceHandler, MockSenderHandler
 
 # Using fixtures and fast intervals from conftest.py
@@ -157,7 +157,7 @@ class TestsensordErrorRecovery:
         self, mock_source, mock_sender, pipe_config
     ):
         """Pipe should clear session and reconnect immediately on SessionObsoletedError."""
-        from fustor_core.exceptions import SessionObsoletedError
+        from sensord_core.exceptions import SessionObsoletedError
         
         mock_sender.role = "leader"
         # Disable background tasks to make test deterministic

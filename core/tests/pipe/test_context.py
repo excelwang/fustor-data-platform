@@ -1,5 +1,5 @@
 import pytest
-from fustor_core.pipe.context import PipeContext
+from sensord_core.pipe.context import PipeContext
 
 @pytest.mark.asyncio
 async def test_pipe_context_registration():

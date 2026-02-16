@@ -1,4 +1,4 @@
-from fustor_core.event import EventType, EventBase, InsertEvent, UpdateEvent, DeleteEvent
+from sensord_core.event import EventType, EventBase, InsertEvent, UpdateEvent, DeleteEvent
 
 class TestEventModels:
     def test_event_base(self):

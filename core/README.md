@@ -1,4 +1,4 @@
-# fustor-core
+# sensord-core
 
 This package contains core components, abstractions, and utilities shared across the Fustor ecosystem. It serves as the foundation for both the sensord and fustord services, as well as all driver extensions.
 
@@ -20,4 +20,4 @@ This package is part of the Fustor monorepo and is typically installed in editab
 
 ## Usage
 
-`fustor-core` is the dependency root for almost all other packages in the monorepo. It ensures that different plugins (Sources/Senders) and core services (sensord/fustord) speak the same language and follow the same architectural patterns.
+`sensord-core` is the dependency root for almost all other packages in the monorepo. It ensures that different plugins (Sources/Senders) and core services (sensord/fustord) speak the same language and follow the same architectural patterns.

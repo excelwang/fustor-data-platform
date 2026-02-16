@@ -1,7 +1,7 @@
 import pytest
 import asyncio
 from unittest.mock import MagicMock, AsyncMock, patch
-from sensord.runtime.sensord_pipe import SensordPipe
+from sensord.stability.pipe import SensordPipe
 
 # Mock SensordPipe for testing methods without full init
 class MockSensordPipe(SensordPipe):
@@ -15,7 +15,7 @@ class MockSensordPipe(SensordPipe):
 @pytest.mark.asyncio
 async def test_check_task_liveness_zombie():
     # Setup
-    with patch("sensord.runtime.sensord_pipe.logger"):
+    with patch("sensord.stability.pipe.logger"):
         pipe = MockSensordPipe()
         
         # Use MagicMock for Task object, not AsyncMock, because done() is sync
@@ -42,7 +42,7 @@ async def test_check_task_liveness_zombie():
 
 @pytest.mark.asyncio
 async def test_check_task_liveness_active():
-    with patch("sensord.runtime.sensord_pipe.logger"):
+    with patch("sensord.stability.pipe.logger"):
         pipe = MockSensordPipe()
         
         mock_task = MagicMock()

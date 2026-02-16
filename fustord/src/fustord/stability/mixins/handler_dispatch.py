@@ -3,10 +3,10 @@ import asyncio
 import logging
 import time
 from typing import Any, Dict, List, Optional
-from fustor_core.pipe.handler import ViewHandler
-from fustor_core.event import EventBase
-from fustor_core.common.metrics import get_metrics
-from fustor_core.pipe import PipeState
+from sensord_core.pipe.handler import ViewHandler
+from sensord_core.event import EventBase
+from sensord_core.common.metrics import get_metrics
+from sensord_core.pipe import PipeState
 
 logger = logging.getLogger("fustord.pipe")
 

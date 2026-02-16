@@ -14,7 +14,7 @@
 
 ## 2. SourceDriver (数据源驱动)
 
-**`fustor_core.drivers.SourceDriver`**
+**`sensord_core.drivers.SourceDriver`**
 
 数据源驱动的核心职责是：
 
@@ -62,7 +62,7 @@
 
 ## 3. SenderDriver (数据推送驱动)
 
-**`fustor_core.drivers.SenderDriver`**
+**`sensord_core.drivers.SenderDriver`**
 
 数据推送驱动的职责是连接到下游系统（Consumer），建立并维护一个同步会话，并遵循"信封协议"来批量推送事件数据。
 

@@ -6,8 +6,8 @@ These tests verify the state transitions and sequence of the pipe.
 import asyncio
 import pytest
 from unittest.mock import MagicMock, AsyncMock, patch
-from fustor_core.pipe import PipeState
-from sensord.runtime.sensord_pipe import SensordPipe
+from sensord_core.pipe import PipeState
+from sensord.stability.pipe import SensordPipe
 
 @pytest.mark.timeout(5)
 class TestSensordPipeLifecycle:

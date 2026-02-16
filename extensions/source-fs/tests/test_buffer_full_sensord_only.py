@@ -10,9 +10,9 @@ from unittest.mock import MagicMock
 import logging # Added import
 
 # Import necessary modules
-from fustor_core.models.config import SourceConfig, SenderConfig, PipeConfig, PasswdCredential, FieldMapping
+from sensord_core.models.config import SourceConfig, SenderConfig, PipeConfig, PasswdCredential, FieldMapping
 from sensord.app import App
-from fustor_core.models.states import PipeState
+from sensord_core.models.states import PipeState
 
 @pytest.mark.xfail(reason="Expected to fail: Buffer full bug reproduction")
 @pytest.mark.asyncio

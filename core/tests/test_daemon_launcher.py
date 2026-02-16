@@ -2,7 +2,7 @@ import pytest
 import sys
 import os
 from unittest.mock import patch, MagicMock
-from fustor_core.common.daemon_launcher import main
+from sensord_core.common.daemon_launcher import main
 
 def test_daemon_launcher_main_success(tmp_path):
     # Mock sys.argv
@@ -25,8 +25,8 @@ def test_daemon_launcher_main_success(tmp_path):
     
     with patch.dict(sys.modules, {"mock_module": mock_module}):
         with patch("uvicorn.run") as mock_uvicorn:
-            with patch("fustor_core.common.daemon_launcher.get_fustor_home_dir", return_value=str(tmp_path)):
-                with patch("fustor_core.common.daemon_launcher.setup_logging"):
+            with patch("sensord_core.common.daemon_launcher.get_fustor_home_dir", return_value=str(tmp_path)):
+                with patch("sensord_core.common.daemon_launcher.setup_logging"):
                     with patch.object(sys, 'argv', test_args):
                         main()
                         mock_uvicorn.assert_called_once()
@@ -51,8 +51,8 @@ def test_daemon_launcher_import_error(tmp_path):
         return MagicMock()
 
     with patch("importlib.import_module", side_effect=mock_import):
-        with patch("fustor_core.common.daemon_launcher.get_fustor_home_dir", return_value=str(tmp_path)):
-            with patch("fustor_core.common.daemon_launcher.setup_logging"):
+        with patch("sensord_core.common.daemon_launcher.get_fustor_home_dir", return_value=str(tmp_path)):
+            with patch("sensord_core.common.daemon_launcher.setup_logging"):
                 with patch.object(sys, 'argv', test_args):
                     main()
                     assert not os.path.exists(tmp_path / "test.pid")

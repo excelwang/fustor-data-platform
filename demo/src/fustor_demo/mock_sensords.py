@@ -3,8 +3,8 @@ from datetime import datetime, timedelta, timezone
 import uuid
 import random
 
-from fustor_core.models.config import SourceConfig, PasswdCredential # Used for type hinting config in mock
-from fustor_core.event import EventType
+from sensord_core.models.config import SourceConfig, PasswdCredential # Used for type hinting config in mock
+from sensord_core.event import EventType
 from fustor_demo.store import demo_store
 
 # --- Helper to generate common event structure ---

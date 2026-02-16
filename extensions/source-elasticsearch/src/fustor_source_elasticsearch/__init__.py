@@ -8,10 +8,10 @@ from datetime import datetime
 
 from elasticsearch import Elasticsearch, AsyncElasticsearch, AuthenticationException, AuthorizationException
 
-from fustor_core.drivers import SourceDriver
-from fustor_core.models.config import SourceConfig, PasswdCredential, ApiKeyCredential
-from fustor_core.exceptions import DriverError
-from fustor_core.event import EventBase, InsertEvent
+from sensord_core.drivers import SourceDriver
+from sensord_core.models.config import SourceConfig, PasswdCredential, ApiKeyCredential
+from sensord_core.exceptions import DriverError
+from sensord_core.event import EventBase, InsertEvent
 
 logger = logging.getLogger("sensord.driver.elasticsearch")
 

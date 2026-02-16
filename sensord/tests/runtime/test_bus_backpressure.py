@@ -6,10 +6,10 @@ U5: EventBus 背压策略 — Transient 事件在 Buffer 满时被丢弃。
 """
 import pytest
 import asyncio
-from sensord.runtime.bus import MemoryEventBus
-from fustor_core.event import EventBase
-from fustor_core.event.types import EventType
-from fustor_core.exceptions import TransientSourceBufferFullError
+from sensord.stability.bus import MemoryEventBus
+from sensord_core.event import EventBase
+from sensord_core.event.types import EventType
+from sensord_core.exceptions import TransientSourceBufferFullError
 
 
 def _make_event(index: int) -> EventBase:

@@ -6,8 +6,8 @@ from typing import List
 
 import pytest
 
-from fustor_core.models.config import PasswdCredential, SourceConfig
-from fustor_core.event import DeleteEvent, UpdateEvent
+from sensord_core.models.config import PasswdCredential, SourceConfig
+from sensord_core.event import DeleteEvent, UpdateEvent
 from fustor_source_fs import FSDriver
 
 @pytest.fixture(autouse=True)

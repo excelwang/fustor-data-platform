@@ -1,8 +1,8 @@
 import pytest
 import asyncio
-from sensord.runtime.bus import MemoryEventBus, EventBusFailedError
-from fustor_core.event import EventBase, InsertEvent
-from fustor_core.models.config import FieldMapping
+from sensord.stability.bus import MemoryEventBus, EventBusFailedError
+from sensord_core.event import EventBase, InsertEvent
+from sensord_core.models.config import FieldMapping
 
 @pytest.mark.asyncio
 class TestMemoryEventBus:

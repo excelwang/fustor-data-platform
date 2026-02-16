@@ -6,10 +6,10 @@ from unittest.mock import Mock, patch
 
 import pytest
 
-from fustor_core.models.config import PasswdCredential, SourceConfig
+from sensord_core.models.config import PasswdCredential, SourceConfig
 from fustor_source_fs import FSDriver
 from fustor_source_fs.components import _WatchManager
-from fustor_core.exceptions import DriverError
+from sensord_core.exceptions import DriverError
 
 
 @pytest.fixture

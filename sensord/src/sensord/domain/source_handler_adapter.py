@@ -8,16 +8,16 @@ to be used with the new Pipe-based architecture.
 import logging
 from typing import Any, Dict, Iterator, List, Optional, TYPE_CHECKING
 
-from fustor_core.pipe.handler import SourceHandler
-from fustor_core.models.config import SourceConfig
+from sensord_core.pipe.handler import SourceHandler
+from sensord_core.models.config import SourceConfig
 
 if TYPE_CHECKING:
-    from sensord.services.drivers.source_driver import SourceDriverService
+    from .drivers.source_driver import SourceDriverService
 
 logger = logging.getLogger("sensord")
 
 
-from fustor_core.drivers import SourceDriver
+from sensord_core.drivers import SourceDriver
 
 class SourceHandlerAdapter(SourceHandler):
     """
@@ -29,7 +29,7 @@ class SourceHandlerAdapter(SourceHandler):
     
     Example usage:
         from fustor_source_fs import FSDriver
-        from fustor_core.models.config import SourceConfig
+        from sensord_core.models.config import SourceConfig
         
         config = SourceConfig(driver="fs", uri="/data", ...)
         driver = FSDriver(id="my-source", config=config)

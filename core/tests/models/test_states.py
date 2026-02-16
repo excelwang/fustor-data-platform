@@ -1,5 +1,5 @@
 import pytest
-from fustor_core.models.states import EventBusState, PipeState, EventBusInstance, PipeInstanceDTO
+from sensord_core.models.states import EventBusState, PipeState, EventBusInstance, PipeInstanceDTO
 
 def test_event_bus_state_enum():
     assert EventBusState.IDLE.name == "IDLE"

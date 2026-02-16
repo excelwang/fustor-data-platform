@@ -4,7 +4,7 @@ version = "0.9.1"
 description = "Fustor FS Consistent View Driver"
 license = "MIT"
 dependencies = [
-    "fustor-core",
+    "sensord-core",
     "fustor-schema-fs",
     "fastapi",
     "pydantic"]

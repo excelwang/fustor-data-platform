@@ -5,8 +5,8 @@ from unittest.mock import MagicMock, ANY
 import time
 
 from fustor_source_fs import FSDriver
-from fustor_core.models.config import SourceConfig, PasswdCredential
-from fustor_core.event import UpdateEvent
+from sensord_core.models.config import SourceConfig, PasswdCredential
+from sensord_core.event import UpdateEvent
 
 @pytest.fixture(autouse=True)
 def clear_driver_instances():

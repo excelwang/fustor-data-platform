@@ -4,7 +4,7 @@ Tests for SessionBridge — session lifecycle and leader promotion.
 import pytest
 import pytest_asyncio
 import asyncio
-from fustor_core.pipe.handler import ViewHandler
+from sensord_core.pipe.handler import ViewHandler
 from fustord.stability import FustordPipe
 from fustord.stability.session_bridge import create_session_bridge
 

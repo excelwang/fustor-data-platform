@@ -3,7 +3,7 @@ name = "sensord-sdk"
 version = "0.9.1"
 description = "SDK for Fustor sensord service"
 license = "MIT"
-dependencies = [ "fustor-core"]
+dependencies = [ "sensord-core"]
 
 [build-system]
 requires = [ "setuptools>=61.0"]

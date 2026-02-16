@@ -11,7 +11,7 @@ import time
 from unittest.mock import patch
 
 from fustor_view_fs import FSViewDriver
-from fustor_core.event import UpdateEvent, MessageSource
+from sensord_core.event import UpdateEvent, MessageSource
 
 
 @pytest.fixture

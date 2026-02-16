@@ -10,7 +10,7 @@ Validates LogicalClock's Mode-based skew election:
 import pytest
 from unittest.mock import patch
 
-from fustor_core.clock import LogicalClock
+from sensord_core.clock import LogicalClock
 
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━

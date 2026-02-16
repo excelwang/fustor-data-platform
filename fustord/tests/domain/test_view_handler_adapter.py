@@ -179,7 +179,7 @@ class TestViewDriverAdapterProcessing:
     @pytest.mark.asyncio
     async def test_process_event(self, driver_adapter, mock_driver):
         """process_event should delegate to driver."""
-        from fustor_core.event import EventBase, EventType, MessageSource
+        from sensord_core.event import EventBase, EventType, MessageSource
         
         event = EventBase(
             event_type=EventType.INSERT,
@@ -278,7 +278,7 @@ class TestViewManagerAdapterProcessing:
     @pytest.mark.asyncio
     async def test_process_event(self, manager_adapter, mock_manager):
         """process_event should delegate to manager."""
-        from fustor_core.event import EventBase, EventType, MessageSource
+        from sensord_core.event import EventBase, EventType, MessageSource
         
         event = EventBase(
             event_type=EventType.INSERT,

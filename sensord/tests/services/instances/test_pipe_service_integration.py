@@ -5,15 +5,15 @@ import time
 import logging
 from unittest.mock import MagicMock, Mock, patch, AsyncMock
 
-from sensord.runtime import SensordPipe
-from sensord.services.drivers.source_driver import SourceDriverService
-from sensord.services.drivers.sender_driver import SenderDriverService
-from sensord.services.instances.bus import EventBusService
-from sensord.services.instances.pipe import PipeInstanceService
-from sensord.services.configs.pipe import PipeConfigService
-from sensord.services.configs.source import SourceConfigService
-from sensord.services.configs.sender import SenderConfigService
-from fustor_core.models.config import PipeConfig, SourceConfig, SenderConfig, PasswdCredential, FieldMapping, AppConfig
+from sensord.stability.pipe import SensordPipe
+from sensord.domain.drivers.source_driver import SourceDriverService
+from sensord.domain.drivers.sender_driver import SenderDriverService
+from sensord.stability.bus_manager import EventBusService
+from sensord.stability.pipe_manager import PipeInstanceService
+from sensord.domain.configs.pipe import PipeConfigService
+from sensord.domain.configs.source import SourceConfigService
+from sensord.domain.configs.sender import SenderConfigService
+from sensord_core.models.config import PipeConfig, SourceConfig, SenderConfig, PasswdCredential, FieldMapping, AppConfig
 
 @pytest.fixture
 def integration_configs(tmp_path: Path):
@@ -71,7 +71,7 @@ async def test_pipe_instance_service_integration(integration_configs, tmp_path: 
     from unittest.mock import patch
     from sensord.config.unified import SensordPipeConfig
 
-    with patch("sensord.services.configs.pipe.sensord_config") as mock_sensord_config:
+    with patch("sensord.domain.configs.pipe.sensord_config") as mock_sensord_config:
         sensord_pipe_config = SensordPipeConfig(
             source="test_source",
             sender="test_sender",
