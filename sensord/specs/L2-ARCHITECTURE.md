@@ -28,6 +28,7 @@ graph TD
         SensordPipe["sensordPipe (Lifecycle/Heartbeat)"]
         EventBus["EventBus (Memory Buffer)"]
         Sender["Sender Drivers (HTTP/gRPC)"]
+        BaseMgr["sensord-core (BasePipeManager)"]
         SCP["Sensord Control Protocol"]
     end
 
@@ -118,7 +119,8 @@ sensord-core/                         # 核心抽象层 (SDK)
 ├── src/sensord_core/
 │   ├── common/                      # 通用工具 (logging, daemon, paths)
 │   ├── event/                       # 统一事件模型 (EventBase, EventType)
-│   ├── pipe/                        # 管道与 Handler ABC
+│   ├── pipe/                        # 管道与 Handler ABC (含 BasePipeManager)
+│   ├── stability/                   # 共享稳定性 Mixins
 │   ├── transport/                   # Sender ABC
 │   ├── clock/                       # 影子参考系时钟算法
 │   └── config/                      # Pydantic 配置模型

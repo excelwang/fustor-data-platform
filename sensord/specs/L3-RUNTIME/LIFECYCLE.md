@@ -12,7 +12,7 @@
 ```mermaid
 state_machine
     [*] --> INITIALIZING
-    INITIALIZING --> CONNECTING: Config Loaded
+    INITIALIZING --> CONNECTING: Config Loaded (global singleton)
     CONNECTING --> SYNCING: SCP Handshake Success
     SYNCING --> RECONNECTING: Network Error / Timeout
     RECONNECTING --> CONNECTING: Backoff Wait Done
@@ -53,6 +53,7 @@ Session 超时时间由 **Client-Hint + Server-Default** 共同决定：
 | `RuntimeError` | **Exponential Backoff** | 连接超时、配置错误等环境问题，快速重试会加重系统负担。 |
 | `CancelledError` (+ STOPPING) | **Break** | 正常的停止流程。 |
 | `CancelledError` (- STOPPING) | **Continue** | 单个 Task (如 Snapshot) 被取消，但 SensordPipe 仍需运行 (见 §2)。 |
+| `PipeState.RUNNING` | **Primary State** | Indicates the pipe is healthy, connected, and actively processing events (including sub-states like SYNCING). | Monitoring / CLI Status |
 | Background Task Crash | **Count & Retry** | 记录连续错误计数，触发 Backoff，等待下一轮循环重启 Task。
 
 ---

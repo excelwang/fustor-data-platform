@@ -71,6 +71,7 @@ The fustord codebase is organized into core and extension packages:
     - `clock/`: LogicalClock and Skew detection logic.
     - `session/`: SessionManager and Session state machine.
     - `view/`: Abstract base classes for View Drivers.
+    - `stability/`: (Shared) BasePipeManager and common Mixins from `sensord-core`.
 
 ### 3.2 Extension Packages
 
