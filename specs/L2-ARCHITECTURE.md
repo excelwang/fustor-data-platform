@@ -7,7 +7,7 @@ version: 1.0.0
 > This document defines the high-level component structure.
 > **Subject**: Role (Active) | Component (Passive)
 > - Role: Observes / Decides / Acts (Agent-driven)
-> - Component: Input / Output (Script-driven)
+> - Component: Input / Output (System)
 
 ---
 

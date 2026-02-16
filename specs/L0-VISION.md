@@ -122,7 +122,7 @@ Fustor 拒绝"主从"式命令模型，推崇 **"感知驱动，按需对齐"** 
 | Source | 数据产出驱动（Agent 侧） |
 | View | 数据消费/汇聚驱动（Fusion 侧） |
 | Session | AgentPipe 与 FusionPipe 之间的业务会话 |
-| Heartbeat | L1 层的生存检测与指令隧道 |
+| Heartbeat | Stability Layer 的生存检测与指令隧道 |
 | Schema | 数据契约/格式标识（如 `fs`） |
 | Tombstone | 已删除文件的逻辑标记 |
 | Suspect | 疑似不完整写入的文件标记 |
