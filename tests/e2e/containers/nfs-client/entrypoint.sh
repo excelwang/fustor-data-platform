@@ -34,7 +34,7 @@ if [ "${AGENT_ENABLED}" = "true" ]; then
     
     # Start sensord in foreground
     echo "Starting Fustor sensord (${AGENT_ID}) in foreground..."
-    exec fustor-sensord start
+    exec sensord start
 fi
 
 # Keep container running if sensord was not started
