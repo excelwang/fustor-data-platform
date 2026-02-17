@@ -6,18 +6,17 @@ members = [
     "datacast-core",
     "datacast-sdk",
     "fustord-sdk",
-    "extensions/sender-echo",
-    "extensions/sender-openapi",
-    "extensions/sender-http",
-    "extensions/receiver-http",
-    "extensions/schema-fs",
-    "extensions/source-elasticsearch",
-    "extensions/source-fs",
-    "extensions/source-mysql",
-    "extensions/source-oss",
-    "demo",
-    "extensions/view-fs",
-    "extensions/view-fs-forest",
+    "datacast/extensions/sender-echo",
+    "datacast/extensions/sender-openapi",
+    "datacast/extensions/sender-http",
+    "fustord/extensions/receiver-http",
+    "datacast/extensions/schema-fs",
+    "datacast/extensions/source-elasticsearch",
+    "datacast/extensions/source-fs",
+    "datacast/extensions/source-mysql",
+    "datacast/extensions/source-oss",
+    "fustord/extensions/view-fs",
+    "fustord/extensions/view-fs-forest",
     "datacast-mgmt"
 ]
 
@@ -48,18 +47,17 @@ pythonpath = [
     "datacast/src",
     "fustord/src",
     "datacast-core/src",
-    "extensions/sender-echo/src",
-    "extensions/sender-openapi/src",
-    "extensions/sender-http/src",
-    "extensions/receiver-http/src",
-    "extensions/schema-fs/src",
-    "extensions/source-elasticsearch/src",
-    "extensions/source-fs/src",
-    "extensions/source-mysql/src",
-    "extensions/source-oss/src",
-    "demo/src",
-    "extensions/view-fs/src",
-    "extensions/view-fs-forest/src",
+    "datacast/extensions/sender-echo/src",
+    "datacast/extensions/sender-openapi/src",
+    "datacast/extensions/sender-http/src",
+    "fustord/extensions/receiver-http/src",
+    "datacast/extensions/schema-fs/src",
+    "datacast/extensions/source-elasticsearch/src",
+    "datacast/extensions/source-fs/src",
+    "datacast/extensions/source-mysql/src",
+    "datacast/extensions/source-oss/src",
+    "fustord/extensions/view-fs/src",
+    "fustord/extensions/view-fs-forest/src",
     "datacast-mgmt/src"
 ]
 markers = [
@@ -68,7 +66,9 @@ testpaths = [
     "datacast/tests",
     "fustord/tests",
     "datacast-core/tests",
-    "extensions/*/tests"]
+    "datacast/extensions/*/tests",
+    "fustord/extensions/*/tests"
+]
 addopts = "-v --tb=short"
 asyncio_mode = "strict"
 norecursedirs = ["tests/e2e"]
