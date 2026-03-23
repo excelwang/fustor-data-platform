@@ -80,3 +80,35 @@ async def test_heartbeat_session_obsolete_recovery(mock_source, mock_sender, pip
     finally:
         hb_task.cancel()
         await pipe.stop()
+
+
+@pytest.mark.asyncio
+async def test_batch_response_does_not_suppress_real_heartbeat(mock_source, mock_sender, pipe_config):
+    """A batch response must not delay the real /heartbeat keepalive."""
+    heartbeat_sent = asyncio.Event()
+
+    async def mock_hb(session_id, **kwargs):
+        heartbeat_sent.set()
+        return {"role": "leader"}
+
+    mock_sender.send_heartbeat = AsyncMock(side_effect=mock_hb)
+
+    pipe = AgentPipe(
+        "hb-batch-suppress", pipe_config,
+        mock_source, mock_sender
+    )
+
+    await pipe.on_session_created("sess-batch", role="leader", session_timeout_seconds=0.3)
+
+    # Simulate a recent successful batch push response. This must not count as keepalive.
+    pipe._last_heartbeat_at = asyncio.get_running_loop().time() - 10.0
+    await pipe._update_role_from_response({"success": True})
+
+    hb_task = asyncio.create_task(pipe._run_heartbeat_loop())
+
+    try:
+        await asyncio.wait_for(heartbeat_sent.wait(), timeout=0.03)
+        assert mock_sender.send_heartbeat.call_count >= 1
+    finally:
+        hb_task.cancel()
+        await pipe.stop()

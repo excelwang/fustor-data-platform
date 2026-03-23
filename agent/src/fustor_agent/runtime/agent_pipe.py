@@ -152,8 +152,12 @@ class AgentPipe(FustorPipe, PipeLifecycleMixin, PipeLeaderMixin, PipeCommandMixi
     
 
     
-    async def _update_role_from_response(self, response: Dict[str, Any]) -> None:
-        """Update role and heartbeat timer based on server response."""
+    async def _update_role_from_response(
+        self,
+        response: Dict[str, Any],
+        mark_heartbeat_success: bool = False,
+    ) -> None:
+        """Update role from a server response and optionally record heartbeat success."""
         new_role = response.get("role")
         if new_role and new_role != self.current_role:
             get_metrics().gauge("fustor.agent.role", 1 if new_role == "leader" else 0, {"pipe": self.id, "role": new_role})
@@ -162,8 +166,11 @@ class AgentPipe(FustorPipe, PipeLifecycleMixin, PipeLeaderMixin, PipeCommandMixi
         elif new_role:
              # Just update metrics for current role
              get_metrics().gauge("fustor.agent.role", 1 if new_role == "leader" else 0, {"pipe": self.id, "role": new_role})
-        
-        self._last_heartbeat_at = asyncio.get_event_loop().time()
+
+        # Only a successful /heartbeat request should refresh server-side liveness.
+        # Batch pushes may also carry a role, but Fusion does not treat /events as keepalive.
+        if mark_heartbeat_success:
+            self._last_heartbeat_at = asyncio.get_event_loop().time()
 
     async def _handle_role_change(self, new_role: str) -> None:
         """Handle role transition logic."""
@@ -354,7 +361,7 @@ class AgentPipe(FustorPipe, PipeLifecycleMixin, PipeLeaderMixin, PipeCommandMixi
                     can_realtime=can_realtime,
                     agent_status=self._build_agent_status(),
                 )
-                await self._update_role_from_response(response)
+                await self._update_role_from_response(response, mark_heartbeat_success=True)
                 
                 # Check for commands in response
                 if response and "commands" in response:
